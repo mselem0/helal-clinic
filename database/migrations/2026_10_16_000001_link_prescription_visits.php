@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        foreach (Schema::getForeignKeys('prescriptions') as $foreign) { if ($foreign['columns'] === ['visit_record_id']) { return; } }
         Schema::table('prescriptions', function (Blueprint $table): void {
             $table->foreign('visit_record_id')->references('id')->on('visit_records')->nullOnDelete();
         });
