@@ -52,6 +52,7 @@ jobs:
           mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs
           composer install --prefer-dist --no-interaction --no-progress
           npm ci
+          npm run build
       - name: Test application and browser flows
         run: |
           php artisan test --compact
@@ -59,7 +60,6 @@ jobs:
           npm run test:e2e
       - name: Build production package
         run: |
-          npm run build
           composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
           bash scripts/deploy/package-release.sh
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
