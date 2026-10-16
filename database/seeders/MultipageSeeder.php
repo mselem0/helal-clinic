@@ -26,7 +26,7 @@ class MultipageSeeder extends Seeder
         }
         $items = collect(['home', 'about', 'services', 'journey', 'videos', 'articles', 'branches', 'faq', 'contact', 'appointment'])->map(fn ($key) => ['page_key' => $key, 'label' => SitePage::where('page_key', $key)->value('title')])->all();
         foreach (['header', 'footer'] as $location) {
-            SiteNavigation::firstOrCreate(['location' => $location], ['items' => $items]);
+            SiteNavigation::firstOrCreate(['location' => $location], ['items' => $location === 'header' ? collect($items)->whereIn('page_key', ['home', 'about', 'services', 'articles', 'branches', 'appointment'])->map(fn ($item) => array_replace($item, ['label' => ['home' => 'الرئيسية', 'about' => 'عن الدكتور', 'services' => 'الخدمات', 'articles' => 'المقالات', 'branches' => 'الفروع', 'appointment' => 'طلب موعد'][$item['page_key']]]))->values()->all() : $items]);
         }
         foreach (ClinicBranch::whereNull('slug')->get() as $branch) {
             $branch->update(['slug' => 'branch-'.$branch->id]);
