@@ -116,6 +116,7 @@ test('service create, edit, upload and delete update the actual public site', as
   await app.open('/codeAiAdminDash/services/'+item.id+'/edit');
   await browser.locator('input[id="data.name"]').fill('خدمة معدلة');await browser.locator('input[id="data.card_title"]').fill('خدمة معدلة');
   await screen.getByRole('button','حفظ التغييرات',{exact:true}).click();
+  await expect(screen.getByText('تم الحفظ',{exact:true})).toBeVisible({timeout:10000});
   await app.open('/');await expect(screen.getByRole('heading','خدمة معدلة')).toBeVisible();
   await app.open('/codeAiAdminDash/services/'+item.id+'/edit');await screen.getByRole('button','حذف',{exact:true}).click();
   await browser.locator('.fi-modal-window button[type="submit"]').click();await expect(browser).toHaveURL(/services$/);
