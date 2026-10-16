@@ -1,0 +1,12 @@
+@import './filament-custom.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Helal admin identity */
+.fi-sidebar { border-inline-end: 1px solid #dcecea; }
+.fi-section { border-radius: 1.25rem; }
+.fi-header-heading { color: #006f76; }
+
+@media(max-width:1023px) { .fi-sidebar { background-color:#fff !important; } }

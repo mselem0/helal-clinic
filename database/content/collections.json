@@ -1,0 +1,140 @@
+{
+    "services": [
+        {
+            "order": 0,
+            "title": "الحمل والولادة",
+            "description": "متابعة الحمل والتخطيط للولادة، ومناقشة خيارات الولادة وتخفيف الألم حسب حالتكِ.",
+            "image": "assets\/service-pregnancy.jpg?v=2",
+            "name": "متابعة الحمل والولادة"
+        },
+        {
+            "order": 1,
+            "title": "تأخر الإنجاب والحقن المجهري",
+            "description": "تقييم أسباب تأخر الإنجاب ومناقشة خيارات العلاج، بما فيها الحقن المجهري وأطفال الأنابيب.",
+            "image": "assets\/service-fertility.jpg",
+            "name": "تأخر الإنجاب والحقن المجهري"
+        },
+        {
+            "order": 2,
+            "title": "المناظير وصحة المرأة",
+            "description": "استشارات المناظير النسائية وجراحات أورام الرحم والأورام الليفية، وفق تقييم الطبيب.",
+            "image": "assets\/service-laparoscopy.jpg",
+            "name": "المناظير وصحة المرأة"
+        }
+    ],
+    "clinics": [
+        {
+            "order": 0,
+            "title": "السادس من أكتوبر",
+            "description": "١٦٢٧ محور الكفراوي، الحي الثالث، فوق صيدلية د. عمر.",
+            "image": "",
+            "name": "السادس من أكتوبر",
+            "address": "١٦٢٧ محور الكفراوي، الحي الثالث، فوق صيدلية د. عمر.",
+            "google_maps_url": "https:\/\/maps.app.goo.gl\/BMV59fBHWR9MVc4g8"
+        },
+        {
+            "order": 1,
+            "title": "منشأة القناطر",
+            "description": "الموقف، مجمع دار الثقة.",
+            "image": "",
+            "name": "منشأة القناطر",
+            "address": "الموقف، مجمع دار الثقة.",
+            "google_maps_url": "https:\/\/www.google.com\/maps\/search\/?api=1&query=عيادة+محمد+هلال+منشأة+القناطر+دار+الثقة"
+        },
+        {
+            "order": 2,
+            "title": "المنصورية",
+            "description": "بجوار بنزينة كساب.",
+            "image": "",
+            "name": "المنصورية",
+            "address": "بجوار بنزينة كساب.",
+            "google_maps_url": "https:\/\/www.google.com\/maps\/search\/?api=1&query=عيادة+محمد+هلال+المنصورية+بنزينة+كساب"
+        }
+    ],
+    "videos": [
+        {
+            "order": 0,
+            "title": "سكر الحمل: طبيعي ولا قيصري؟",
+            "description": "سؤال مهم قبل الولادة، يشرحه د. هلال ببساطة.",
+            "image": "assets\/reel-1122351437148430.jpg",
+            "reel": "1122351437148430",
+            "category": "الحمل والولادة"
+        },
+        {
+            "order": 1,
+            "title": "العناية بجرح الولادة تبدأ بالفهم",
+            "description": "نصائح الدكتور حول التهاب جرح الولادة والعناية به.",
+            "image": "assets\/reel-1683918787070180.jpg",
+            "reel": "1683918787070180",
+            "category": "بعد الولادة"
+        },
+        {
+            "order": 2,
+            "title": "زوائد الرحم اللحمية.. إيه حكايتها؟",
+            "description": "تعرّفي على موضوع الزوائد اللحمية في بطانة الرحم.",
+            "image": "assets\/reel-2129128044360416.jpg",
+            "reel": "2129128044360416",
+            "category": "صحة المرأة"
+        },
+        {
+            "order": 3,
+            "title": "بعد الولادة.. علامات ما تتأجلش",
+            "description": "فيديو الدكتور عن علامات تستدعي العودة للمستشفى.",
+            "image": "assets\/reel-2013840505981997.jpg",
+            "reel": "2013840505981997",
+            "category": "بعد الولادة"
+        }
+    ],
+    "articles": [
+        {
+            "order": 0,
+            "title": "أول زيارة لمتابعة الحمل: جهّزي أسئلتكِ",
+            "description": "قائمة بسيطة تساعدكِ على ترتيب المعلومات والأسئلة قبل لقاء الطبيب.",
+            "image": "assets\/service-pregnancy.jpg?v=2"
+        },
+        {
+            "order": 1,
+            "title": "استشارة تأخر الإنجاب: من أين نبدأ؟",
+            "description": "كيف ترتّبين تاريخكِ الصحي والتقارير السابقة للاستشارة.",
+            "image": "assets\/service-fertility.jpg"
+        },
+        {
+            "order": 2,
+            "title": "قبل قرار المنظار: أسئلة تناقشيها مع الطبيب",
+            "description": "فهم الهدف من الإجراء والبدائل وخطوات المتابعة.",
+            "image": "assets\/service-laparoscopy.jpg"
+        }
+    ],
+    "reviews": [
+        {
+            "order": 0,
+            "title": "",
+            "description": "",
+            "image": "",
+            "patient_name": "rahem mohamed",
+            "review_text": "«عنده مصدقيه وامانه واحترام»",
+            "patient_initial": "R",
+            "source_url": "https:\/\/maps.app.goo.gl\/BMV59fBHWR9MVc4g8"
+        },
+        {
+            "order": 1,
+            "title": "",
+            "description": "",
+            "image": "",
+            "patient_name": "Mohamed Gomaa",
+            "review_text": "«دكتور شاطر جدا ربنا يباركلو»",
+            "patient_initial": "M",
+            "source_url": "https:\/\/maps.app.goo.gl\/BMV59fBHWR9MVc4g8"
+        },
+        {
+            "order": 2,
+            "title": "",
+            "description": "",
+            "image": "",
+            "patient_name": "Ahmed Eid",
+            "review_text": "«د محمد من افضل الناس علما وخلقا وعن تجربة»",
+            "patient_initial": "A",
+            "source_url": "https:\/\/maps.app.goo.gl\/BMV59fBHWR9MVc4g8"
+        }
+    ]
+}

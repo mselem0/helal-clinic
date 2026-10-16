@@ -1,0 +1,235 @@
+/* cms/resources/css/filament-custom.css */
+
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --navy-primary: #002855;
+    --cyan-accent: #00B4D8;
+}
+
+/* Premium OKLCH Shadows */
+.shadow-premium {
+    box-shadow: 
+        0 1px 3px 0 oklch(0.2 0.05 250 / 0.05),
+        0 10px 15px -3px oklch(0.2 0.05 250 / 0.07),
+        0 4px 6px -4px oklch(0.2 0.05 250 / 0.05);
+}
+
+.shadow-glass {
+    box-shadow: 
+        0 0 0 1px var(--glass-border),
+        0 10px 30px -10px oklch(0.2 0.05 250 / 0.1);
+}
+
+/* Glassmorphism Utilities */
+.glass-surface {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+}
+
+/* Filament Overrides */
+
+/* 1. Sidebar Refinement */
+.fi-sidebar {
+    border-inline-end: none !important;
+    background-color: transparent !important;
+}
+
+.fi-sidebar-nav {
+    padding: 1.5rem;
+}
+
+.fi-sidebar-item-button {
+    border-radius: 1rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.fi-sidebar-item-active .fi-sidebar-item-button {
+    background: white !important;
+    box-shadow: 0 4px 12px oklch(0.2 0.05 250 / 0.05) !important;
+    color: var(--navy-primary) !important;
+}
+
+/* 2. Main Content & Widgets */
+.fi-main {
+    background-color: #f8fafc; /* Tinted neutral background */
+}
+
+.fi-wi-widget > div {
+    border-radius: 2rem !important;
+    border: none !important;
+    box-shadow: 0 10px 30px -10px oklch(0.2 0.05 250 / 0.08) !important;
+    background: white !important;
+}
+
+/* Apply glass effect to greeting widget specifically if targetable by class */
+.fi-wi-greeting-header-widget > div {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+/* 3. Typography Tweaks */
+body {
+    letter-spacing: -0.01em;
+}
+
+h1, h2, h3 {
+    letter-spacing: -0.02em;
+}
+
+/* 4. Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: oklch(0.2 0.05 250 / 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.2 0.05 250 / 0.2);
+}
+
+/* 5. Immersive Floating Glass Topbar Header */
+.fi-topbar {
+    background: transparent !important;
+    position: sticky !important;
+    top: 0;
+    z-index: 30;
+}
+
+.fi-topbar nav {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 1.5rem !important;
+    margin: 1.25rem 1.5rem 0.5rem !important;
+    padding: 0 1.5rem !important;
+    height: 4.5rem !important; /* Spacious and elegant vertical padding */
+    box-shadow: 
+        0 1px 3px 0 oklch(0.2 0.05 250 / 0.02),
+        0 10px 30px -10px oklch(0.2 0.05 250 / 0.06),
+        0 0 0 1px var(--glass-border) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.fi-topbar nav:hover {
+    box-shadow: 
+        0 4px 6px -1px oklch(0.2 0.05 250 / 0.04),
+        0 20px 40px -15px oklch(0.2 0.05 250 / 0.09),
+        0 0 0 1px rgba(255, 255, 255, 0.45) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* 6. Refined Topbar UI Elements & Controls */
+
+/* Sidebar Toggle Buttons for Mobile/Collapsed view */
+.fi-topbar-open-sidebar-btn, 
+.fi-topbar-close-sidebar-btn {
+    border-radius: 0.75rem !important;
+    background-color: rgba(0, 40, 85, 0.03) !important;
+    border: 1px solid rgba(0, 40, 85, 0.04) !important;
+    transition: all 0.2s ease !important;
+}
+
+.fi-topbar-open-sidebar-btn:hover, 
+.fi-topbar-close-sidebar-btn:hover {
+    background-color: rgba(0, 40, 85, 0.06) !important;
+    color: var(--navy-primary) !important;
+    transform: scale(1.03);
+}
+
+/* Database Notifications Trigger Button */
+.fi-topbar-database-notifications-btn {
+    border-radius: 0.85rem !important;
+    border: 1px solid transparent !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-color: rgba(0, 40, 85, 0.02) !important;
+}
+
+.fi-topbar-database-notifications-btn:hover {
+    background-color: rgba(0, 40, 85, 0.05) !important;
+    color: var(--cyan-accent) !important;
+    border-color: rgba(0, 180, 216, 0.15) !important;
+    transform: translateY(-1px);
+}
+
+/* User Menu & Avatar Container */
+.fi-user-menu .fi-dropdown-trigger button {
+    border-radius: 1rem !important;
+    padding: 2px !important;
+    border: 2px solid rgba(0, 40, 85, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.fi-user-menu .fi-dropdown-trigger button:hover {
+    border-color: var(--cyan-accent) !important;
+    box-shadow: 0 4px 12px rgba(0, 180, 216, 0.1) !important;
+    transform: scale(1.05);
+}
+
+.fi-user-avatar {
+    border-radius: 0.85rem !important; /* Rounded square avatar style to match premium UI elements */
+    transition: border-radius 0.3s ease !important;
+}
+
+/* 7. Beautiful Glassmorphic Breadcrumbs Navigation */
+.fi-breadcrumbs {
+    margin-bottom: 1.5rem !important;
+    padding: 0.5rem 1rem !important;
+    background: rgba(255, 255, 255, 0.45) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 1rem !important;
+    display: inline-flex !important;
+    box-shadow: 
+        0 1px 2px 0 oklch(0.2 0.05 250 / 0.01),
+        0 8px 20px -8px oklch(0.2 0.05 250 / 0.03) !important;
+    transition: all 0.25s ease !important;
+}
+
+.fi-breadcrumbs:hover {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 
+        0 1px 3px 0 oklch(0.2 0.05 250 / 0.02),
+        0 12px 24px -10px oklch(0.2 0.05 250 / 0.05) !important;
+}
+
+.fi-breadcrumbs-item-label {
+    font-weight: 700 !important;
+    transition: color 0.2s ease !important;
+}
+
+.fi-breadcrumbs-item-label:hover {
+    color: var(--cyan-accent) !important;
+}
+
+/* 8. Search Field Enhancement */
+.fi-ta-search-field .fi-input-wrp {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(0, 40, 85, 0.08) !important;
+    border-radius: 0.85rem !important;
+    box-shadow: 0 4px 12px -5px oklch(0.2 0.05 250 / 0.02) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.fi-ta-search-field .fi-input-wrp:focus-within {
+    background-color: white !important;
+    border-color: var(--cyan-accent) !important;
+    box-shadow: 
+        0 0 0 3px rgba(0, 180, 216, 0.15),
+        0 8px 24px -8px rgba(0, 40, 85, 0.05) !important;
+}
+

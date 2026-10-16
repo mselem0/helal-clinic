@@ -1,0 +1,1 @@
+<a class="px-4 text-sm text-primary-700" href="{{ route('home') }}" target="_blank" rel="noopener">فتح موقع هلال ↗</a>

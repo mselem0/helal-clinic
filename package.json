@@ -1,0 +1,24 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "test:e2e": "e2e run",
+    "test:e2e:full": "e2e run"
+  },
+  "devDependencies": {
+    "@e2e-dev/web": "^0.13.0",
+    "@fontsource/tajawal": "^5.3.0",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/typography": "^0.5.19",
+    "autoprefixer": "^10.4.20",
+    "axios": "^1.7.4",
+    "concurrently": "^9.0.1",
+    "e2e": "^0.18.0",
+    "laravel-vite-plugin": "^1.2.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "vite": "^6.0.11"
+  }
+}

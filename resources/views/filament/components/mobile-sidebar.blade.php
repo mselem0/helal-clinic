@@ -1,0 +1,1 @@
+<div class="hidden" x-data x-init="if (window.innerWidth < 1024) $store.sidebar.close()"></div>
