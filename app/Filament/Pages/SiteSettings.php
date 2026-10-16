@@ -8,8 +8,6 @@ use App\Helpers\SiteSettingHelper;
 use App\Models\SiteSetting;
 use App\Support\AuthorizesSitePage;
 use Filament\Actions\Action;
-use Filament\Forms\Components\ColorPicker;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -50,18 +48,6 @@ class SiteSettings extends Page implements HasForms
             ->schema([
                 Tabs::make('Tabs')
                     ->tabs([
-                        Tabs\Tab::make('المظهر')
-                            ->schema([
-                                ColorPicker::make('primary_color')->label('اللون الأساسي')->default('#00B4D8'),
-                                ColorPicker::make('secondary_color')->label('اللون الثانوي')->default('#002855'),
-                                Select::make('font_family')
-                                    ->label('نوع الخط')
-                                    ->options([
-                                        'Cairo' => 'Cairo',
-                                        'Almarai' => 'Almarai',
-                                        'Tajawal' => 'Tajawal',
-                                    ])->default('Cairo'),
-                            ]),
                         Tabs\Tab::make('التواصل')
                             ->schema([
                                 TextInput::make('email')->label('البريد الإلكتروني')->email(),
