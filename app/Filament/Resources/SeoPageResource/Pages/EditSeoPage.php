@@ -5,28 +5,27 @@
 namespace App\Filament\Resources\SeoPageResource\Pages;
 
 use App\Filament\Resources\SeoPageResource;
-use App\Services\SeoScoreCalculator;
-use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class EditSeoPage extends EditRecord
 {
     protected static string $resource = SeoPageResource::class;
 
-    protected function getHeaderActions(): array
+    protected function mutateFormDataBeforeFill(array $data): array
     {
-        return [
-            Actions\DeleteAction::make(),
-        ];
+        return array_replace($data, $this->record->draft_data ?? []);
     }
 
-    protected function afterSave(): void
+    protected function handleRecordUpdate(Model $record, array $data): Model
     {
-        $calculator = new SeoScoreCalculator;
-        $result = $calculator->calculate($this->record);
-        $this->record->update([
-            'seo_score' => $result['score'],
-            'score_breakdown' => $result['breakdown'],
-        ]);
+        $record->update(['draft_data' => $data]);
+
+        return $record;
+    }
+
+    protected function getSavedNotificationTitle(): ?string
+    {
+        return 'تم حفظ مسودة SEO — النشر من استوديو الموقع';
     }
 }

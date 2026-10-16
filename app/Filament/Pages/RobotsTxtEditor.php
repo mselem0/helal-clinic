@@ -4,6 +4,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\SeoHelper;
 use App\Support\AuthorizesSitePage;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -12,7 +13,6 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Facades\File;
 
 class RobotsTxtEditor extends Page implements HasForms
 {
@@ -35,8 +35,7 @@ class RobotsTxtEditor extends Page implements HasForms
 
     public function mount(): void
     {
-        $path = base_path('public/robots.txt');
-        $content = File::exists($path) ? File::get($path) : "User-agent: *\nAllow: /\n\nSitemap: ".url('/sitemap.xml');
+        $content = SeoHelper::getSetting('robots_extra', '');
         $this->form->fill(['content' => $content]);
     }
 
@@ -45,9 +44,8 @@ class RobotsTxtEditor extends Page implements HasForms
         return $form
             ->schema([
                 Textarea::make('content')
-                    ->label('محتوى ملف robots.txt')
+                    ->label('تعليمات إضافية — حماية الإدارة والمعاينات وخريطة الموقع تلقائية')
                     ->rows(15)
-                    ->required()
                     ->columnSpanFull(),
             ])
             ->statePath('data');
@@ -65,7 +63,7 @@ class RobotsTxtEditor extends Page implements HasForms
     public function save(): void
     {
         $data = $this->form->getState();
-        File::put(base_path('public/robots.txt'), $data['content']);
+        SeoHelper::setSetting('robots_extra', $data['content'] ?? '');
         Notification::make()->title('تم حفظ ملف robots.txt بنجاح')->success()->send();
     }
 }

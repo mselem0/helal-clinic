@@ -25,7 +25,7 @@ class ServiceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'الخدمات الطبية';
 
-    protected static ?string $navigationGroup = 'إدارة المحتوى الطبي';
+    protected static ?string $navigationGroup = 'المحتوى';
 
     public static function form(Form $form): Form
     {
@@ -41,7 +41,7 @@ class ServiceResource extends Resource
                             ->label('اسم الخدمة')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('slug')
+                        Forms\Components\TextInput::make('slug')->regex('/^[\pL\pN]+(?:[-_][\pL\pN]+)*$/u')
                             ->label('الرابط (Slug)')
                             ->required()
                             ->unique(ignoreRecord: true)
@@ -64,6 +64,7 @@ class ServiceResource extends Resource
                     ])->columns(2),
                 Forms\Components\Section::make('SEO')
                     ->schema([
+                        Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
                         Forms\Components\TextInput::make('meta_title')
                             ->label('Meta Title')
                             ->maxLength(255),

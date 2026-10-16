@@ -8,20 +8,32 @@ use App\Models\ClinicBranch;
 use App\Models\HeroSetting;
 use App\Models\PageSection;
 use App\Models\Service;
+use App\Models\SitePage;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
 use App\Models\Video;
+use App\Services\PageSeo;
+use App\Services\SiteView;
 use App\Services\ThemeDraftService;
 use App\Support\ClinicFeatures;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use Modules\Booking\Models\Booking;
 use Modules\PatientCore\Models\Patient;
 
 class HomeController extends Controller
 {
     public function index(Request $request, ThemeDraftService $drafts)
+    {
+        $page = SiteView::draft(SitePage::where('page_key', 'home')->firstOrFail());
+        abort_unless($page->is_published, 404);
+
+        return $this->renderSite($request, $drafts, $page);
+    }
+
+    public function renderSite(Request $request, ThemeDraftService $drafts, $page, array $extra = [])
     {
         abort_if($request->has('preview') && ! $request->hasValidSignature(), 403);
         $preview = $request->has('preview');
@@ -50,17 +62,26 @@ class HomeController extends Controller
             }
         });
 
-        return response()->view('helal.home', [
+        $seo = PageSeo::data($page, $extra['item'] ?? null);
+        View::share('site_seo', $seo);
+        $pageKeys = collect($page->sections ?? [])->map(fn ($v) => is_array($v) ? $v['key'] : $v);
+        $pageSections = $pageKeys->map(fn ($key) => $sections->firstWhere('section_key', $key))->filter();
+        if ($page->page_key === 'home' && $pageKeys->isEmpty()) {
+            $pageSections = $sections->whereNotIn('section_key', ['header', 'footer']);
+        }
+
+        return response()->view($page->page_key === 'home' ? 'helal.home' : 'helal.page', array_merge([
+            'page' => $page, 'pageKey' => $page->page_key,
             'contact' => SiteSettingHelper::group('contact'), 'whatsappNumber' => SiteSettingHelper::get('wa_number', '201017900354'),
-            'sections' => $sections, 'theme' => $theme, 'style' => $style,
-            'videos' => Video::where('is_active', true)->orderBy('order')->get(),
-            'testimonials' => Testimonial::where('is_active', true)->orderBy('order')->get(),
-            'articles' => Article::where('is_published', true)->latest()->limit(6)->get(),
+            'pageSections' => $pageSections, 'sections' => $sections, 'theme' => $theme, 'style' => $style,
+            'videos' => Video::where('is_active', true)->orderBy('order')->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
+            'testimonials' => Testimonial::where('is_active', true)->orderBy('order')->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
+            'articles' => Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()))->latest()->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
             'services' => Service::where('is_active', true)->orderBy('order')->get(),
             'branches' => ClinicBranch::where('is_active', true)->orderBy('order')->get(),
             'journey' => json_decode($sections->firstWhere('section_key', 'your-journey')?->body ?? '{}', true)['stages'] ?? [],
             'bookingEnabled' => ClinicFeatures::enabled('Booking'), 'preview' => $preview,
-        ])->header('Cache-Control', $preview ? 'private, no-store' : 'no-cache')->header('X-Robots-Tag', $preview ? 'noindex, nofollow' : 'index, follow');
+        ], $extra))->header('Cache-Control', $preview ? 'private, no-store' : 'no-cache')->header('X-Robots-Tag', str_replace(',', ', ', $seo['robots']));
     }
 
     public function storeBooking(Request $request): JsonResponse

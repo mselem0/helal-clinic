@@ -15,6 +15,7 @@ class Video extends Model implements HasMedia
     }
 
     protected $fillable = [
+        'uploaded_at',
         'image_path',
         'video_path',
         'reel',
@@ -27,7 +28,7 @@ class Video extends Model implements HasMedia
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_active' => 'boolean', 'uploaded_at' => 'datetime',
     ];
 
     public function getFirstMediaUrl(string $collectionName = 'default', string $conversionName = ''): string

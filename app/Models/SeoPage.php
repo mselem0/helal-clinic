@@ -14,6 +14,7 @@ class SeoPage extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $fillable = [
+        'draft_data',
         'page_key',
         'page_label',
         'meta_title',
@@ -36,6 +37,7 @@ class SeoPage extends Model implements HasMedia
     ];
 
     protected $casts = [
+        'draft_data' => 'array',
         'meta_keywords' => 'array',
         'focus_keywords' => 'array',
         'score_breakdown' => 'array',

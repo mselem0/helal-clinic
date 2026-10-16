@@ -3,8 +3,10 @@
 namespace App\Filament\Pages;
 
 use App\Models\PageSection;
+use App\Models\SitePage;
 use App\Models\SiteSetting;
 use App\Models\ThemeRevision;
+use App\Services\ContentReadiness;
 use App\Services\ThemeDraftService;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
@@ -28,6 +30,8 @@ class ThemeEditor extends Page implements HasForms
 
     protected static ?string $navigationIcon = 'heroicon-o-paint-brush';
 
+    protected static ?string $navigationGroup = 'المظهر والثيمات';
+
     protected static ?string $navigationLabel = 'المحتوى والثيمات';
 
     protected static ?string $title = 'استوديو موقع هلال';
@@ -37,6 +41,8 @@ class ThemeEditor extends Page implements HasForms
     protected static string $view = 'filament.pages.theme-editor';
 
     public ?array $data = [];
+
+    public string $selectedPageKey = 'home';
 
     public ?int $selectedSectionId = null;
 
@@ -59,6 +65,18 @@ class ThemeEditor extends Page implements HasForms
         $this->authorizeEditor();
         $this->editingTheme = SiteSetting::where('key', 'active_theme')->value('value') ?? 'helal_classic';
         $section = PageSection::orderBy('order')->first();
+        if ($section) {
+            $this->selectSection($section->id);
+        }
+    }
+
+    public function updatedSelectedPageKey(): void
+    {
+        $this->authorizeEditor();
+        $page = SitePage::where('page_key', $this->selectedPageKey)->firstOrFail();
+        $keys = collect($page->draft_data['sections'] ?? $page->sections ?? [])->map(fn ($v) => is_array($v) ? $v['key'] : $v);
+        $section = PageSection::when($page->page_key !== 'home', fn ($q) => $q->whereIn('section_key', $keys))->orderBy('order')->first();
+        $this->selectedSectionId = $section?->id;
         if ($section) {
             $this->selectSection($section->id);
         }
@@ -175,7 +193,9 @@ class ThemeEditor extends Page implements HasForms
     public function publish(): void
     {
         $this->authorizeEditor();
-        $this->save();
+        if ($this->selectedSectionId) {
+            $this->save();
+        }
         abort_unless(isset(ThemeDraftService::THEMES[$this->editingTheme]), 422);
         SiteSetting::where('key', 'active_theme')->update(['draft_data' => ['value' => $this->editingTheme]]);
         app(ThemeDraftService::class)->publish();
@@ -186,7 +206,9 @@ class ThemeEditor extends Page implements HasForms
     {
         $this->authorizeEditor();
         app(ThemeDraftService::class)->discardDrafts();
-        $this->selectSection($this->selectedSectionId);
+        if ($this->selectedSectionId) {
+            $this->selectSection($this->selectedSectionId);
+        }
         Notification::make()->title('تم إلغاء المسودات دون تغيير المنشور')->success()->send();
     }
 
@@ -201,11 +223,16 @@ class ThemeEditor extends Page implements HasForms
 
     public function getPreviewUrlProperty(): string
     {
-        return URL::temporarySignedRoute('home', now()->addMinutes(30), ['preview' => 1, 'theme' => $this->editingTheme]);
+        $page = SitePage::where('page_key', $this->selectedPageKey)->firstOrFail();
+
+        return URL::temporarySignedRoute('site.preview', now()->addMinutes(30), ['page' => $page->id, 'preview' => 1, 'theme' => $this->editingTheme]);
     }
 
     public function getViewData(): array
     {
-        return ['sections' => PageSection::orderBy('order')->get(), 'themes' => ThemeDraftService::THEMES, 'revisions' => ThemeRevision::latest()->limit(20)->get(), 'contentRoutes' => ['services' => 'filament.admin.resources.services.index', 'clinics' => 'filament.admin.resources.clinic-branches.index', 'videos' => 'filament.admin.resources.videos.index', 'reviews' => 'filament.admin.resources.testimonials.index', 'articles' => 'filament.admin.resources.articles.index'], 'selectedKey' => PageSection::find($this->selectedSectionId)?->section_key, 'publishedTheme' => SiteSetting::where('key', 'active_theme')->value('value')];
+        $page = SitePage::where('page_key', $this->selectedPageKey)->firstOrFail();
+        $keys = collect($page->draft_data['sections'] ?? $page->sections ?? [])->map(fn ($v) => is_array($v) ? $v['key'] : $v);
+
+        return ['sitePages' => SitePage::all(), 'warnings' => app(ContentReadiness::class)->warnings(), 'sections' => PageSection::when($page->page_key !== 'home', fn ($q) => $q->whereIn('section_key', $keys))->orderBy('order')->get(), 'themes' => ThemeDraftService::THEMES, 'revisions' => ThemeRevision::latest()->limit(20)->get(), 'contentRoutes' => ['services' => 'filament.admin.resources.services.index', 'clinics' => 'filament.admin.resources.clinic-branches.index', 'videos' => 'filament.admin.resources.videos.index', 'reviews' => 'filament.admin.resources.testimonials.index', 'articles' => 'filament.admin.resources.articles.index'], 'selectedKey' => PageSection::find($this->selectedSectionId)?->section_key, 'publishedTheme' => SiteSetting::where('key', 'active_theme')->value('value')];
     }
 }

@@ -4,6 +4,7 @@
 
 namespace App\Models;
 
+use App\Support\TracksPublicSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
@@ -14,8 +15,15 @@ class Service extends Model implements HasMedia
     use HasFactory, InteractsWithMedia {
         getFirstMediaUrl as getFirstMediaUrlTrait;
     }
+    use TracksPublicSlug;
+
+    public function publicPath(): string
+    {
+        return '/services/'.$this->slug;
+    }
 
     protected $fillable = [
+        'og_image',
         'image_path',
         'card_title',
 

@@ -7,7 +7,6 @@ namespace App\Http\Middleware;
 use App\Models\SeoRedirect;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,11 +16,7 @@ class HandleSeoRedirects
     {
         $path = '/'.ltrim($request->path(), '/');
 
-        $redirect = Cache::remember("redirect_{$path}", 3600, function () use ($path) {
-            return SeoRedirect::where('source_url', $path)
-                ->where('is_active', true)
-                ->first();
-        });
+        $redirect = in_array($request->method(), ['GET', 'HEAD']) ? SeoRedirect::where('source_url', $path)->where('is_active', true)->first() : null;
 
         if ($redirect) {
             DB::table('seo_redirects')

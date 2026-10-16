@@ -16,6 +16,8 @@ class SeoManagement extends Page implements HasActions
     use AuthorizesSitePage;
     use HasAnalyticsActions;
 
+    protected static ?string $navigationGroup = 'تحسين محركات البحث';
+
     protected static ?string $navigationIcon = 'heroicon-o-magnifying-glass';
 
     protected static ?string $title = 'إدارة SEO';

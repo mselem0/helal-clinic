@@ -3,42 +3,79 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\ClinicBranch;
 use App\Models\Service;
+use App\Models\SitePage;
+use App\Services\SiteView;
+use App\Services\ThemeDraftService;
+use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
-    public function about()
+    private function render(Request $request, SitePage $page, array $extra = [])
     {
-        return redirect()->to(route('home').'#about');
+        abort_if($request->has('preview') && ! $request->hasValidSignature(), 403);
+        $page = SiteView::draft($page);
+        abort_unless($page->is_published || SiteView::preview(), 404);
+        request()->attributes->set('site_page', $page);
+
+        return app(HomeController::class)->renderSite($request, app(ThemeDraftService::class), $page, $extra);
     }
 
-    public function gallery()
+    public function page(Request $request, string $slug)
     {
-        return redirect()->to(route('home').'#videos');
+        $page = SitePage::where('slug', $slug)->whereNotIn('page_key', ['home', 'services', 'articles', 'branches'])->firstOrFail();
+
+        return $this->render($request, $page);
     }
 
-    public function contact()
+    public function preview(Request $request, SitePage $page)
     {
-        return redirect()->to(route('home').'#clinics');
+        abort_unless($request->hasValidSignature() && $request->boolean('preview'), 403);
+
+        return $this->render($request, $page);
     }
 
-    public function services()
+    public function services(Request $request)
     {
-        return view('helal.list', ['title' => 'خدمات العيادة', 'items' => Service::where('is_active', true)->orderBy('order')->get(), 'type' => 'service']);
+        return $this->render($request, SitePage::where('page_key', 'services')->firstOrFail());
     }
 
-    public function serviceShow(string $slug)
+    public function blogIndex(Request $request)
     {
-        return view('helal.detail', ['item' => Service::where('is_active', true)->where('slug', $slug)->firstOrFail(), 'type' => 'service']);
+        abort_if($request->has('page') && (! ctype_digit((string) $request->query('page')) || (int) $request->query('page') < 1), 404);
+        $articles = Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()))->latest('published_at')->paginate(12);
+        abort_if($articles->currentPage() > $articles->lastPage(), 404);
+
+        return $this->render($request, SitePage::where('page_key', 'articles')->firstOrFail(), ['articles' => $articles]);
     }
 
-    public function blogIndex()
+    public function branches(Request $request)
     {
-        return view('helal.list', ['title' => 'مقالات الدكتور', 'items' => Article::where('is_published', true)->latest()->paginate(12), 'type' => 'article']);
+        return $this->render($request, SitePage::where('page_key', 'branches')->firstOrFail());
     }
 
-    public function blogShow(string $slug)
+    private function detail(Request $request, $item, string $type)
     {
-        return view('helal.detail', ['item' => Article::where('is_published', true)->where('slug', $slug)->firstOrFail(), 'type' => 'article']);
+        $title = $item->title ?? $item->name;
+        $page = new SitePage(['page_key' => $type, 'title' => $title, 'sections' => [], 'is_published' => true, 'robots' => 'index_follow']);
+        request()->attributes->set('content_item', $item);
+
+        return $this->render($request, $page, ['item' => $item, 'type' => $type]);
+    }
+
+    public function serviceShow(Request $request, string $slug)
+    {
+        return $this->detail($request, Service::where('is_active', true)->where('slug', $slug)->firstOrFail(), 'service');
+    }
+
+    public function blogShow(Request $request, string $slug)
+    {
+        return $this->detail($request, Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()))->where('slug', $slug)->firstOrFail(), 'article');
+    }
+
+    public function branchShow(Request $request, string $slug)
+    {
+        return $this->detail($request, ClinicBranch::where('is_active', true)->where('slug', $slug)->firstOrFail(), 'branch');
     }
 }

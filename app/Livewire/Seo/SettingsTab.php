@@ -174,7 +174,7 @@ class SettingsTab extends Component implements HasActions, HasForms
                                             ->placeholder('GTM-XXXXXXX'),
                                     ]),
 
-                                TextInput::make('google_verification')->label('كود التحقق من Google'),
+                                TextInput::make('google_verification')->label('كود التحقق من Google Search Console')->helperText('أدخلي قيمة content فقط من وسم التحقق. بعد النشر أضيفي /sitemap.xml داخل Search Console. لا يحدث ربط أو إرسال تلقائي.'),
                                 TextInput::make('bing_verification')->label('كود التحقق من Bing'),
                                 TextInput::make('yandex_verification')->label('كود التحقق من Yandex'),
                                 TextInput::make('baidu_verification')->label('كود التحقق من Baidu'),

@@ -59,5 +59,6 @@ class HelalContentSeeder extends Seeder
         foreach ($collections['articles'] as $i => $row) {
             Article::firstOrCreate(['slug' => 'article-'.($i + 1)], ['title' => $row['title'], 'content' => $row['description'], 'meta_description' => $row['description'], 'image_path' => $row['image'], 'is_published' => false]);
         }
+        $this->call(MultipageSeeder::class);
     }
 }
