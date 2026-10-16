@@ -7,7 +7,7 @@
 @else
     @foreach($page->sections ?? [] as $key)
         @php($section = $sections->firstWhere('section_key', is_array($key) ? ($key['key'] ?? '') : $key))
-        @if($section && view()->exists('helal.sections.'.$section->section_key))<div class="section-shell" @if($section->background_color) style="background-color:{{ $section->background_color }}" @endif>@include('helal.sections.'.$section->section_key,['content'=>$section->content])</div>@endif
+        @if($section && view()->exists('helal.sections.'.$section->section_key))<div class="section-shell" data-section="{{ $section->section_key }}" @if($section->background_color) style="background-color:{{ $section->background_color }}" @endif>@include('helal.sections.'.$section->section_key,['content'=>$section->content])</div>@endif
     @endforeach
     @if($pageKey === 'articles' && $articles instanceof \Illuminate\Pagination\LengthAwarePaginator)<nav class="wrap pagination" aria-label="صفحات المقالات">@if($articles->previousPageUrl())<a class="button outline" href="{{ $articles->previousPageUrl() }}">السابق</a>@endif<span>صفحة {{ $articles->currentPage() }} من {{ $articles->lastPage() }}</span>@if($articles->nextPageUrl())<a class="button" href="{{ $articles->nextPageUrl() }}">التالي</a>@endif</nav>@endif
 @endif
