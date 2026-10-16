@@ -3,7 +3,7 @@
         <!-- Top Actions Bar -->
         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
             <div>
-                <a href="{{ \App\Filament\Resources\PatientResource::getUrl('index') }}" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#00B4D8] transition-colors">
+                <a href="{{ \Modules\PatientCore\Filament\Resources\PatientResource::getUrl('index') }}" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#00B4D8] transition-colors">
                     <span class="ml-1">&larr;</span> العودة لقائمة المرضى
                 </a>
             </div>

@@ -1,0 +1,11 @@
+{
+    "name": "PatientCore",
+    "alias": "patientcore",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\PatientCore\\Providers\\PatientCoreServiceProvider"
+    ],
+    "files": []
+}

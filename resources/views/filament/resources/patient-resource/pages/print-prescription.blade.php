@@ -388,7 +388,7 @@
                                         @endif
                                     </h1>
                                     @if(!$template || !$template->header_left_ar)
-                                        <p>استشاري طب وجراحة أمراض الذكورة وتأخر الإنجاب</p>
+                                        <p>استشاري طب وجراحة أمراض النساء والتوليد والمناظير والحقن المجهري</p>
                                     @endif
                                 </div>
                             </div>
@@ -396,7 +396,7 @@
                                 @if($template && $template->header_right_en)
                                     {!! nl2br(e($template->header_right_en)) !!}
                                 @else
-                                    <strong>Dr. Mohamed Ragab Shahata Clinic</strong><br>
+                                    <strong>Dr. Mohamed Helal Shahata Clinic</strong><br>
                                     Andrology & Male Infertility Specialist<br>
                                     Tel: 01234567890 / 01098765432
                                 @endif

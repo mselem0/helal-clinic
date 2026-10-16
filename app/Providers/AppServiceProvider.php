@@ -37,6 +37,19 @@ class AppServiceProvider extends ServiceProvider
             Gate::policy(Activity::class, ActivityPolicy::class);
         }
 
+        foreach (['PatientCore' => ['Patient', 'VisitRecord'], 'Booking' => ['Booking'], 'Clinical' => ['Prescription', 'PrintTemplate', 'MedicalHistoryItem', 'PatientMedication'], 'Whatsapp' => ['WhatsappLog', 'WhatsappTemplate']] as $module => $models) {
+            if (! Module::find($module)?->isEnabled()) {
+                continue;
+            }
+            foreach ($models as $model) {
+                $policy = 'Modules\\'.$module.'\\Policies\\'.$model.'Policy';
+                $class = 'Modules\\'.$module.'\\Models\\'.$model;
+                if (class_exists($policy)) {
+                    Gate::policy($class, $policy);
+                }
+            }
+        }
+        if (Module::find('AccessControl')?->isEnabled()) { Gate::policy(\Spatie\Permission\Models\Role::class, \Modules\AccessControl\Policies\RolePolicy::class); }
         Gate::before(function ($user, $ability) {
             return $user->hasRole('super_admin') ? true : null;
         });

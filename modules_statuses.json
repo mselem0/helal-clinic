@@ -1,9 +1,9 @@
 {
-    "PatientCore": false,
-    "AI": false,
-    "Booking": false,
-    "Clinical": false,
-    "AccessControl": false,
-    "ActivityLog": false,
-    "Whatsapp": false
+    "PatientCore": true,
+    "AI": true,
+    "Booking": true,
+    "Clinical": true,
+    "AccessControl": true,
+    "ActivityLog": true,
+    "Whatsapp": true
 }

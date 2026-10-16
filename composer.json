@@ -50,7 +50,14 @@
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
+            "Database\\Seeders\\": "database/seeders/",
+            "Modules\\Booking\\": "Modules/Booking/app/",
+            "Modules\\AccessControl\\": "Modules/AccessControl/app/",
+            "Modules\\AI\\": "Modules/AI/app/",
+            "Modules\\ActivityLog\\": "Modules/ActivityLog/app/",
+            "Modules\\PatientCore\\": "Modules/PatientCore/app/",
+            "Modules\\Clinical\\": "Modules/Clinical/app/",
+            "Modules\\Whatsapp\\": "Modules/Whatsapp/app/"
         }
     },
     "autoload-dev": {
