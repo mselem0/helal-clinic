@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl" data-theme="{{ $theme }}"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
 @include('helal.seo')
-<link rel="preload" href="{{ asset('fonts/tajawal-arabic-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="{{ asset('fonts/tajawal.css') }}">
+<link rel="preload" href="{{ asset('fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="{{ asset('fonts/ibm-plex-arabic.css') }}">
 <link rel="icon" href="{{ asset('assets/logo.png') }}">
 <link rel="stylesheet" href="{{ asset('helal.css') }}"><link rel="stylesheet" href="{{ asset('helal-modern.css') }}"><link rel="stylesheet" href="{{ asset('helal-pages.css') }}">
 <style>:root { --teal: {{ $style['primary'] }}; --orange: {{ $style['accent'] }}; }</style>
