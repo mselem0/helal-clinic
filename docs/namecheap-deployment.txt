@@ -1,0 +1,58 @@
+نشر هلال على Namecheap Stellar
+
+حالة التجهيز:
+- الريبو: mselem0/helal-clinic، فرع النشر main فقط.
+- المضيف: server417.web-hosting.com، المستخدم drmonwhs، المنفذ 21098.
+- المسار الخاص: /home/drmonwhs/apps/helal.
+- جذر الدومين: /home/drmonwhs/public_html. يُستخدم front controller ثابت وروابط للملفات العامة، ويظل باقي Laravel خارجه.
+- الحزم المقفلة تحتاج PHP 8.3. نسخة 8.3 متاحة في الاستضافة، لكن النسخة الافتراضية وقت الفحص كانت 8.2؛ اختَر 8.3 من Select PHP Version قبل النشر.
+- GitHub Actions يستخدم 8.3، وسكربت النشر يستخدم /opt/alt/php83/usr/bin/php صراحة.
+- لا يوجد npm أو Composer مطلوبان على الاستضافة؛ GitHub يبني ويرفع حزمة إنتاج بالاعتماديات المقفلة.
+
+أسرار GitHub المطلوبة (Settings > Secrets and variables > Actions > Secrets):
+DEPLOY_HOST=server417.web-hosting.com
+DEPLOY_USER=drmonwhs
+DEPLOY_PORT=21098
+DEPLOY_PATH=/home/drmonwhs/apps/helal
+DEPLOY_SSH_KEY=المفتاح الخاص المخصص للنشر
+DEPLOY_KNOWN_HOSTS=محتوى ملف ~/.ssh/helal_known_hosts الذي يثبت المفاتيح التي استُخدمت في اتصال التجهيز
+
+سياسة التشغيل:
+- إعداد DEPLOY_ENABLED يجب أن يكون Repository Variable وقيمته true لتشغيل النشر. غيابه أو أي قيمة أخرى تعني اختبارات وبناء فقط.
+- لا تفعّله قبل مراجعة النشر الأول. إنشاء الملفات محليًا لا يضيفها إلى GitHub حتى عمل push.
+- يمكن إضافة Environment باسم production وقصر فروعه على main وإضافة موافقة للنشر إذا رغبت.
+- أول تشغيل يحتاج workflow_dispatch مع initialize=true؛ يعمل migrate وseed مرة واحدة ويجهز جذر الدومين بعد حفظ ملفاته الموجودة.
+- كل push لاحق على main يختبر ويبني ثم ينشر، دون seed أو تغيير APP_KEY أو .env أو storage.
+- النشر متسلسل. الحزم تنقل عبر SSH ببصمة مثبتة؛ لا يتم تعطيل تحقق هوية السيرفر.
+
+قبل النشر الأول:
+0. من cPanel > Select PHP Version اختر 8.3 ثم Set as current. لا تستخدم 8.5 لأن إحدى الحزم المقفلة لا تدعمها.
+1. أنشئ MySQL database وMySQL user من cPanel > MySQL Database Wizard واربط المستخدم بالقاعدة بصلاحياتها.
+2. من File Manager فعّل Show Hidden Files وافتح /home/drmonwhs/apps/helal/shared/.env.
+3. أدخل DB_DATABASE وDB_USERNAME وDB_PASSWORD من بيانات القاعدة الفعلية. لا تنقل بيانات قاعدة محلية ولا ترسل كلمة المرور في المحادثة.
+4. APP_KEY تم توليده مرة واحدة على السيرفر؛ لا تستبدله عند النشر.
+5. تأكد من توجيه الدومين إلى الاستضافة ومن صلاحية HTTPS. فحوص ما بعد النشر تستخدم https://drmohamedhelal.com/up والصفحة الرئيسية.
+6. راجع محتوى أول نشر واسم الطبيب والفروع والبيانات الطبية. التكاملات الخارجية تظل معطلة.
+7. بعد الإذن بالنشر فقط: ارفع commits، فعّل DEPLOY_ENABLED، ثم شغّل أول workflow يدويًا مع initialize=true.
+8. بعد نجاح أول نشر، أنشئ مديرًا من SSH بأمر:
+   cd /home/drmonwhs/apps/helal/current
+   php artisan clinic:create-admin YOUR_EMAIL
+   كلمة المرور تُدخل تفاعليًا ولا يوجد حساب إنتاج افتراضي.
+
+الحماية والاسترجاع:
+- تؤخذ نسخة MySQL خاصة قبل تشغيل migrations. فشل النسخ يمنع الترحيلات.
+- إعدادات الإنتاج ترفض APP_DEBUG=true وغياب APP_KEY وبيانات MySQL، وترفض تفعيل التكاملات الخارجية أثناء هذا التجهيز.
+- يُحفظ public_html عند أول تغيير للملفات التي سيديرها التطبيق. .well-known وملفات الاستضافة الأخرى لا تُحذف.
+- تغيير current يتم بعد تجهيز النسخة. فشل HTTP checks يعيد الكود السابق، أو يعيد ملفات جذر الدومين إذا كانت أول محاولة.
+- الرجوع إلى الكود السابق لا يعكس migrations؛ استرجاع قاعدة البيانات عمل مستقل يحتاج مراجعة وأذنًا.
+- backups في shared/backups وshared/webroot-backups خاصة، وتحتاج متابعة مساحة الاستضافة وحفظ نسخة خارجية مصرح بها قبل حذف أي نسخ.
+- لا توجد مهام queues دائمة مطلوبة للنسخة الأساسية؛ الإعداد الحالي sync.
+- .htaccess الخاص بجذر الدومين يُجهز في أول نشر ويحافظ على كتل cPanel الخاصة بـPHP؛ راجع تعديلاته لاحقًا إذا تغيرت قواعد الخادم.
+
+الاختبارات المحلية:
+php artisan test --compact
+/tmp/helal-deploy-tools/actionlint .github/workflows/deploy.yml
+bash -n scripts/deploy/deploy-release.sh
+bash -n scripts/deploy/upload-release.sh
+bash -n scripts/deploy/package-release.sh
+تجربة بناء الإنتاج نُفذت في مجلد منفصل؛ لأن PHP المحلي 8.5 يتجاوز حد إحدى الحزم، تم تجاهل الحد الأعلى محليًا فقط ثم فحص المتطلبات على PHP السيرفر 8.3. مسار GitHub لا يتجاهل قيود المنصة.

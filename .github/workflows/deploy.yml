@@ -1,0 +1,94 @@
+name: Test and deploy Helal to Namecheap
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      initialize:
+        description: First publication only — migrate, seed initial clinic content and install public_html bridge
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helal-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      MAIL_MAILER: array
+      QUEUE_CONNECTION: sync
+      AI_ENABLED: 'false'
+      WHATSAPP_ENABLED: 'false'
+      GOOGLE_ANALYTICS_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, curl, dom, exif, fileinfo, gd, intl, mbstring, pdo_mysql, pdo_sqlite, sqlite3, soap, xml, xmlreader, xmlwriter, zip
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: |
+          mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs
+          composer install --prefer-dist --no-interaction --no-progress
+          npm ci
+      - name: Test application and browser flows
+        run: |
+          php artisan test --compact
+          node scripts/deploy/install-browser.mjs
+          npm run test:e2e
+      - name: Build production package
+        run: |
+          npm run build
+          composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+          bash scripts/deploy/package-release.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: helal-release-${{ github.sha }}
+          path: |
+            helal-release.tar.gz
+            helal-release.tar.gz.sha256
+          retention-days: 3
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: helal-release-${{ github.sha }}
+      - name: Deploy the tested release
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          INITIALIZE_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && inputs.initialize && 'true' || 'false' }}
+        run: bash scripts/deploy/upload-release.sh
