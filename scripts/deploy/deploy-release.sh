@@ -75,6 +75,8 @@ if [[ "$initialize" == true ]]; then
     [[ ! -e "$shared/initialized" ]] || { echo "Initial seeding already completed." >&2; exit 1; }
     "$php_bin" artisan db:seed --force
 fi
+# Seeded public media must remain readable by the web server despite the private deploy umask.
+chmod -R u+rwX,go+rX "$shared/storage/app/public"
 "$php_bin" artisan config:cache
 "$php_bin" artisan view:cache
 # The stable bridge keeps the main domain's fixed public_html document root.
