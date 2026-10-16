@@ -182,6 +182,16 @@ class MultipageSiteTest extends TestCase
         $this->get('/site-preview/1?preview=1')->assertForbidden();
     }
 
+    public function test_arabic_slug_redirects_match_encoded_requests_and_absolute_self_redirect_is_rejected(): void
+    {
+        $service = Service::first();
+        $service->update(['slug' => 'متابعة-الحمل']);
+        $service->update(['slug' => 'رعاية-الحمل']);
+        $this->get('/services/'.rawurlencode('متابعة-الحمل'))->assertStatus(301)->assertRedirect('/services/رعاية-الحمل');
+        $this->expectException(ValidationException::class);
+        SeoRedirect::create(['source_url' => '/loop', 'target_url' => url('/loop'), 'redirect_type' => 301, 'is_active' => true]);
+    }
+
     public function test_invalid_and_out_of_range_article_pages_return_real_404(): void
     {
         foreach (['/blog?page=0', '/blog?page=abc', '/blog?page=999'] as $path) {
@@ -212,6 +222,6 @@ class MultipageSiteTest extends TestCase
         $this->assertSame('عنوان محفوظ', $page->fresh()->title);
         $this->assertSame('بيانات محفوظة', $service->fresh()->description);
         $this->assertDatabaseCount('site_pages', 10);
-        $this->assertDatabaseCount('site_navigations',2);
+        $this->assertDatabaseCount('site_navigations', 2);
     }
 }

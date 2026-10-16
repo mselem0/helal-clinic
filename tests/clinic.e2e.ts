@@ -182,6 +182,7 @@ test('full system exposes all seven modules only on its dedicated branch',async(
   }
   return;
  }
+ expect(await browser.evaluate(async()=> (await fetch('/patient-auth')).status)).toBe(200);
  for(const path of ['patients','bookings','print-templates','users','roles','activity-logs','whatsapp-templates','knowledge-chunks','ai-assistant','ai-memory-management','whatsapp-conversations','clinic-system-status']) {
   await app.open('/codeAiAdminDash/'+path);
   expect(await browser.evaluate(()=>document.querySelector('main')!==null)).toBe(true);

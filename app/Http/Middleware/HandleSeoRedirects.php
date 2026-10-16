@@ -14,7 +14,7 @@ class HandleSeoRedirects
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $path = '/'.ltrim($request->path(), '/');
+        $path = '/'.ltrim(rawurldecode($request->path()), '/');
 
         $redirect = in_array($request->method(), ['GET', 'HEAD']) ? SeoRedirect::where('source_url', $path)->where('is_active', true)->first() : null;
 

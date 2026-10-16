@@ -105,7 +105,7 @@ class ThemeEditor extends Page implements HasForms
         return $form->schema([
             Section::make('محتوى القسم')->description('التعديلات مسودة حتى الضغط على نشر. راجعي بيانات العيادة قبل النشر.')->schema([
                 Toggle::make('is_active')->label('إظهار القسم'),
-                TextInput::make('order')->label('ترتيب القسم')->integer()->required(),
+                TextInput::make('order')->label('الترتيب الافتراضي للقسم')->helperText('ترتيب الأقسام داخل الصفحة يُدار من صفحات الموقع.')->integer()->required(),
                 ColorPicker::make('background_color')->label('خلفية القسم')->hex(),
                 Repeater::make('fields')->label('النصوص والروابط والوسائط')->schema([
                     Hidden::make('key'), Hidden::make('type'), Hidden::make('label'),

@@ -34,8 +34,8 @@ try {
    const {lhr}=await lighthouse(base+path,{port:chrome.port,output:'json',logLevel:'error',onlyCategories:['performance','seo'],throttlingMethod:'simulate',disableStorageReset:true});
    const report={theme,kind,path,seo:Math.round(lhr.categories.seo.score*100),performance:Math.round(lhr.categories.performance.score*100),lcp:lhr.audits['largest-contentful-paint'].numericValue,cls:lhr.audits['cumulative-layout-shift'].numericValue,issues:Object.values(lhr.audits).filter(a=>a.score!==null&&a.score<1&&a.scoreDisplayMode!=='informative').map(a=>({id:a.id,title:a.title,score:a.score}))};
    reports.push(report);writeFileSync(join(output,theme+'-'+kind+'.json'),JSON.stringify(lhr,null,2));console.log(JSON.stringify(report));
-   await page.goto(base+path);await page.screenshot({path:join(output,theme+'-'+kind+'-1440.png'),fullPage:true});
-   if(kind==='home'||kind==='branch'){await page.setViewportSize({width:390,height:844});await page.screenshot({path:join(output,theme+'-'+kind+'-390.png'),fullPage:true});await page.setViewportSize({width:1440,height:1000});}
+   await page.goto(base+path);await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:join(output,theme+'-'+kind+'-1440.png'),fullPage:true,animations:'disabled'});
+   if(kind==='home'||kind==='branch'){await page.setViewportSize({width:390,height:844});await page.reload();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(300);await page.screenshot({path:join(output,theme+'-'+kind+'-390.png'),fullPage:true,animations:'disabled'});await page.setViewportSize({width:1440,height:1000});}
   }
  }
  writeFileSync(join(output,'summary.json'),JSON.stringify({date:new Date().toISOString(),environment:'Local disposable SQLite, Lighthouse simulated mobile, external network blocked; not field Core Web Vitals.',reports},null,2));
