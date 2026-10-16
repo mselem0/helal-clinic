@@ -23,7 +23,7 @@ trait TracksPublicSlug
                 throw ValidationException::withMessages(['slug' => 'استخدمي حروفًا وأرقامًا وشرطات فقط.']);
             }
             if ($model instanceof SitePage) {
-                $reserved = ['services', 'blog', 'branches', 'bookings', 'site-preview', 'sitemap', 'robots', 'up', 'codeaiadmindash', 'livewire', 'storage', 'assets', 'patient', 'api', 'login', 'logout', 'register', 'password', 'email', 'admin'];
+                $reserved = SitePage::RESERVED_SLUGS;
                 if (in_array(strtolower($model->slug), $reserved, true)) {
                     throw ValidationException::withMessages(['slug' => 'هذا الرابط محجوز للنظام.']);
                 }

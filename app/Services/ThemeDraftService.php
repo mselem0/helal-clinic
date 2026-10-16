@@ -29,7 +29,7 @@ class ThemeDraftService
     {
         $copy = clone $page;
         $copy->forceFill($data);
-        $reserved = ['services', 'blog', 'branches', 'bookings', 'site-preview', 'sitemap', 'robots', 'up', 'codeaiadmindash', 'livewire', 'storage', 'assets', 'patient', 'api', 'login', 'logout', 'register', 'password', 'email', 'admin'];
+        $reserved = SitePage::RESERVED_SLUGS;
         $invalid = ! preg_match('/^[\pL\pN]+(?:[-_][\pL\pN]+)*$/u', $copy->slug ?? '') || in_array(strtolower($copy->slug), $reserved, true);
         $invalid = $invalid || SitePage::where('slug', $copy->slug)->where('id', '!=', $page->id ?? 0)->exists();
         foreach (SitePage::whereNotNull('draft_data')->where('id', '!=', $page->id ?? 0)->get() as $other) {
