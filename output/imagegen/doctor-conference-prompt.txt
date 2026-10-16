@@ -1,0 +1,1 @@
+Built-in imagegen. Identity-preserve edit of the user original conference photo: conservative portrait crop, modest white balance and exposure correction, original face, expression, pose, hands, suit and conference environment; no beautification, smoothing, new clothes or pose. Review generated result against original; exact pixel preservation is not guaranteed.
