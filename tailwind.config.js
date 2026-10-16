@@ -6,6 +6,8 @@ export default {
     presets: [preset],
     content: [
         './app/Filament/**/*.php',
+        './Modules/**/app/Filament/**/*.php',
+        './Modules/**/resources/views/**/*.blade.php',
         './resources/views/**/*.blade.php',
         './vendor/filament/**/*.blade.php',
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',

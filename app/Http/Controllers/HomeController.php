@@ -47,6 +47,7 @@ class HomeController extends Controller
         });
 
         return response()->view('helal.home', [
+            'contact' => SiteSettingHelper::group('contact'), 'whatsappNumber' => SiteSettingHelper::get('wa_number', '201017900354'),
             'sections' => $sections, 'theme' => $theme, 'style' => $style,
             'videos' => Video::where('is_active', true)->orderBy('order')->get(),
             'testimonials' => Testimonial::where('is_active', true)->orderBy('order')->get(),
@@ -74,7 +75,7 @@ class HomeController extends Controller
             abort_unless(class_exists(Booking::class), 503);
             DB::transaction(function () use ($data): void {
                 $patient = Patient::firstOrCreate(['phone' => $data['patient_phone']], ['name' => $data['patient_name'], 'gender' => 'female']);
-                Booking::create($data + ['patient_id' => $patient->id, 'status' => 'new', 'source' => 'website']);
+                Booking::create($data + ['patient_id' => $patient->id, 'user_id' => auth()->check() && auth()->user()->isPatient() ? auth()->id() : null, 'status' => 'new', 'source' => 'website']);
             });
             $stored = true;
         }
