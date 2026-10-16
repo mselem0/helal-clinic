@@ -197,13 +197,13 @@ test('full system patient can be created and a clinical visit can be saved from 
  await browser.locator('[wire\\:click="openNewVisitModal"]').click();
  await browser.locator('[wire\\:model="chiefComplaint"]').fill('شكوى اختبار');
  await screen.getByRole('button','تسجيل وحفظ الكشف',{exact:true}).click();
- await expect(screen.getByText('شكوى اختبار',{exact:true})).toBeVisible();
+ await expect(screen.getByText('شكوى اختبار',{exact:true}).first()).toBeVisible();
 });
 
 
 test('FAQ questions can be added and published from the editor',async({app,browser,screen})=>{
  await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');await browser.onDialog('accept');
- await browser.locator('[data-section-choice="faq"]').click();await screen.getByRole('button','إضافة سؤال',{exact:true}).click();
+ await browser.locator('[data-section-choice="faq"]').click();await screen.getByRole('button','إضافة سؤال',{exact:true}).click();await expect(browser.locator('input[id$=".question"]')).toHaveCount(4);
  await browser.locator('input[id$=".question"]').last().fill('سؤال جديد للاختبار؟');await browser.locator('textarea[id$=".answer"]').last().fill('إجابة جديدة للاختبار.');
  await screen.getByRole('button','نشر الموقع',{exact:true}).click();await expect(browser.locator('[data-testid="revision-select"] option')).toHaveCount(2);
  await app.open('/');await expect(screen.getByText('سؤال جديد للاختبار؟',{exact:true})).toBeVisible();

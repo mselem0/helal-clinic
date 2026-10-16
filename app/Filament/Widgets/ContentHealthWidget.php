@@ -27,7 +27,7 @@ class ContentHealthWidget extends Widget
             'services' => Service::where('is_active', true)->count() >= 3,
             'branches' => ClinicBranch::where('is_active', true)->count() > 0,
             'testimonials' => Testimonial::where('is_active', true)->count() >= 2,
-            'photo' => HeroSetting::first()?->hasMedia('doctor-photo'),
+            'photo' => file_exists(public_path('assets/doctor.jpg')) || HeroSetting::first()?->hasMedia('doctor-photo'),
         ];
 
         $passed = count(array_filter($checks));
@@ -78,7 +78,7 @@ class ContentHealthWidget extends Widget
 
         // 5. Media Checks
         $hero = HeroSetting::first();
-        if (! $hero || ! $hero->hasMedia('doctor-photo')) {
+        if ((! $hero || ! $hero->hasMedia('doctor-photo')) && ! file_exists(public_path('assets/doctor.jpg'))) {
             $issues[] = [
                 'type' => 'warning',
                 'text' => 'صورة الطبيب مفقودة في قسم الهيرو.',
