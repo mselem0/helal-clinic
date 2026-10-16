@@ -76,6 +76,14 @@ class HelalThemeWorkflowTest extends TestCase
         $this->assertStringNotContainsString('أسئلة جديدة', $section->fresh()->body);
     }
 
+    public function test_faq_repeater_can_publish_new_questions(): void
+    {
+        $this->admin();
+        $section = PageSection::where('section_key', 'faq')->first();
+        Livewire::test(ThemeEditor::class)->call('selectSection', $section->id)->fillForm(['faqs' => [['question' => 'سؤال جديد؟', 'answer' => 'إجابة جديدة.']]])->call('publish')->assertHasNoErrors();
+        $this->get('/')->assertOk()->assertSee('سؤال جديد؟');
+    }
+
     public function test_guest_and_non_admin_cannot_open_editor(): void
     {
         $this->get(ThemeEditor::getUrl())->assertRedirect();

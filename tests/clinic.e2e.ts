@@ -180,7 +180,7 @@ test('full system exposes all seven modules only on its dedicated branch',async(
   }
   return;
  }
- for(const path of ['patients','bookings','print-templates','users','roles','activity-logs','whatsapp-logs','whatsapp-templates','knowledge-chunks','ai-assistant','ai-memory-management','whatsapp-conversations','clinic-system-status']) {
+ for(const path of ['patients','bookings','print-templates','users','roles','activity-logs','whatsapp-templates','knowledge-chunks','ai-assistant','ai-memory-management','whatsapp-conversations','clinic-system-status']) {
   await app.open('/codeAiAdminDash/'+path);
   expect(await browser.evaluate(()=>document.querySelector('main')!==null)).toBe(true);
  }
@@ -196,6 +196,15 @@ test('full system patient can be created and a clinical visit can be saved from 
  await expect(screen.getByRole('heading',/الملف الطبي للمريض/)).toBeVisible();
  await browser.locator('[wire\\:click="openNewVisitModal"]').click();
  await browser.locator('[wire\\:model="chiefComplaint"]').fill('شكوى اختبار');
- await browser.locator('[wire\\:click="saveVisit"]').click();
+ await screen.getByRole('button','تسجيل وحفظ الكشف',{exact:true}).click();
  await expect(screen.getByText('شكوى اختبار',{exact:true})).toBeVisible();
+});
+
+
+test('FAQ questions can be added and published from the editor',async({app,browser,screen})=>{
+ await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');await browser.onDialog('accept');
+ await browser.locator('[data-section-choice="faq"]').click();await screen.getByRole('button','إضافة سؤال',{exact:true}).click();
+ await browser.locator('input[id$=".question"]').last().fill('سؤال جديد للاختبار؟');await browser.locator('textarea[id$=".answer"]').last().fill('إجابة جديدة للاختبار.');
+ await screen.getByRole('button','نشر الموقع',{exact:true}).click();await expect(browser.locator('[data-testid="revision-select"] option')).toHaveCount(2);
+ await app.open('/');await expect(screen.getByText('سؤال جديد للاختبار؟',{exact:true})).toBeVisible();
 });

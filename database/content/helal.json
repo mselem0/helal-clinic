@@ -81,6 +81,72 @@
         "label": "احجزي موعدكِ ",
         "type": "text",
         "value": "احجزي موعدكِ "
+      },
+      {
+        "key": "field_14",
+        "label": "وجهة الرابط #home",
+        "type": "url",
+        "value": "#home"
+      },
+      {
+        "key": "field_15",
+        "label": "وجهة الرابط #home",
+        "type": "url",
+        "value": "#home"
+      },
+      {
+        "key": "field_16",
+        "label": "وجهة الرابط #about",
+        "type": "url",
+        "value": "#about"
+      },
+      {
+        "key": "field_17",
+        "label": "وجهة الرابط #your-journey",
+        "type": "url",
+        "value": "#your-journey"
+      },
+      {
+        "key": "field_18",
+        "label": "وجهة الرابط #services",
+        "type": "url",
+        "value": "#services"
+      },
+      {
+        "key": "field_19",
+        "label": "وجهة الرابط #videos",
+        "type": "url",
+        "value": "#videos"
+      },
+      {
+        "key": "field_20",
+        "label": "وجهة الرابط #clinics",
+        "type": "url",
+        "value": "#clinics"
+      },
+      {
+        "key": "field_21",
+        "label": "وجهة الرابط #articles",
+        "type": "url",
+        "value": "#articles"
+      },
+      {
+        "key": "field_22",
+        "label": "وجهة الرابط #reviews",
+        "type": "url",
+        "value": "#reviews"
+      },
+      {
+        "key": "field_23",
+        "label": "وجهة الرابط #faq",
+        "type": "url",
+        "value": "#faq"
+      },
+      {
+        "key": "field_24",
+        "label": "وجهة الرابط #booking",
+        "type": "url",
+        "value": "#booking"
       }
     ]
   },
@@ -226,6 +292,24 @@
         "label": "شاهدي المزيد",
         "type": "text",
         "value": "شاهدي المزيد"
+      },
+      {
+        "key": "field_24",
+        "label": "وجهة الرابط #booking",
+        "type": "url",
+        "value": "#booking"
+      },
+      {
+        "key": "field_25",
+        "label": "وجهة الرابط #services",
+        "type": "url",
+        "value": "#services"
+      },
+      {
+        "key": "field_26",
+        "label": "وجهة الرابط #videos",
+        "type": "url",
+        "value": "#videos"
       }
     ]
   },
@@ -451,6 +535,12 @@
         "label": "ابدئي بطلب استشارة",
         "type": "text",
         "value": "ابدئي بطلب استشارة"
+      },
+      {
+        "key": "field_11",
+        "label": "وجهة الرابط #booking",
+        "type": "url",
+        "value": "#booking"
       }
     ]
   },
@@ -1082,42 +1172,20 @@
         "label": "أسئلة شائعة",
         "type": "text",
         "value": "أسئلة شائعة"
+      }
+    ],
+    "faqs": [
+      {
+        "question": "إزاي أحجز موعد؟",
+        "answer": "اختاري الفرع والخدمة واليوم المفضل، ثم أرسلي طلبكِ. يؤكد فريق العيادة تفاصيل الموعد بالتواصل معكِ."
       },
       {
-        "key": "field_3",
-        "label": "إزاي أحجز موعد؟",
-        "type": "text",
-        "value": "إزاي أحجز موعد؟"
+        "question": "أجهّز إيه لأول زيارة؟",
+        "answer": "خدي معكِ التقارير والتحاليل السابقة إن وُجدت، وقائمة الأدوية الحالية. اسألي فريق العيادة لو فيه تجهيزات خاصة لزيارتكِ."
       },
       {
-        "key": "field_4",
-        "label": "اختاري الفرع والخدمة واليوم المفضل، ثم أرسلي طلبكِ. يؤكد فريق العيادة تفاصيل الموعد بالتوا",
-        "type": "text",
-        "value": "اختاري الفرع والخدمة واليوم المفضل، ثم أرسلي طلبكِ. يؤكد فريق العيادة تفاصيل الموعد بالتواصل معكِ."
-      },
-      {
-        "key": "field_5",
-        "label": "أجهّز إيه لأول زيارة؟",
-        "type": "text",
-        "value": "أجهّز إيه لأول زيارة؟"
-      },
-      {
-        "key": "field_6",
-        "label": "خدي معكِ التقارير والتحاليل السابقة إن وُجدت، وقائمة الأدوية الحالية. اسألي فريق العيادة ل",
-        "type": "text",
-        "value": "خدي معكِ التقارير والتحاليل السابقة إن وُجدت، وقائمة الأدوية الحالية. اسألي فريق العيادة لو فيه تجهيزات خاصة لزيارتكِ."
-      },
-      {
-        "key": "field_7",
-        "label": "هل اليوم اللي اختارته حجز مؤكّد؟",
-        "type": "text",
-        "value": "هل اليوم اللي اختارته حجز مؤكّد؟"
-      },
-      {
-        "key": "field_8",
-        "label": "اختيار اليوم هو طلب مبدئي؛ لا يُعتبر الموعد مؤكدًا قبل تواصل فريق العيادة معكِ.",
-        "type": "text",
-        "value": "اختيار اليوم هو طلب مبدئي؛ لا يُعتبر الموعد مؤكدًا قبل تواصل فريق العيادة معكِ."
+        "question": "هل اليوم اللي اختارته حجز مؤكّد؟",
+        "answer": "اختيار اليوم هو طلب مبدئي؛ لا يُعتبر الموعد مؤكدًا قبل تواصل فريق العيادة معكِ."
       }
     ]
   },
@@ -1353,6 +1421,102 @@
         "label": "لو الفيديو لم يظهر، شاهديه على فيسبوك",
         "type": "text",
         "value": "لو الفيديو لم يظهر، شاهديه على فيسبوك"
+      },
+      {
+        "key": "field_39",
+        "label": "وجهة الرابط #home",
+        "type": "url",
+        "value": "#home"
+      },
+      {
+        "key": "field_40",
+        "label": "وجهة الرابط #home",
+        "type": "url",
+        "value": "#home"
+      },
+      {
+        "key": "field_41",
+        "label": "وجهة الرابط #about",
+        "type": "url",
+        "value": "#about"
+      },
+      {
+        "key": "field_42",
+        "label": "وجهة الرابط #your-journey",
+        "type": "url",
+        "value": "#your-journey"
+      },
+      {
+        "key": "field_43",
+        "label": "وجهة الرابط #videos",
+        "type": "url",
+        "value": "#videos"
+      },
+      {
+        "key": "field_44",
+        "label": "وجهة الرابط #articles",
+        "type": "url",
+        "value": "#articles"
+      },
+      {
+        "key": "field_45",
+        "label": "وجهة الرابط #reviews",
+        "type": "url",
+        "value": "#reviews"
+      },
+      {
+        "key": "field_46",
+        "label": "وجهة الرابط #services",
+        "type": "url",
+        "value": "#services"
+      },
+      {
+        "key": "field_47",
+        "label": "وجهة الرابط #services",
+        "type": "url",
+        "value": "#services"
+      },
+      {
+        "key": "field_48",
+        "label": "وجهة الرابط #services",
+        "type": "url",
+        "value": "#services"
+      },
+      {
+        "key": "field_49",
+        "label": "وجهة الرابط #services",
+        "type": "url",
+        "value": "#services"
+      },
+      {
+        "key": "field_50",
+        "label": "وجهة الرابط #services",
+        "type": "url",
+        "value": "#services"
+      },
+      {
+        "key": "field_51",
+        "label": "وجهة الرابط #booking",
+        "type": "url",
+        "value": "#booking"
+      },
+      {
+        "key": "field_52",
+        "label": "وجهة الرابط #clinics",
+        "type": "url",
+        "value": "#clinics"
+      },
+      {
+        "key": "field_53",
+        "label": "وجهة الرابط #faq",
+        "type": "url",
+        "value": "#faq"
+      },
+      {
+        "key": "field_54",
+        "label": "وجهة الرابط #home",
+        "type": "url",
+        "value": "#home"
       }
     ]
   }
