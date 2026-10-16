@@ -6,7 +6,12 @@ function createPlayer(video){
  const shell=document.createElement('div');shell.className='modern-player';video.parentNode.insertBefore(shell,video);shell.append(video);
  const overlay=document.createElement('button');overlay.className='player-center';overlay.type='button';overlay.setAttribute('aria-label','تشغيل الفيديو');overlay.textContent='▶';shell.append(overlay);
  const bar=document.createElement('div');bar.className='player-controls';bar.innerHTML='<input class="seek" type="range" min="0" max="100" step="0.1" value="0" aria-label="تقديم الفيديو"><div class="player-toolbar"><button class="toggle" type="button" aria-label="تشغيل أو إيقاف الفيديو">▶</button><span class="player-time">0:00 / 0:00</span><button class="mute" type="button" aria-label="كتم أو تشغيل الصوت">♪</button><input class="volume" type="range" min="0" max="1" step="0.05" value="1" aria-label="مستوى الصوت"><select class="speed" aria-label="سرعة التشغيل"><option value="1">1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><button class="fullscreen" type="button" aria-label="ملء الشاشة">⛶</button></div>';shell.append(bar);
- const toggle=()=>video.paused?video.play().catch(()=>{}):video.pause();overlay.addEventListener('click',toggle);video.addEventListener('click',toggle);bar.querySelector('.toggle').addEventListener('click',toggle);
+ const status=document.createElement('p');status.className='player-status';status.setAttribute('role','status');status.hidden=true;shell.append(status);
+ const showStatus=text=>{status.textContent=text;status.hidden=!text;};
+ const play=()=>video.play().catch(error=>{if(error.name==='AbortError')return;showStatus(error.name==='NotAllowedError'?'اضغطي تشغيل لبدء الفيديو.':'تعذر تشغيل الفيديو. حاولي مرة أخرى.');});
+ video.addEventListener('error',()=>showStatus('تعذر تحميل الفيديو. تحققي من الاتصال وحاولي مرة أخرى.'));
+ video.addEventListener('playing',()=>showStatus(''));
+ const toggle=()=>video.paused?play():video.pause();overlay.addEventListener('click',toggle);video.addEventListener('click',toggle);bar.querySelector('.toggle').addEventListener('click',toggle);
  const format=t=>Math.floor((t||0)/60)+':'+String(Math.floor((t||0)%60)).padStart(2,'0');
  const update=()=>{bar.querySelector('.player-time').textContent=format(video.currentTime)+' / '+format(video.duration);bar.querySelector('.seek').value=video.duration?video.currentTime/video.duration*100:0;};video.addEventListener('timeupdate',update);video.addEventListener('loadedmetadata',update);
  video.addEventListener('play',()=>{shell.classList.add('is-playing');bar.querySelector('.toggle').textContent='Ⅱ';overlay.setAttribute('aria-label','إيقاف الفيديو');});video.addEventListener('pause',()=>{shell.classList.remove('is-playing');bar.querySelector('.toggle').textContent='▶';overlay.setAttribute('aria-label','تشغيل الفيديو');});
@@ -17,7 +22,7 @@ function createPlayer(video){
 document.querySelectorAll('dialog').forEach(dialog=>{dialog.querySelector('.close')?.addEventListener('click',()=>dialog.close());dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});});
 document.querySelectorAll('video').forEach(video=>createPlayer(video));
 document.querySelectorAll('[data-reel]').forEach(button=>button.addEventListener('click',()=>{
- if(!videoDialog || !button.dataset.reel)return;
+ if(!videoDialog || (!button.dataset.reel && !button.dataset.src))return;
  document.querySelectorAll('video').forEach(v=>v.pause());
  const video=document.createElement('video'); video.playsInline=true;video.preload='metadata';
  video.poster=button.dataset.poster || '/assets/reel-'+button.dataset.reel+'.jpg';
@@ -25,8 +30,8 @@ document.querySelectorAll('[data-reel]').forEach(button=>button.addEventListener
  video.setAttribute('aria-label',button.dataset.title || 'فيديو الدكتور');
  document.querySelector('#video-container').replaceChildren(video);createPlayer(video);
  videoDialog.querySelector('h3').textContent=button.dataset.title || 'فيديو الدكتور';
- videoDialog.querySelector('a').href='https://www.facebook.com/reel/'+encodeURIComponent(button.dataset.reel)+'/';
- videoDialog.showModal();video.play().catch(()=>{});
+ const sourceLink=videoDialog.querySelector('a');sourceLink.hidden=!/^\d+$/.test(button.dataset.reel || '');if(!sourceLink.hidden)sourceLink.href='https://www.facebook.com/reel/'+encodeURIComponent(button.dataset.reel)+'/';
+ videoDialog.showModal();video.play().catch(()=>{ /* The visible play button permits playback if autoplay is blocked. */ });
 }));
 videoDialog?.addEventListener('close',()=>{videoDialog.querySelectorAll('video').forEach(v=>v.pause());document.querySelector('#video-container')?.replaceChildren();});
 const form=document.querySelector('#booking-form');

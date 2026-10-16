@@ -44,6 +44,31 @@ test('video player opens the selected local video and closes', async ({ app, bro
   await browser.locator('#video-dialog .close').click();await expect(browser.locator('#video-dialog')).not.toBeVisible();
 });
 
+test('featured and gallery videos decode and advance during playback', async ({ app, browser }) => {
+  for (const theme of ['helal_classic', 'helal_modern']) {
+    await app.open('/');
+    const preview = await browser.evaluate(async theme => (await (await fetch('/__e2e/preview?theme='+theme)).json()).url, theme);
+    await app.open(preview);
+    const count = await browser.locator('#videos .tile-art button').count();
+    for (let index = -1; index < count; index++) {
+      await (index < 0 ? browser.locator('.feature-preview') : browser.locator('#videos .tile-art button').nth(index)).click();
+      const playback = await browser.evaluate(async () => {
+        const video = document.querySelector('#video-dialog video') as HTMLVideoElement;
+        video.muted = true;
+        await Promise.race([video.play(), new Promise((_, reject) => setTimeout(() => reject(new Error('Video did not start')), 10000))]);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return { error: video.error?.code ?? null, time: video.currentTime, duration: video.duration, ready: video.readyState, source: video.currentSrc };
+      });
+      expect(playback.error).toBe(null);
+      expect(playback.time > 0).toBe(true);
+      expect(playback.duration > 0).toBe(true);
+      expect(playback.ready >= 2).toBe(true);
+      expect(playback.source).toMatch(/\/assets\/reel-\d+\.mp4$/);
+      await browser.locator('#video-dialog .close').click();
+    }
+  }
+});
+
 test('journey stages update the questions and select the booking service', async ({ app, browser }) => {
   await app.open('/patient-journey');await browser.locator('[data-stage="health"]').click();
   await expect(browser.locator('#journey-title')).toContainText('ابدئي');
