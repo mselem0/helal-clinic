@@ -58,6 +58,14 @@ jobs:
           php artisan test --compact
           node scripts/deploy/install-browser.mjs
           npm run test:e2e
+      - name: Preserve browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: browser-failure-${{ github.sha }}
+          path: .e2e/
+          include-hidden-files: true
+          retention-days: 3
       - name: Build production package
         run: |
           composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
