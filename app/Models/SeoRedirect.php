@@ -15,8 +15,8 @@ class SeoRedirect extends Model
             if (! $redirect->is_active) {
                 return;
             }
-            $source = $redirect->source_url;
-            $target = $redirect->target_url;
+            $source = static::localPath($redirect->source_url);
+            $target = static::localPath($redirect->target_url);
             $seen = [$source];
             for ($i = 0; $i < 30; $i++) {
                 if (in_array($target, $seen, true)) {
@@ -27,10 +27,23 @@ class SeoRedirect extends Model
                 if (! $next) {
                     return;
                 }
-                $target = $next->target_url;
+                $target = static::localPath($next->target_url);
             }
             throw ValidationException::withMessages(['target_url' => 'سلسلة التحويلات طويلة جدًا.']);
         });
+    }
+
+    private static function localPath(string $url): string
+    {
+        $parts = parse_url($url);
+        if (! $parts) {
+            return $url;
+        }
+        if (isset($parts['host']) && (strtolower($parts['host']) !== strtolower(parse_url(url('/'), PHP_URL_HOST) ?? '') || ($parts['port'] ?? null) !== parse_url(url('/'), PHP_URL_PORT))) {
+            return $url;
+        }
+
+        return '/'.ltrim(rawurldecode($parts['path'] ?? '/'), '/');
     }
 
     protected $fillable = [
