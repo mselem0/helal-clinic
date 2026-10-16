@@ -75,7 +75,7 @@ class ThemeEditor extends Page implements HasForms
         $setting = SiteSetting::where('key', 'theme_'.$this->editingTheme)->first();
         $style = json_decode($setting?->draft_data['value'] ?? $setting?->value ?? '{}', true) ?: [];
         $this->form->fill([
-            'fields' => $body['fields'] ?? [], 'stages' => collect($body['stages'] ?? [])->map(fn ($value, $key) => ['key' => $key] + $value)->values()->all(), 'order' => $draft['order'] ?? $section->order,
+            'fields' => $section->section_key === 'faq' ? array_values(array_filter($body['fields'] ?? [], fn ($field) => ! in_array($field['key'], ['field_3', 'field_4', 'field_5', 'field_6', 'field_7', 'field_8']))) : ($body['fields'] ?? []), 'faqs' => $body['faqs'] ?? $this->legacyFaqs($body), 'stages' => collect($body['stages'] ?? [])->map(fn ($value, $key) => ['key' => $key] + $value)->values()->all(), 'order' => $draft['order'] ?? $section->order,
             'is_active' => $draft['is_active'] ?? $section->is_active,
             'background_color' => $style['sections'][$section->section_key]['background_color'] ?? null,
             'primary' => $style['primary'] ?? '#006f76', 'accent' => $style['accent'] ?? '#ed8b19',
@@ -97,6 +97,12 @@ class ThemeEditor extends Page implements HasForms
                     FileUpload::make('upload')->label('رفع صورة أو فيديو')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'video/mp4'])->maxSize(51200)->visible(fn ($get) => $get('type') === 'image'),
                 ])->itemLabel(fn (array $state): string => $state['label'] ?? 'محتوى')->collapsible()->collapsed()->addable(false)->deletable(false)->reorderable(false),
             ]),
+            Section::make('الأسئلة الشائعة')->visible(fn () => PageSection::find($this->selectedSectionId)?->section_key === 'faq')->schema([
+                Repeater::make('faqs')->label('الأسئلة')->addActionLabel('إضافة سؤال')->schema([
+                    TextInput::make('question')->label('السؤال')->required()->maxLength(500),
+                    Textarea::make('answer')->label('الإجابة')->required()->maxLength(3000),
+                ])->reorderable(),
+            ]),
             Section::make('مراحل رحلة المريضة')->visible(fn () => PageSection::find($this->selectedSectionId)?->section_key === 'your-journey')->schema([
                 Repeater::make('stages')->label('المراحل')->schema([
                     Hidden::make('key'), TextInput::make('tag')->label('اسم المرحلة')->required(),
@@ -112,6 +118,16 @@ class ThemeEditor extends Page implements HasForms
                 ColorPicker::make('accent')->label('لون التمييز')->required()->hex(),
             ])->columns(2),
         ])->statePath('data');
+    }
+
+    private function legacyFaqs(array $body): array
+    {
+        if (PageSection::find($this->selectedSectionId)?->section_key !== 'faq') {
+            return [];
+        }
+        $fields = collect($body['fields'] ?? [])->pluck('value', 'key');
+
+        return collect([3, 5, 7])->map(fn ($i) => ['question' => $fields['field_'.$i] ?? '', 'answer' => $fields['field_'.($i + 1)] ?? ''])->filter(fn ($faq) => $faq['question'] !== '')->values()->all();
     }
 
     public function editThemeOnly(string $themeKey): void
@@ -139,7 +155,7 @@ class ThemeEditor extends Page implements HasForms
         }
         unset($field);
         app(ThemeDraftService::class)->saveSectionDraft($section->section_key, [
-            'body' => json_encode(['fields' => $original, 'stages' => collect($state['stages'] ?? [])->mapWithKeys(function ($stage) {
+            'body' => json_encode(['fields' => $original, 'faqs' => $state['faqs'] ?? [], 'stages' => collect($state['stages'] ?? [])->mapWithKeys(function ($stage) {
                 $key = $stage['key'];
                 unset($stage['key']);
 

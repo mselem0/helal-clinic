@@ -40,7 +40,11 @@ class HomeController extends Controller
         }
         $sections->each(function ($section) use ($style): void {
             $section->background_color = $style['sections'][$section->section_key]['background_color'] ?? null;
+            $section->faqs = json_decode($section->body ?? '{}', true)['faqs'] ?? null;
             $section->content = collect(json_decode($section->body ?? '{}', true)['fields'] ?? [])->pluck('value', 'key')->all();
+            if ($section->section_key === 'faq' && $section->faqs === null) {
+                $section->faqs = collect([3, 5, 7])->map(fn ($i) => ['question' => $section->content['field_'.$i] ?? '', 'answer' => $section->content['field_'.($i + 1)] ?? ''])->filter(fn ($faq) => $faq['question'] !== '')->all();
+            }
             if (! preg_match('/^#[0-9a-f]{6}$/i', $section->background_color ?? '')) {
                 $section->background_color = null;
             }

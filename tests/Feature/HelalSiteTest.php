@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Helpers\SeoHelper;
 use App\Models\ClinicBranch;
 use App\Models\PageSection;
+use App\Models\SeoPage;
 use App\Models\Service;
+use App\Support\ClinicFeatures;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
@@ -32,8 +35,8 @@ class HelalSiteTest extends TestCase
 
     public function test_basic_booking_prepares_whatsapp_without_claiming_storage(): void
     {
-        $this->postJson('/bookings', $this->booking())->assertOk()->assertJson(['stored' => \App\Support\ClinicFeatures::enabled('Booking'), 'status' => 'pending'])->assertJsonPath('whatsapp_url', fn ($url) => str_starts_with($url, 'https://wa.me/201017900354?text='));
-        $this->assertDatabaseCount('bookings', \App\Support\ClinicFeatures::enabled('Booking') ? 1 : 0);
+        $this->postJson('/bookings', $this->booking())->assertOk()->assertJson(['stored' => ClinicFeatures::enabled('Booking'), 'status' => 'pending'])->assertJsonPath('whatsapp_url', fn ($url) => str_starts_with($url, 'https://wa.me/201017900354?text='));
+        $this->assertDatabaseCount('bookings', ClinicFeatures::enabled('Booking') ? 1 : 0);
     }
 
     public function test_booking_rejects_past_dates_bad_phone_and_inactive_branch(): void
@@ -45,8 +48,16 @@ class HelalSiteTest extends TestCase
 
     public function test_disabled_module_routes_are_not_accessible(): void
     {
-        if (\App\Support\ClinicFeatures::enabled('PatientCore')) { $this->get('/patient-auth')->assertOk(); } else { $this->get('/patient-auth')->assertNotFound(); }
-        if (\App\Support\ClinicFeatures::enabled('Clinical')) { $this->get('/admin/prescriptions/1/print')->assertRedirect(); } else { $this->get('/admin/prescriptions/1/print')->assertNotFound(); }
+        if (ClinicFeatures::enabled('PatientCore')) {
+            $this->get('/patient-auth')->assertOk();
+        } else {
+            $this->get('/patient-auth')->assertNotFound();
+        }
+        if (ClinicFeatures::enabled('Clinical')) {
+            $this->get('/admin/prescriptions/1/print')->assertRedirect();
+        } else {
+            $this->get('/admin/prescriptions/1/print')->assertNotFound();
+        }
     }
 
     public function test_internal_pages_render_without_old_branding(): void
@@ -62,6 +73,14 @@ class HelalSiteTest extends TestCase
         $section->update(['body' => '{"fields":[]}']);
         $this->seed();
         $this->assertSame('{"fields":[]}', $section->fresh()->body);
+    }
+
+    public function test_seo_settings_drive_metadata_and_sitemap_excludes_drafts(): void
+    {
+        SeoPage::where('page_key', 'home')->update(['meta_title' => 'عنوان SEO خاص بهلال']);
+        SeoHelper::clearCache();
+        $this->get('/')->assertOk()->assertSee('<title>عنوان SEO خاص بهلال</title>', false);
+        $this->get('/sitemap.xml')->assertOk()->assertSee('/services/service-1')->assertDontSee('/blog/article-1');
     }
 
     private function booking(): array
