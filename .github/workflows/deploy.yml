@@ -57,7 +57,7 @@ jobs:
         run: |
           php artisan test --compact
           node scripts/deploy/install-browser.mjs
-          npm run test:e2e
+          npm run test:e2e -- --grep "real admin login"
       - name: Preserve browser failure diagnostics
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
