@@ -38,7 +38,7 @@ class ContentUrl
         }
 
         $url = asset(ltrim($value, '/'));
-        if (in_array($value, ['assets/doctor-conference.jpg', 'assets/doctor-conference.webp'], true)) {
+        if (in_array($value, ['assets/doctor-conference.jpg', 'assets/doctor-conference.webp'], true) || (str_starts_with($value, 'assets/') && str_ends_with($value, '.mp4') && is_file(public_path($value)))) {
             $url .= '?v='.substr(hash_file('sha256', public_path($value)), 0, 12);
         }
 
