@@ -4,14 +4,22 @@
 
 namespace App\Models;
 
+use App\Support\TracksPublicSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ClinicBranch extends Model
 {
     use HasFactory;
+    use TracksPublicSlug;
+
+    public function publicPath(): string
+    {
+        return '/branches/'.$this->slug;
+    }
 
     protected $fillable = [
+        'og_image', 'slug', 'description', 'directions', 'service_ids', 'meta_title', 'meta_description',
         'name',
         'address',
         'phone',
@@ -23,6 +31,6 @@ class ClinicBranch extends Model
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_active' => 'boolean', 'service_ids' => 'array',
     ];
 }

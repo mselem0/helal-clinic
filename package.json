@@ -5,7 +5,8 @@
     "build": "vite build",
     "dev": "vite",
     "test:e2e": "e2e run",
-    "test:e2e:full": "e2e run"
+    "test:e2e:full": "e2e run",
+    "audit:seo": "node scripts/audit-seo.mjs"
   },
   "devDependencies": {
     "@e2e-dev/web": "^0.13.0",
@@ -17,6 +18,7 @@
     "concurrently": "^9.0.1",
     "e2e": "^0.18.0",
     "laravel-vite-plugin": "^1.2.0",
+    "lighthouse": "13.0.3",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
     "vite": "^6.0.11"

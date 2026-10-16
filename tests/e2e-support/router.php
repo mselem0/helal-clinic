@@ -4,6 +4,8 @@ use App\Models\Article;
 use App\Models\ClinicBranch;
 use App\Models\PageSection;
 use App\Models\Service;
+use App\Models\SiteNavigation;
+use App\Models\SitePage;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
 use App\Models\ThemeRevision;
@@ -60,6 +62,7 @@ Route::middleware('web')->group(function (): void {
     });
     Route::get('/__e2e/state', function () {
         return response()->json([
+            'pages' => SitePage::all(), 'menus' => SiteNavigation::all(),
             'theme' => SiteSetting::where('key', 'active_theme')->value('value'),
             'sections' => PageSection::orderBy('order')->get(['id', 'section_key', 'body', 'draft_data', 'is_active', 'order']),
             'revisions' => ThemeRevision::count(),
@@ -70,6 +73,30 @@ Route::middleware('web')->group(function (): void {
             'full' => ClinicFeatures::enabled('Booking'),
         ]);
     });
-    Route::get('/__e2e/preview', fn () => response()->json(['url' => URL::temporarySignedRoute('home', now()->addMinutes(10), ['preview' => 1, 'theme' => request('theme', 'helal_classic')])]));
+    Route::get('/__e2e/audit-theme', function () {
+        abort_unless(in_array(request('theme'), ['helal_classic', 'helal_modern']), 422);
+        SiteSetting::where('key', 'active_theme')->update(['value' => request('theme')]);
+
+        return response()->json(['ok' => true]);
+    });
+    Route::get('/__e2e/multipage', function () {
+        $article = Article::first();
+        $article->update(['is_published' => true, 'published_at' => now()->subDay(), 'author_name' => 'كاتب اختبار', 'medical_reviewer' => 'مراجع اختبار', 'reviewed_at' => now(), 'sources' => [['title' => 'مرجع اختبار', 'url' => 'https://example.org/reference']], 'service_ids' => [Service::first()->id]]);
+        ClinicBranch::first()->update(['service_ids' => [Service::first()->id]]);
+
+        return response()->json(['article' => '/blog/'.$article->slug, 'service' => '/services/'.Service::first()->slug, 'branch' => '/branches/'.ClinicBranch::first()->slug]);
+    });
+    Route::get('/__e2e/preview', function () {
+        if (request('kind')) {
+            [$route,$model] = match (request('kind')) {
+                'service' => ['services.show', Service::first()],'article' => ['blog.show', Article::where('is_published', true)->first()],default => ['branches.show', ClinicBranch::first()]
+            };
+
+            return response()->json(['url' => URL::temporarySignedRoute($route, now()->addMinutes(10), ['slug' => $model->slug, 'preview' => 1, 'theme' => request('theme', 'helal_classic')])]);
+        }
+        $page = SitePage::where('page_key', request('page', 'home'))->firstOrFail();
+
+        return response()->json(['url' => URL::temporarySignedRoute('site.preview', now()->addMinutes(10), ['page' => $page->id, 'preview' => 1, 'theme' => request('theme', 'helal_classic')])]);
+    });
 });
 $app->handleRequest(Request::capture());

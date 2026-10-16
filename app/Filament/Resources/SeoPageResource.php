@@ -8,7 +8,6 @@ use App\Filament\Resources\SeoPageResource\Pages;
 use App\Models\SeoPage;
 use App\Services\SeoScoreCalculator;
 use Filament\Forms;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -28,6 +27,16 @@ class SeoPageResource extends Resource
     protected static ?string $navigationGroup = 'SEO & التسويق';
 
     protected static bool $shouldRegisterNavigation = false;
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
 
     public static function form(Form $form): Form
     {
@@ -114,7 +123,7 @@ class SeoPageResource extends Resource
                                     ->schema([
                                         Forms\Components\TextInput::make('og_title')->label('عنوان OG'),
                                         Forms\Components\Textarea::make('og_description')->label('وصف OG')->rows(2),
-                                        SpatieMediaLibraryFileUpload::make('seo-page-og')->collection('seo-page-og')
+                                        Forms\Components\FileUpload::make('og_image')->image()->disk('public')->directory('landing')
                                             ->label('صورة OG'),
                                         Forms\Components\Select::make('og_type')
                                             ->label('نوع المحتوى')
@@ -124,7 +133,7 @@ class SeoPageResource extends Resource
                                     ->schema([
                                         Forms\Components\TextInput::make('twitter_title')->label('عنوان تويتر'),
                                         Forms\Components\Textarea::make('twitter_description')->label('وصف تويتر')->rows(2),
-                                        SpatieMediaLibraryFileUpload::make('seo-page-twitter')->collection('seo-page-twitter')
+                                        Forms\Components\FileUpload::make('twitter_image')->image()->disk('public')->directory('landing')
                                             ->label('صورة تويتر'),
                                         Forms\Components\Select::make('twitter_card')
                                             ->label('نوع بطاقة تويتر')

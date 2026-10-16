@@ -16,9 +16,9 @@
 @media(min-width:761px) and (max-width:1000px) { header { flex-wrap:wrap; } header nav { flex-wrap:wrap; gap:12px; width:100%; justify-content:center; } }
 
 /* Decorative pseudo-elements must not create horizontal scrolling. */
-body { overflow-x:clip; }
+.section-shell { overflow-x:clip; }
 
-html { overflow-x:clip; }
+
 
 header:has(.patient-account) { flex-wrap:wrap; }
 .patient-account { font-size:12px; padding:7px 12px; }

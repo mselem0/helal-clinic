@@ -6,11 +6,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClinicBranchResource\Pages;
 use App\Models\ClinicBranch;
+use App\Models\Service;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class ClinicBranchResource extends Resource
 {
@@ -24,7 +26,7 @@ class ClinicBranchResource extends Resource
 
     protected static ?string $pluralModelLabel = 'الفروع';
 
-    protected static ?string $navigationGroup = 'إدارة المحتوى الطبي';
+    protected static ?string $navigationGroup = 'المحتوى';
 
     public static function form(Form $form): Form
     {
@@ -37,6 +39,13 @@ class ClinicBranchResource extends Resource
                             ->label('اسم الفرع')
                             ->required()
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('slug')->label('الرابط')->required()->maxLength(180)->unique(ignoreRecord: true)->regex('/^[\pL\pN]+(?:[-_][\pL\pN]+)*$/u')->default(fn () => 'branch-'.strtolower(Str::random(8))),
+                        Forms\Components\Textarea::make('description')->label('نبذة عن الفرع'),
+                        Forms\Components\Textarea::make('directions')->label('إرشادات الوصول'),
+                        Forms\Components\Select::make('service_ids')->label('الخدمات المتاحة فعليًا')->multiple()->options(fn () => Service::pluck('name', 'id')),
+                        Forms\Components\TextInput::make('meta_title')->label('عنوان البحث')->maxLength(255),
+                        Forms\Components\Textarea::make('meta_description')->label('وصف البحث')->maxLength(320),
+                        Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
                         Forms\Components\TextInput::make('phone')
                             ->label('رقم هاتف الفرع')
                             ->tel()

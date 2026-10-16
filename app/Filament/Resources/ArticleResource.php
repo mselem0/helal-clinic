@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ArticleResource\Pages;
 use App\Models\Article;
+use App\Models\Service;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -36,7 +37,7 @@ class ArticleResource extends Resource
                             ->required()
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('slug')
+                        Forms\Components\TextInput::make('slug')->regex('/^[\pL\pN]+(?:[-_][\pL\pN]+)*$/u')
                             ->label('الرابط (Slug)')
                             ->required()
                             ->unique(ignoreRecord: true)
@@ -57,6 +58,15 @@ class ArticleResource extends Resource
                             ->default(true),
                     ])->columns(2),
 
+                Forms\Components\Section::make('التأليف والمراجعة الطبية')->description('استخدمي أسماء ومصادر وتواريخ مراجعة فعلية فقط.')->schema([
+                    Forms\Components\TextInput::make('author_name')->label('كاتب المقال')->maxLength(255),
+                    Forms\Components\TextInput::make('medical_reviewer')->label('المراجع الطبي')->maxLength(255),
+                    Forms\Components\DateTimePicker::make('published_at')->label('تاريخ النشر')->helperText('التاريخ المستقبلي يخفي المقال حتى موعده.'),
+                    Forms\Components\DatePicker::make('reviewed_at')->label('آخر مراجعة طبية')->maxDate(now()),
+                    Forms\Components\Repeater::make('sources')->defaultItems(0)->label('المصادر')->schema([Forms\Components\TextInput::make('title')->label('المصدر')->required(), Forms\Components\TextInput::make('url')->label('الرابط')->url()->required()]),
+                    Forms\Components\Select::make('service_ids')->label('الخدمات المرتبطة')->multiple()->options(fn () => Service::pluck('name', 'id')),
+                    Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
+                ]),
                 Forms\Components\Section::make('SEO')
                     ->schema([
                         Forms\Components\TextInput::make('meta_title')

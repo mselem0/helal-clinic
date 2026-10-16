@@ -81,7 +81,7 @@ class HelalThemeWorkflowTest extends TestCase
         $this->admin();
         $section = PageSection::where('section_key', 'faq')->first();
         Livewire::test(ThemeEditor::class)->call('selectSection', $section->id)->fillForm(['faqs' => [['question' => 'سؤال جديد؟', 'answer' => 'إجابة جديدة.']]])->call('publish')->assertHasNoErrors();
-        $this->get('/')->assertOk()->assertSee('سؤال جديد؟');
+        $this->get('/frequently-asked-questions')->assertOk()->assertSee('سؤال جديد؟');
     }
 
     public function test_guest_and_non_admin_cannot_open_editor(): void

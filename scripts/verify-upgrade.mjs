@@ -1,0 +1,23 @@
+import {mkdtempSync,mkdirSync,copyFileSync,writeFileSync,readFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {spawnSync} from 'node:child_process';
+const full=resolve(process.argv[2] || '../helal-clinic-full-system');
+const base=resolve('.');const temp=mkdtempSync(join(tmpdir(),'helal-e2e-upgrade-'));
+for(const path of ['framework/cache/data','framework/sessions','framework/views','logs','app/public'])mkdirSync(join(temp,'storage',path),{recursive:true});
+const manifest=join(temp,'modules.json');copyFileSync(join(base,'modules_statuses.json'),manifest);
+const env={...process.env,APP_ENV:'testing',CLINIC_E2E:'1',CLINIC_MODULE_STATUSES:manifest,APP_DEBUG:'false',APP_KEY:'base64:MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=',APP_URL:'http://localhost',DB_CONNECTION:'sqlite',DB_DATABASE:join(temp,'database.sqlite'),LARAVEL_STORAGE_PATH:join(temp,'storage'),SESSION_DRIVER:'array',CACHE_STORE:'array',QUEUE_CONNECTION:'sync',MAIL_MAILER:'array',AI_ENABLED:'false',WHATSAPP_ENABLED:'false'};
+writeFileSync(env.DB_DATABASE,'');
+function run(cwd,args,input){const r=spawnSync('php',['-d','error_reporting=8191',...args],{cwd,env,encoding:'utf8',input});if(r.status!==0)throw new Error(r.stderr+'\n'+r.stdout);return r.stdout;}
+run(base,['artisan','migrate','--seed','--force']);
+const bootstrap=`<?php require getcwd().'/vendor/autoload.php'; $app=require getcwd().'/bootstrap/app.php';$app->make(\\Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap();`;
+const models=['site_pages','site_navigations','page_sections','services','articles','clinic_branches','seo_pages'];
+run(base,[],bootstrap+`$page=\\App\\Models\\SitePage::where('page_key','about')->first();$page->update(['title'=>'محتوى محفوظ عند الترقية','draft_data'=>['title'=>'مسودة محفوظة عند الترقية']]);`);
+const snapshot=bootstrap+`$result=[];foreach(${JSON.stringify(models).replaceAll('[','[').replaceAll(']',']')} as $table){$result[$table]=\\Illuminate\\Support\\Facades\\DB::table($table)->orderBy('id')->get()->toJson();}echo json_encode($result);`;
+const before=run(base,[],snapshot).trim();
+copyFileSync(join(full,'modules_statuses.json'),manifest);
+run(full,['artisan','migrate','--force']);
+const after=run(full,[],snapshot).trim();
+if(before!==after)throw new Error('Base content changed while migrating to full system');
+const result={verified:true,tables:models,contentAndDraftsPreserved:true,externalIntegrations:'disabled',method:'Fresh basic SQLite install, add content and draft, enable full manifest, run full migrations, compare every content row.'};
+mkdirSync('.e2e',{recursive:true});writeFileSync('.e2e/upgrade.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));

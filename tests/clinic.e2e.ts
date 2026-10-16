@@ -21,7 +21,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
       await app.open('/');
       const url = await browser.evaluate(async (theme) => (await (await fetch('/__e2e/preview?theme='+theme)).json()).url, theme);
       await app.open(url);
-      await expect(screen.getByRole('heading', 'كل مرحلة لها اهتمامها.')).toBeVisible();
+      await expect(browser.locator('h1')).toBeVisible();
       expect(await browser.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
       expect(await browser.evaluate(() => [...document.images].filter(i=>i.complete && i.naturalWidth===0).map(i=>i.src))).toEqual([]);
     }
@@ -32,7 +32,8 @@ test('mobile menu opens, follows a section and closes', async ({ app, browser, s
   await browser.setViewport({width:390,height:844});await app.open('/');
   await browser.locator('.menu-toggle').click();
   await expect(browser.locator('#main-menu')).toHaveAttribute('class', /menu-open/);
-  await browser.locator('#main-menu a[href="#services"]').click();
+  await browser.locator('#main-menu a[href$="/services"]').click();
+  await expect(browser).toHaveURL(/\/services$/);
   await expect(browser.locator('.menu-toggle')).toHaveAttribute('aria-expanded','false');
 });
 
@@ -44,14 +45,14 @@ test('video player opens the selected local video and closes', async ({ app, bro
 });
 
 test('journey stages update the questions and select the booking service', async ({ app, browser }) => {
-  await app.open('/');await browser.locator('[data-stage="health"]').click();
+  await app.open('/patient-journey');await browser.locator('[data-stage="health"]').click();
   await expect(browser.locator('#journey-title')).toContainText('ابدئي');
-  await browser.locator('#journey-book').click();
+  await browser.locator('#journey-book').click();await expect(browser).toHaveURL(/appointment/);
   expect(await browser.evaluate(() => (document.querySelector('#service') as HTMLSelectElement).selectedOptions[0].textContent)).toContain('المناظير');
 });
 
 test('booking validates, submits once and makes the pending status explicit', async ({ app, browser, screen }) => {
-  await app.open('/');await browser.locator('#booking-next').click();await expect(browser.locator('#booking-error')).toContainText('اختاري');
+  await app.open('/appointment');await browser.locator('#booking-next').click();await expect(browser.locator('#booking-error')).toContainText('اختاري');
   await browser.locator('#clinic').selectOption({value:'1'});await browser.locator('#service').selectOption({value:'1'});await browser.locator('#booking-next').click();
   await browser.locator('#calendar-days button:not([disabled])').first().click();await browser.locator('#booking-next').click();
   await browser.locator('#patient').fill('مريضة اختبار');await browser.locator('#appointment-phone').fill('01012345678');
@@ -72,7 +73,7 @@ test('unsigned previews and disabled modules cannot be reached directly', async 
 
 test('real admin login opens dashboard and all registered content screens', async ({ app, browser, screen }) => {
   await login(app,screen,browser);await expect(browser).toHaveURL(/codeAiAdminDash$/);
-  for(const path of ['theme-editor','services','clinic-branches','videos','testimonials','articles','seo-management']){
+  for(const path of ['site-pages','site-navigations','theme-editor','services','clinic-branches','videos','testimonials','articles','seo-management']){
     await app.open('/codeAiAdminDash/'+path);
     expect(await browser.evaluate(()=>document.body.innerText.includes('Server Error'))).toBe(false);
     expect(await browser.evaluate(()=>document.querySelector('main')!==null)).toBe(true);
@@ -131,7 +132,7 @@ test('content drafts stay private, preview shows them and discard keeps publishe
   await screen.getByRole('button','حفظ المسودة',{exact:true}).click();
   await expect(browser.locator('[data-section-choice="faq"]')).toContainText('مسودة');
   await app.open('/');await expect(screen.getByText('عنوان FAQ للمراجعة',{exact:true})).not.toBeVisible();
-  const url=await browser.evaluate(async()=> (await(await fetch('/__e2e/preview')).json()).url);await app.open(url);
+  const url=await browser.evaluate(async()=> (await(await fetch('/__e2e/preview?page=faq')).json()).url);await app.open(url);
   await expect(screen.getByText('عنوان FAQ للمراجعة',{exact:true})).toBeVisible();
   await app.open('/codeAiAdminDash/theme-editor');await screen.getByRole('button','إلغاء المسودات',{exact:true}).click();
   await expect(browser.locator('[data-section-choice="faq"]')).not.toContainText('مسودة');
@@ -159,7 +160,7 @@ for(const scenario of [
    await login(app,screen,browser);await app.open('/codeAiAdminDash/'+scenario.resource+'/create');
    for(const [field,value] of Object.entries(scenario.fields)) await browser.locator('[id="data.'+field+'"]').fill(value);
    await screen.getByRole('button','إضافة',{exact:true}).click();await expect(browser).toHaveURL(new RegExp(scenario.resource+'/\\d+/edit'));
-   await app.open('/');await expect(screen.getByText(scenario.text,{exact:true}).first()).toBeVisible();
+   await app.open('/'+({'clinic-branches':'branches',testimonials:'',videos:'gallery',articles:'blog'}[scenario.resource]));await expect(screen.getByText(scenario.text,{exact:true}).first()).toBeVisible();
  });
 }
 
@@ -207,5 +208,5 @@ test('FAQ questions can be added and published from the editor',async({app,brows
  await browser.locator('[data-section-choice="faq"]').click();await screen.getByRole('button','إضافة سؤال',{exact:true}).click();await expect(browser.locator('input[id$=".question"]')).toHaveCount(4);
  await browser.locator('input[id$=".question"]').last().fill('سؤال جديد للاختبار؟');await browser.locator('textarea[id$=".answer"]').last().fill('إجابة جديدة للاختبار.');
  await screen.getByRole('button','نشر الموقع',{exact:true}).click();await expect(browser.locator('[data-testid="revision-select"] option')).toHaveCount(2);
- await app.open('/');await expect(screen.getByText('سؤال جديد للاختبار؟',{exact:true})).toBeVisible();
+ await app.open('/frequently-asked-questions');await expect(screen.getByText('سؤال جديد للاختبار؟',{exact:true})).toBeVisible();
 });

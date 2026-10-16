@@ -24,7 +24,7 @@ class TestimonialResource extends Resource
 
     protected static ?string $pluralModelLabel = 'آراء المرضى';
 
-    protected static ?string $navigationGroup = 'إدارة المحتوى الطبي';
+    protected static ?string $navigationGroup = 'المحتوى';
 
     public static function form(Form $form): Form
     {

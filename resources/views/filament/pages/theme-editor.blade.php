@@ -1,4 +1,6 @@
 <x-filament-panels::page>
+<x-filament::section heading="الصفحة التي تعملين عليها"><select wire:model.live="selectedPageKey" data-testid="page-selector" class="rounded-lg border-gray-300">@foreach($sitePages as $sitePage)<option value="{{ $sitePage->page_key }}">{{ $sitePage->title }}</option>@endforeach</select><p class="mt-2 text-sm">محتوى الأقسام مشترك بين الصفحات والثيمين. ترتيب أقسام كل صفحة وبيانات البحث من قائمة صفحات الموقع.</p><a href="{{ \App\Filament\Resources\SitePageResource::getUrl() }}">إدارة الصفحات والقوائم وبيانات البحث ↗</a></x-filament::section>
+@if($warnings)<x-filament::section heading="محتوى يحتاج مراجعة"><ul class="list-disc list-inside">@foreach($warnings as $warning)<li>{{ $warning }}</li>@endforeach</ul></x-filament::section>@endif
     <div class="grid gap-4 md:grid-cols-2">
         @foreach($themes as $key => $label)
             <x-filament::section>
@@ -20,7 +22,7 @@
                 <button type="button" data-section-choice="{{ $section->section_key }}" wire:click="selectSection({{ $section->id }})" class="w-full rounded-xl p-3 text-start {{ $selectedSectionId === $section->id ? 'bg-primary-100 text-primary-900' : 'bg-white' }}">{{ $section->section_label }} @if($section->draft_data)<span class="text-xs"> · مسودة</span>@endif</button>
             @endforeach
         </aside>
-        <div class="lg:col-span-3 space-y-4">@if(isset($contentRoutes[$selectedKey]) && \Illuminate\Support\Facades\Route::has($contentRoutes[$selectedKey]))<x-filament::section><a href="{{ route($contentRoutes[$selectedKey]) }}" class="text-primary-700 font-semibold">إضافة وتعديل وحذف عناصر هذا القسم ↗</a><p class="text-sm text-gray-500">إدارة العناصر من قائمتها؛ التغييرات هناك تُنشر مباشرة حسب حالة تفعيل العنصر.</p></x-filament::section>@endif{{ $this->form }}</div>
+        <div class="lg:col-span-3 space-y-4">@if(isset($contentRoutes[$selectedKey]) && \Illuminate\Support\Facades\Route::has($contentRoutes[$selectedKey]))<x-filament::section><a href="{{ route($contentRoutes[$selectedKey]) }}" class="text-primary-700 font-semibold">إضافة وتعديل وحذف عناصر هذا القسم ↗</a><p class="text-sm text-gray-500">إدارة العناصر من قائمتها؛ التغييرات هناك تُنشر مباشرة حسب حالة تفعيل العنصر.</p></x-filament::section>@endif@if($selectedSectionId){{ $this->form }}@else<p>هذه الصفحة بلا أقسام مشتركة. أضيفي محتواها من إدارة الصفحات.</p>@endif</div>
     </div>
     <x-filament::section heading="الإصدارات السابقة">
         <p class="mb-3 text-sm text-gray-500">الاستعادة تعيد المحتوى والمظهر مع حفظ نسخة من الحالة الحالية.</p>

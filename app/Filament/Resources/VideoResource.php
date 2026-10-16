@@ -25,12 +25,13 @@ class VideoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'الفيديوهات التوعوية';
 
-    protected static ?string $navigationGroup = 'إدارة المحتوى الطبي';
+    protected static ?string $navigationGroup = 'المحتوى';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
+                Forms\Components\DateTimePicker::make('uploaded_at')->label('تاريخ نشر الفيديو الفعلي')->maxDate(now()),
                 Forms\Components\FileUpload::make('image_path')->label('صورة البطاقة')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(51200),
                 Forms\Components\FileUpload::make('video_path')->label('ملف الفيديو')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'video/mp4'])->maxSize(51200),
                 Forms\Components\TextInput::make('reel')->label('رقم ريل فيسبوك')->maxLength(1000),
