@@ -144,7 +144,7 @@ class WhatsappConversations extends Page
 
         $contact = collect($this->contacts)->firstWhere('patient_phone', $this->selectedPhone);
         $patientName = $contact['patient_name'] ?? 'مريض';
-        $clinicPhone = SiteSettingHelper::get('whatsapp_number', '201214584120');
+        $clinicPhone = SiteSettingHelper::get('wa_number', '201017900354');
 
         $systemValues = [
             'patient_name' => $patientName,

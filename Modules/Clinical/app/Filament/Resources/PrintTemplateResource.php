@@ -148,7 +148,7 @@ class PrintTemplateResource extends Resource
 
                                         Textarea::make('footer_text_en')
                                             ->label('تذييل اليسار (إنجليزي) - أرقام الاتصال والتواصل')
-                                            ->placeholder("Tel: 01023456789 / 01198765432\nEmail: dr.ragab@example.com\nFacebook: /DrMohamedRagabClinic")
+                                            ->placeholder("Tel: 01023456789 / 01198765432\nEmail: clinic@example.com\nFacebook: /HelalClinic0")
                                             ->rows(4)
                                             ->hidden(fn (Forms\Get $get) => $get('hide_footer')),
                                     ]),
