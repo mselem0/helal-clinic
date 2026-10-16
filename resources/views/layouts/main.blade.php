@@ -15,4 +15,4 @@
 <main id="main-content" class="{{ request()->routeIs('home') ? 'home-page' : 'inner-page' }}">@yield('content')</main>
 @include('helal.sections.footer', ['content' => $sections->firstWhere('section_key','footer')?->content ?? []])
 <script>window.helalJourney = @json($journey); window.helalBooking = @json(['url' => route('bookings.store'), 'enabled' => $bookingEnabled]);</script>
-<script src="{{ asset('helal.js') }}" defer></script></body></html>
+<script src="{{ asset('helal.js') }}?v={{ substr(hash_file('sha256', public_path('helal.js')), 0, 12) }}" defer></script></body></html>
