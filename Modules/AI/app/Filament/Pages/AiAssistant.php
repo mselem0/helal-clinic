@@ -36,13 +36,13 @@ class AiAssistant extends Page
 
     public function selectConversation($conversationId): void
     {
-        $this->activeConversationId = $conversationId;
+        $this->activeConversationId = AiConversation::where('user_id',auth()->id())->findOrFail($conversationId)->id;
         $this->dispatch('loadConversation', conversationId: $conversationId);
     }
 
     #[On('loadConversation')]
     public function handleConversationLoaded($conversationId): void
     {
-        $this->activeConversationId = $conversationId;
+        $this->activeConversationId = AiConversation::where('user_id',auth()->id())->findOrFail($conversationId)->id;
     }
 }

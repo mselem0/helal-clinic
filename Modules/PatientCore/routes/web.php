@@ -10,5 +10,5 @@ Route::post('/patient/logout',function () { auth()->logout();request()->session(
 Route::get('/patient',function () {
     abort_unless(auth()->user()->isPatient(),403);
     $bookings=\Modules\Booking\Models\Booking::with(['service','clinicBranch'])->where('user_id',auth()->id())->latest()->get();
-    return view('helal.patient',compact('bookings'));
+    return response()->view('helal.patient',compact('bookings'))->header('Cache-Control','private, no-store')->header('X-Robots-Tag','noindex, nofollow');
 })->middleware('auth')->name('patient.portal');

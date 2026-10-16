@@ -109,7 +109,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 'panels::body.end',
-                fn (): string => (auth()->check() && class_exists(Module::class) && Module::find('AI')?->isEnabled() && class_exists('\Modules\AI\Livewire\AiChatWidget')) ? Blade::render("@livewire('ai-chat-widget')") : '',
+                fn (): string => (auth()->check() && config('clinic-integrations.ai') && class_exists(Module::class) && Module::find('AI')?->isEnabled() && class_exists('\Modules\AI\Livewire\AiChatWidget')) ? Blade::render("@livewire('ai-chat-widget')") : '',
             );
 
         if (class_exists(Module::class)) {

@@ -1,4 +1,5 @@
 <x-filament-panels::page>
+@if(!config('clinic-integrations.ai'))<x-filament::section heading="التكامل غير مفعّل"><p>المساعد جاهز للإعداد. أكمل بيانات الاتصال وفعّل الخدمة قبل بدء المحادثات.</p></x-filament::section>@else
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-4">
         {{-- Sidebar / History --}}
         <div class="lg:col-span-1">
@@ -35,4 +36,5 @@
             </div>
         </div>
     </div>
+@endif
 </x-filament-panels::page>

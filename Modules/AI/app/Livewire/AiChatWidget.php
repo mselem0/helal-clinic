@@ -56,6 +56,7 @@ class AiChatWidget extends Component implements HasActions, HasForms
 
     public function startNewConversation()
     {
+        abort_unless(auth()->check() && auth()->user()->can('create_ai::conversation'),403);
         $this->conversation = AiConversation::create([
             'user_id' => Auth::id(),
             'title' => 'محادثة جديدة '.now()->format('Y-m-d H:i'),
@@ -65,6 +66,7 @@ class AiChatWidget extends Component implements HasActions, HasForms
 
     public function loadMessages()
     {
+        abort_unless($this->conversation && $this->conversation->user_id === auth()->id(),403);
         $this->messages = $this->conversation->messages()
             ->orderBy('created_at', 'asc')
             ->get()
@@ -73,6 +75,8 @@ class AiChatWidget extends Component implements HasActions, HasForms
 
     public function sendMessage()
     {
+        abort_unless(\App\Support\ClinicFeatures::enabled('AI') && auth()->check() && auth()->user()->can('create_ai::conversation'), 403);
+        if (!config('clinic-integrations.ai')) { Notification::make()->title('التكامل غير مفعّل')->warning()->send(); return; }
         if (empty(trim($this->message))) {
             return;
         }
@@ -112,6 +116,8 @@ class AiChatWidget extends Component implements HasActions, HasForms
     #[On('process-ai')]
     public function generateAssistantResponse($userMessageText)
     {
+        abort_unless(\App\Support\ClinicFeatures::enabled('AI') && auth()->check() && auth()->user()->can('create_ai::conversation'), 403);
+        if (!config('clinic-integrations.ai')) { Notification::make()->title('التكامل غير مفعّل')->warning()->send(); return; }
         RateLimiter::hit('ai-agent:'.Auth::id(), 60);
 
         $cacheKey = 'ai_response_'.md5($userMessageText);
@@ -170,6 +176,14 @@ class AiChatWidget extends Component implements HasActions, HasForms
         $this->messages[] = $aiMsg->toArray();
         $this->isLoading = false;
         $this->dispatch('scroll-to-bottom');
+    }
+
+    #[\Livewire\Attributes\On('loadConversation')]
+    public function loadConversation(int $conversationId): void
+    {
+        abort_unless(auth()->check() && \App\Support\ClinicFeatures::enabled('AI'),403);
+        $this->conversation=AiConversation::where('user_id',auth()->id())->findOrFail($conversationId);
+        $this->loadMessages();
     }
 
     public function render()
