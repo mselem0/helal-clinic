@@ -8,6 +8,7 @@ namespace App\Models;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -15,7 +16,7 @@ use Illuminate\Notifications\Notifiable;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasPanelShield, HasRoles, Notifiable, TwoFactorAuthenticatable;
@@ -57,6 +58,11 @@ class User extends Authenticatable implements FilamentUser
             'last_login_at' => 'datetime',
             'role' => 'string',
         ];
+    }
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return $this->getAttribute('avatar_url') ?: asset('assets/logo.png');
     }
 
     public function canAccessPanel(Panel $panel): bool
