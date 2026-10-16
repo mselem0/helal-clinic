@@ -37,6 +37,11 @@ class ContentUrl
             return asset('storage/'.$value);
         }
 
-        return asset(ltrim($value, '/'));
+        $url = asset(ltrim($value, '/'));
+        if (in_array($value, ['assets/doctor-conference.jpg', 'assets/doctor-conference.webp'], true)) {
+            $url .= '?v='.substr(hash_file('sha256', public_path($value)), 0, 12);
+        }
+
+        return $url;
     }
 }
