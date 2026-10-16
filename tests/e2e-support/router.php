@@ -99,6 +99,10 @@ Route::middleware('web')->group(function (): void {
         return response()->json(['url' => URL::temporarySignedRoute('site.preview', now()->addMinutes(10), ['page' => $page->id, 'preview' => 1, 'theme' => request('theme', 'helal_classic')])]);
     });
 });
+app('view')->composer('filament-forms::components.text-input', function ($view) {
+    $data = $view->getData();
+    error_log(json_encode(['field_class' => isset($data['field']) ? $data['field']::class : null, 'maxlength_present' => isset($data['getMaxLength']), 'keys' => array_keys($data)]));
+});
 $response = $app->make(Kernel::class)->handle(Request::capture());
 if ($response->getStatusCode() === 500) {
     $diagnostics = $root.'/.e2e/compiled-views';
