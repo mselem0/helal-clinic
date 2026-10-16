@@ -1,0 +1,5 @@
+# Video URLs carry a content version, so browsers can retain repeated plays.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType video/mp4 "access plus 30 days"
+</IfModule>

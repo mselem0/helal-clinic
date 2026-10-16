@@ -63,7 +63,7 @@ test('featured and gallery videos decode and advance during playback', async ({ 
       expect(playback.time > 0).toBe(true);
       expect(playback.duration > 0).toBe(true);
       expect(playback.ready >= 2).toBe(true);
-      expect(playback.source).toMatch(/\/assets\/reel-\d+\.mp4$/);
+      expect(playback.source).toMatch(/\/assets\/reel-\d+\.mp4(?:\?v=[a-f0-9]+)?$/);
       await browser.locator('#video-dialog .close').click();
     }
   }

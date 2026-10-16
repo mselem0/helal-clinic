@@ -1,7 +1,19 @@
 'use strict';
 function selectByText(selector,text) { const select=document.querySelector(selector); if(!select)return; const option=[...select.options].find(o=>o.textContent===text); if(option)select.value=option.value; }
 const videoDialog=document.querySelector('#video-dialog');
+const preparedVideos=new Map(), playerShells=new WeakMap();
+function prepareVideo(button){
+ const source=button.dataset.src || '/assets/reel-'+button.dataset.reel+'.mp4?v=20261017';
+ if(!preparedVideos.has(source)){
+  const video=document.createElement('video');video.playsInline=true;video.preload='metadata';video.src=source;
+  preparedVideos.set(source,video);
+  if(preparedVideos.size>2){const oldest=preparedVideos.keys().next().value;const previous=preparedVideos.get(oldest);if(!previous.isConnected){previous.removeAttribute('src');previous.load();preparedVideos.delete(oldest);}}
+ }
+ const video=preparedVideos.get(source);video.poster=button.dataset.poster || '/assets/reel-'+button.dataset.reel+'.jpg';video.setAttribute('aria-label',button.dataset.title || 'فيديو الدكتور');return video;
+}
+
 function createPlayer(video){
+ if(playerShells.has(video))return playerShells.get(video);
  video.controls=false;
  const shell=document.createElement('div');shell.className='modern-player';video.parentNode.insertBefore(shell,video);shell.append(video);
  const overlay=document.createElement('button');overlay.className='player-center';overlay.type='button';overlay.setAttribute('aria-label','تشغيل الفيديو');overlay.textContent='▶';shell.append(overlay);
@@ -10,29 +22,33 @@ function createPlayer(video){
  const showStatus=text=>{status.textContent=text;status.hidden=!text;};
  const play=()=>video.play().catch(error=>{if(error.name==='AbortError')return;showStatus(error.name==='NotAllowedError'?'اضغطي تشغيل لبدء الفيديو.':'تعذر تشغيل الفيديو. حاولي مرة أخرى.');});
  video.addEventListener('error',()=>showStatus('تعذر تحميل الفيديو. تحققي من الاتصال وحاولي مرة أخرى.'));
+ video.addEventListener('waiting',()=>showStatus('جارِ تحميل الفيديو…'));
  video.addEventListener('playing',()=>showStatus(''));
+ video.addEventListener('canplay',()=>showStatus(''));
  const toggle=()=>video.paused?play():video.pause();overlay.addEventListener('click',toggle);video.addEventListener('click',toggle);bar.querySelector('.toggle').addEventListener('click',toggle);
  const format=t=>Math.floor((t||0)/60)+':'+String(Math.floor((t||0)%60)).padStart(2,'0');
  const update=()=>{bar.querySelector('.player-time').textContent=format(video.currentTime)+' / '+format(video.duration);bar.querySelector('.seek').value=video.duration?video.currentTime/video.duration*100:0;};video.addEventListener('timeupdate',update);video.addEventListener('loadedmetadata',update);
  video.addEventListener('play',()=>{shell.classList.add('is-playing');bar.querySelector('.toggle').textContent='Ⅱ';overlay.setAttribute('aria-label','إيقاف الفيديو');});video.addEventListener('pause',()=>{shell.classList.remove('is-playing');bar.querySelector('.toggle').textContent='▶';overlay.setAttribute('aria-label','تشغيل الفيديو');});
  bar.querySelector('.seek').addEventListener('input',e=>{if(Number.isFinite(video.duration))video.currentTime=Number(e.target.value)/100*video.duration;});bar.querySelector('.mute').addEventListener('click',()=>{video.muted=!video.muted;bar.querySelector('.mute').textContent=video.muted?'×':'♪';});bar.querySelector('.volume').addEventListener('input',e=>{video.volume=Number(e.target.value);video.muted=video.volume===0;bar.querySelector('.mute').textContent=video.muted?'×':'♪';});bar.querySelector('.speed').addEventListener('change',e=>video.playbackRate=Number(e.target.value));bar.querySelector('.fullscreen').addEventListener('click',()=>{shell.classList.toggle('expanded-player');if(!shell.classList.contains('expanded-player')&&document.fullscreenElement)document.exitFullscreen();});
- shell.tabIndex=0;shell.addEventListener('keydown',e=>{if(e.target!==shell)return;if(e.key===' '){e.preventDefault();toggle();}if(e.key==='ArrowRight')video.currentTime=Math.min(video.duration,video.currentTime+5);if(e.key==='ArrowLeft')video.currentTime=Math.max(0,video.currentTime-5);});return shell;
+ shell.tabIndex=0;shell.addEventListener('keydown',e=>{if(e.target!==shell)return;if(e.key===' '){e.preventDefault();toggle();}if(e.key==='ArrowRight')video.currentTime=Math.min(video.duration,video.currentTime+5);if(e.key==='ArrowLeft')video.currentTime=Math.max(0,video.currentTime-5);});playerShells.set(video,shell);return shell;
 }
 
 document.querySelectorAll('dialog').forEach(dialog=>{dialog.querySelector('.close')?.addEventListener('click',()=>dialog.close());dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});});
 document.querySelectorAll('video').forEach(video=>createPlayer(video));
-document.querySelectorAll('[data-reel]').forEach(button=>button.addEventListener('click',()=>{
+document.querySelectorAll('[data-reel]').forEach(button=>{
+ const warm=()=>{if((button.dataset.reel || button.dataset.src) && !navigator.connection?.saveData)prepareVideo(button);};
+ button.addEventListener('pointerenter',warm);button.addEventListener('focus',warm);button.addEventListener('pointerdown',warm,{passive:true});
+ button.addEventListener('click',()=>{
  if(!videoDialog || (!button.dataset.reel && !button.dataset.src))return;
  document.querySelectorAll('video').forEach(v=>v.pause());
- const video=document.createElement('video'); video.playsInline=true;video.preload='metadata';
- video.poster=button.dataset.poster || '/assets/reel-'+button.dataset.reel+'.jpg';
- video.src=button.dataset.src || '/assets/reel-'+button.dataset.reel+'.mp4';
- video.setAttribute('aria-label',button.dataset.title || 'فيديو الدكتور');
- document.querySelector('#video-container').replaceChildren(video);createPlayer(video);
+ const video=prepareVideo(button);
+ if(!playerShells.has(video)){document.querySelector('#video-container').replaceChildren(video);createPlayer(video);}
+ else document.querySelector('#video-container').replaceChildren(playerShells.get(video));
+ video.currentTime=0;
  videoDialog.querySelector('h3').textContent=button.dataset.title || 'فيديو الدكتور';
  const sourceLink=videoDialog.querySelector('a');sourceLink.hidden=!/^\d+$/.test(button.dataset.reel || '');if(!sourceLink.hidden)sourceLink.href='https://www.facebook.com/reel/'+encodeURIComponent(button.dataset.reel)+'/';
  videoDialog.showModal();video.play().catch(()=>{ /* The visible play button permits playback if autoplay is blocked. */ });
-}));
+});});
 videoDialog?.addEventListener('close',()=>{videoDialog.querySelectorAll('video').forEach(v=>v.pause());document.querySelector('#video-container')?.replaceChildren();});
 const form=document.querySelector('#booking-form');
 let showBookingStep=()=>{};
