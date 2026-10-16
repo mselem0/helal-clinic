@@ -30,5 +30,5 @@ $port = (int) ($argv[1] ?? 0);
 if ($port < 1) {
     exit(1);
 }
-passthru(escapeshellarg(PHP_BINARY).' -d opcache.enable_cli=0 -d pcre.jit=0 -S 127.0.0.1:'.$port.' -t '.escapeshellarg($root.'/public').' '.escapeshellarg(__DIR__.'/router.php'), $code);
+passthru(escapeshellarg(PHP_BINARY).' -d opcache.enable=0 -d opcache.enable_cli=0 -d pcre.jit=0 -S 127.0.0.1:'.$port.' -t '.escapeshellarg($root.'/public').' '.escapeshellarg(__DIR__.'/router.php'), $code);
 exit($code);
