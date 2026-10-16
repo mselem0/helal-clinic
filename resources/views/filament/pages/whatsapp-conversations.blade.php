@@ -7,7 +7,7 @@
             <!-- Sidebar Header -->
             <header class="sidebar-header">
                 <div class="avatar-wrapper">
-                    <img src="https://ui-avatars.com/api/?name=Dr+Ragab&background=002855&color=fff" alt="Admin">
+                    <img src="{{ asset('assets/logo.png') }}" alt="Admin">
                 </div>
                 <div class="header-actions">
                     <!-- Actions removed to simplify interface -->

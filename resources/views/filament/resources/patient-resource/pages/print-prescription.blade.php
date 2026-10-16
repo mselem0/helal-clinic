@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>روشتة طبية - {{ $prescription->patient->name }}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family={{ $template ? $template->font_family : "Almarai" }}:wght@400;700&display=swap');
+        @import url('{{ asset('fonts/tajawal.css') }}');
         
         :root {
             --primary-color: {{ $template ? $template->primary_color : "#002855" }};
             --secondary-color: {{ $template ? $template->secondary_color : "#00B4D8" }};
-            --font-family: '{{ $template ? $template->font_family : "Almarai" }}', sans-serif;
+            --font-family: '{{ $template ? $template->font_family : "Tajawal" }}', sans-serif;
         }
 
         body {
@@ -388,7 +388,7 @@
                                         @endif
                                     </h1>
                                     @if(!$template || !$template->header_left_ar)
-                                        <p>استشاري طب وجراحة أمراض الذكورة وتأخر الإنجاب</p>
+                                        <p>استشاري أمراض النساء والتوليد والمناظير والحقن المجهري</p>
                                     @endif
                                 </div>
                             </div>
@@ -396,9 +396,9 @@
                                 @if($template && $template->header_right_en)
                                     {!! nl2br(e($template->header_right_en)) !!}
                                 @else
-                                    <strong>Dr. Mohamed Ragab Shahata Clinic</strong><br>
-                                    Andrology & Male Infertility Specialist<br>
-                                    Tel: 01234567890 / 01098765432
+                                    <strong>Dr. Mohamed Helal Clinic</strong><br>
+                                    Obstetrics and Gynecology<br>
+                                    
                                 @endif
                             </div>
                         </div>
@@ -489,16 +489,14 @@
                                 @if($template && $template->footer_text_ar)
                                     {!! $template->footer_text_ar !!}
                                 @else
-                                    المركز الطبي التخصصي - المهندسين - الجيزة<br>
-                                    مواعيد الاستشارة: السبت والاثنين والأربعاء من ٦م إلى ١٠م
+                                    يرجى ضبط بيانات الفرع والتواصل في قالب الطباعة.
                                 @endif
                             </div>
                             <div class="footer-col-en">
                                 @if($template && $template->footer_text_en)
                                     {!! $template->footer_text_en !!}
                                 @else
-                                    Clinic Hotline: 19999 / Whatsapp: 01011223344<br>
-                                    Web: www.drmohamedragab.com
+                                    Helal Clinic
                                 @endif
                             </div>
                         </div>

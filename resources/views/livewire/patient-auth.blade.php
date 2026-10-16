@@ -3,7 +3,7 @@
         <div class="p-8 sm:p-12">
             <div class="text-center mb-10">
                 <a href="/">
-                    <img src="{{ asset('logo.png') }}" alt="Dr. Mohamed Ragab" class="h-16 mx-auto mb-6">
+                    <img src="{{ asset('assets/logo.png') }}" alt="Dr. Mohamed Helal" class="h-16 mx-auto mb-6">
                 </a>
                 <h2 class="text-3xl font-bold text-navy">
                     {{ $type === 'signup' ? 'إنشاء حساب جديد' : 'تسجيل الدخول' }}

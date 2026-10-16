@@ -46,7 +46,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->font('Tajawal', url: asset('fonts/tajawal.css'))
             ->brandName('عيادات هلال | لوحة الإدارة')
-            ->favicon(asset('storage/favicon.ico'))
+            ->favicon(asset('assets/logo.png'))
             ->darkMode(false)
             ->sidebarCollapsibleOnDesktop()
             ->viteTheme('resources/css/app.css')
