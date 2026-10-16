@@ -10,6 +10,7 @@
   },
   "devDependencies": {
     "@e2e-dev/web": "^0.13.0",
+    "@fontsource/ibm-plex-sans-arabic": "5.3.0",
     "@fontsource/tajawal": "^5.3.0",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.19",

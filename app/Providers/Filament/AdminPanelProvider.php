@@ -44,7 +44,7 @@ class AdminPanelProvider extends PanelProvider
                 'secondary' => Color::hex('#ed8b19'),
                 'gray' => Color::Slate,
             ])
-            ->font('Tajawal', url: asset('fonts/tajawal.css'))
+            ->font('IBM Plex Sans Arabic', url: asset('fonts/ibm-plex-arabic.css'))
             ->brandName('عيادات هلال | لوحة الإدارة')
             ->favicon(asset('assets/logo.png'))
             ->darkMode(false)
