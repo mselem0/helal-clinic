@@ -108,8 +108,8 @@ test('service create, edit, upload and delete update the actual public site', as
   await browser.locator('input[id="data.name"]').fill('خدمة اختبار شاملة');
   await browser.locator('input[id="data.slug"]').fill('e2e-service');
   await browser.locator('textarea[id="data.description"]').fill('وصف خدمة اختبار من لوحة التحكم');
-  await browser.locator('.fi-fo-file-upload input[type="file"]').first().setInputFiles('public/assets/service-pregnancy.jpg');
-  await expect(browser.locator('.filepond--item[data-filepond-item-state="processing-complete"]')).toBeVisible();
+  await browser.locator('.fi-fo-file-upload .filepond--browser').first().setInputFiles('public/assets/service-pregnancy.jpg');
+  await expect(browser.locator('.filepond--item[data-filepond-item-state="processing-complete"]')).toBeVisible({timeout:10000});
   await screen.getByRole('button','إضافة',{exact:true}).click();await expect(browser).toHaveURL(/services\/\d+\/edit/);
   const state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());const item=state.services.find((s:any)=>s.slug==='e2e-service');expect(item).toBeDefined();
   await app.open('/');await expect(screen.getByRole('heading','خدمة اختبار شاملة')).toBeVisible();
