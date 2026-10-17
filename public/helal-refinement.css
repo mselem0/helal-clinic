@@ -86,3 +86,14 @@ main>.section-shell>.google-reviews{padding-inline:0}
 @media(prefers-reduced-motion:reduce){#videos .real-thumbnail{transition:none}#videos .video-tile:hover .real-thumbnail{transform:none}}
 #videos .tile-art button{top:auto;right:auto;bottom:18px;left:18px}
 @media(max-width:760px){#videos .tile-art button{top:auto;right:auto;bottom:16px;left:16px}}
+
+/* Interior titles are compact navigation, rather than a second hero section. */
+.inner-page>.page-masthead{padding-block:24px 28px}
+.inner-page>.page-masthead .breadcrumbs{margin-bottom:12px}
+.inner-page>.page-masthead>.wrap>.eyebrow{display:none}
+.inner-page>.page-masthead h1{font-size:clamp(28px,3vw,38px);line-height:1.5;margin:0}
+.inner-page>.page-masthead p{margin-top:12px;font-size:15px;line-height:1.9}
+.inner-page>.page-masthead+.section-shell :is(.services,.videos,.clinics,.articles,.google-reviews,.faq,.personal-journey,.about){padding-top:40px}
+.inner-page>.page-masthead+.section-shell .booking{margin-block:28px 40px}
+.inner-page>.page-masthead+.detail-grid{padding-top:36px}
+@media(max-width:760px){.inner-page>.page-masthead{padding-block:18px 22px}.inner-page>.page-masthead .breadcrumbs{margin-bottom:10px}.inner-page>.page-masthead h1{font-size:27px}.inner-page>.page-masthead+.section-shell :is(.services,.videos,.clinics,.articles,.google-reviews,.faq,.personal-journey,.about){padding-top:28px}.inner-page>.page-masthead+.section-shell .booking{margin-block:22px 28px}.inner-page>.page-masthead+.detail-grid{padding-top:28px}}
