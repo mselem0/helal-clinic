@@ -13,7 +13,7 @@ class SitePage extends Model
 
     protected $guarded = ['id'];
 
-    protected $casts = ['sections' => 'array', 'draft_data' => 'array', 'is_published' => 'boolean', 'published_at' => 'datetime'];
+    protected $casts = ['doctor_profile' => 'array', 'sections' => 'array', 'draft_data' => 'array', 'is_published' => 'boolean', 'published_at' => 'datetime'];
 
     public function publicPath(): string
     {

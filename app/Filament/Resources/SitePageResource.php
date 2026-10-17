@@ -54,6 +54,19 @@ class SitePageResource extends Resource
                 Forms\Components\Repeater::make('sections')->defaultItems(0)->label('أقسام الصفحة بالترتيب')->schema([Forms\Components\Select::make('key')->label('القسم')->options(fn () => PageSection::whereNotIn('section_key', ['header', 'footer', 'home'])->pluck('section_label', 'section_key'))->required()->distinct()])->reorderable()->default([])->helperText('النصوص والصور الخاصة بكل قسم متاحة من استوديو الموقع.'),
                 Forms\Components\Toggle::make('is_published')->label('إظهار الصفحة بعد النشر')->default(false),
             ]),
+            Forms\Components\Section::make('المؤهلات والتخصصات والعضويات')->description('تظهر في صفحة عن الدكتور مع ملخص في الرئيسية. الحفظ مسودة، والنشر من استوديو الموقع.')->visible(fn ($record) => $record?->page_key === 'about')->schema([
+                Forms\Components\TextInput::make('doctor_profile.headline')->label('الصفة المهنية')->maxLength(255),
+                Forms\Components\Repeater::make('doctor_profile.qualifications')->label('المؤهلات العلمية')->schema([
+                    Forms\Components\TextInput::make('title')->label('المؤهل')->required()->maxLength(255),
+                    Forms\Components\TextInput::make('detail')->label('الجامعة أو الجهة')->maxLength(255),
+                ])->defaultItems(0)->reorderable()->collapsible(),
+                Forms\Components\Repeater::make('doctor_profile.memberships')->label('العضويات المهنية')->schema([
+                    Forms\Components\TextInput::make('title')->label('اسم الجمعية')->required()->maxLength(255),
+                ])->defaultItems(0)->reorderable(),
+                Forms\Components\Repeater::make('doctor_profile.specialties')->label('مجالات التخصص')->schema([
+                    Forms\Components\TextInput::make('title')->label('مجال التخصص')->required()->maxLength(255),
+                ])->defaultItems(0)->reorderable(),
+            ]),
             Forms\Components\Section::make('محركات البحث والمشاركة')->schema([
                 Forms\Components\TextInput::make('meta_title')->label('عنوان البحث')->maxLength(255),
                 Forms\Components\Textarea::make('meta_description')->label('وصف البحث')->maxLength(320),
