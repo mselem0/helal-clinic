@@ -51,7 +51,9 @@ document.querySelectorAll('[data-reel]').forEach(button=>{
   const url=new URL('https://player.vimeo.com/video/'+match[1]);
   const hash=new URL(external).searchParams.get('h');if(hash)url.searchParams.set('h',hash);
   url.searchParams.set('autoplay','1');url.searchParams.set('dnt','1');
-  const frame=document.createElement('iframe');frame.src=url.href;frame.title=button.dataset.title || 'فيديو الدكتور';frame.allow='autoplay; fullscreen; picture-in-picture';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';frame.style.cssText='display:block;width:100%;height:min(74dvh,650px);border:0';
+  for(const key of ['title','byline','portrait','badge'])url.searchParams.set(key,'0');
+  url.searchParams.set('color','008b91');url.searchParams.set('playsinline','1');
+  const frame=document.createElement('iframe');frame.src=url.href;frame.title=button.dataset.title || 'فيديو الدكتور';frame.allow='autoplay; fullscreen; picture-in-picture';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';frame.className='vimeo-player';
   document.querySelector('#video-container').replaceChildren(frame);
   videoDialog.querySelector('h3').textContent=frame.title;
   const link=videoDialog.querySelector('a');link.href='https://vimeo.com/'+match[1];link.textContent='مشاهدة على Vimeo';link.hidden=false;

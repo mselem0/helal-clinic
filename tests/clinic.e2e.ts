@@ -53,7 +53,7 @@ test('Vimeo videos load only on click and closing removes the external player', 
     const count = await browser.locator('#videos .tile-art button').count();
     for (let index = -1; index < count; index++) {
       await (index < 0 ? browser.locator('.feature-preview') : browser.locator('#videos .tile-art button').nth(index)).click();
-      await expect(browser.locator('#video-dialog iframe')).toHaveAttribute('src', /^https:\/\/player\.vimeo\.com\/video\/12367865[0-9]+\?autoplay=1&dnt=1$/);
+      await expect(browser.locator('#video-dialog iframe')).toHaveAttribute('src', /^https:\/\/player\.vimeo\.com\/video\/12367865[0-9]+\?autoplay=1&dnt=1&title=0&byline=0&portrait=0&badge=0&color=008b91&playsinline=1$/);
       expect(await browser.locator('#video-dialog video').count()).toBe(0);
       await browser.locator('#video-dialog .close').click();
       expect(await browser.locator('#video-dialog iframe').count()).toBe(0);
