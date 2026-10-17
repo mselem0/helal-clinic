@@ -47,3 +47,14 @@ test('public structured metadata, sitemap, related links and draft protection wo
  expect(responses.sitemap).toContain('/branches/');expect(responses.sitemap).toContain('lastmod');expect(responses.robots).toContain('Disallow: /site-preview/');expect(responses.unsigned).toBe(403);expect(responses.missing).toBe(404);
  await app.open('/services/service-1');await expect(browser.locator('.related-panel')).toContainText('السادس من أكتوبر');
 });
+
+test('doctor qualifications and specialties render clearly in both themes',async({app,browser})=>{
+ for(const theme of ['helal_classic','helal_modern']){
+  const url=await browser.evaluate(async theme=>(await(await fetch('/__e2e/preview?page=about&theme='+theme)).json()).url,theme);
+  await app.open(url);
+  await expect(browser.locator('.doctor-profile')).toContainText('دكتوراه أمراض النساء والتوليد');
+  await expect(browser.locator('.profile-memberships')).toContainText('الجمعية الأوروبية للخصوبة والعقم');
+  expect(await browser.locator('.profile-specialties li').count()).toBe(12);
+  expect(await browser.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ }
+});

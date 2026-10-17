@@ -24,6 +24,10 @@ class MultipageSeeder extends Seeder
             SitePage::firstOrCreate(['page_key' => $key], ['slug' => $slug, 'title' => $title, 'sections' => $sections, 'is_published' => $available, 'published_at' => $available ? now() : null,
                 'meta_title' => $title.' | عيادات د. محمد هلال', 'meta_description' => 'تعرّفي على '.$title.' في عيادات د. محمد هلال لأمراض النساء والتوليد، واطلبي موعدًا في الفرع المناسب لكِ.']);
         }
+        $aboutPage = SitePage::where('page_key', 'about')->first();
+        if ($aboutPage && $aboutPage->doctor_profile === null) {
+            $aboutPage->update(['doctor_profile' => json_decode(file_get_contents(database_path('content/doctor-profile.json')), true)]);
+        }
         $items = collect(['home', 'about', 'services', 'journey', 'videos', 'articles', 'branches', 'faq', 'contact', 'appointment'])->map(fn ($key) => ['page_key' => $key, 'label' => SitePage::where('page_key', $key)->value('title')])->all();
         foreach (['header', 'footer'] as $location) {
             SiteNavigation::firstOrCreate(['location' => $location], ['items' => $location === 'header' ? collect($items)->whereIn('page_key', ['home', 'about', 'services', 'articles', 'branches', 'appointment'])->map(fn ($item) => array_replace($item, ['label' => ['home' => 'الرئيسية', 'about' => 'عن الدكتور', 'services' => 'الخدمات', 'articles' => 'المقالات', 'branches' => 'الفروع', 'appointment' => 'طلب موعد'][$item['page_key']]]))->values()->all() : $items]);
