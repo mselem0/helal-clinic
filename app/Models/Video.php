@@ -18,6 +18,7 @@ class Video extends Model implements HasMedia
         'uploaded_at',
         'image_path',
         'video_path',
+        'external_video_url',
         'reel',
         'category',
         'description',
