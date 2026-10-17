@@ -40,31 +40,23 @@ test('mobile menu opens, follows a section and closes', async ({ app, browser, s
 test('video player opens the selected local video and closes', async ({ app, browser }) => {
   await app.open('/');await browser.locator('#videos .tile-art button').first().click();
   await expect(browser.locator('#video-dialog')).toBeVisible();
-  expect(await browser.evaluate(() => document.querySelector('#video-dialog video')?.getAttribute('src')?.includes('.mp4'))).toBe(true);
+  expect(await browser.evaluate(() => document.querySelector('#video-dialog iframe')?.getAttribute('src')?.startsWith('https://player.vimeo.com/video/'))).toBe(true);
   await browser.locator('#video-dialog .close').click();await expect(browser.locator('#video-dialog')).not.toBeVisible();
 });
 
-test('featured and gallery videos decode and advance during playback', async ({ app, browser }) => {
+test('Vimeo videos load only on click and closing removes the external player', async ({ app, browser }) => {
   for (const theme of ['helal_classic', 'helal_modern']) {
     await app.open('/');
     const preview = await browser.evaluate(async theme => (await (await fetch('/__e2e/preview?theme='+theme)).json()).url, theme);
     await app.open(preview);
+    expect(await browser.locator('iframe[src*="vimeo.com"]').count()).toBe(0);
     const count = await browser.locator('#videos .tile-art button').count();
     for (let index = -1; index < count; index++) {
       await (index < 0 ? browser.locator('.feature-preview') : browser.locator('#videos .tile-art button').nth(index)).click();
-      const playback = await browser.evaluate(async () => {
-        const video = document.querySelector('#video-dialog video') as HTMLVideoElement;
-        video.muted = true;
-        await Promise.race([video.play(), new Promise((_, reject) => setTimeout(() => reject(new Error('Video did not start')), 10000))]);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return { error: video.error?.code ?? null, time: video.currentTime, duration: video.duration, ready: video.readyState, source: video.currentSrc };
-      });
-      expect(playback.error).toBe(null);
-      expect(playback.time > 0).toBe(true);
-      expect(playback.duration > 0).toBe(true);
-      expect(playback.ready >= 2).toBe(true);
-      expect(playback.source).toMatch(/\/assets\/reel-\d+\.mp4(?:\?v=[a-f0-9]+)?$/);
+      await expect(browser.locator('#video-dialog iframe')).toHaveAttribute('src', /^https:\/\/player\.vimeo\.com\/video\/12367865[0-9]+\?autoplay=1&dnt=1$/);
+      expect(await browser.locator('#video-dialog video').count()).toBe(0);
       await browser.locator('#video-dialog .close').click();
+      expect(await browser.locator('#video-dialog iframe').count()).toBe(0);
     }
   }
 });

@@ -1,6 +1,9 @@
 'use strict';
 function selectByText(selector,text) { const select=document.querySelector(selector); if(!select)return; const option=[...select.options].find(o=>o.textContent===text); if(option)select.value=option.value; }
 const videoDialog=document.querySelector('#video-dialog');
+const vimeoVideos={"2129128044360416": "1236786561", "2013840505981997": "1236786559", "1683918787070180": "1236786562", "1122351437148430": "1236786560"};
+function vimeoSource(button){const source=button.dataset.src || '';if(/^https:\/\/(?:www\.)?vimeo\.com\//.test(source)||/^https:\/\/player\.vimeo\.com\/video\//.test(source))return source;return !source && vimeoVideos[button.dataset.reel]?'https://player.vimeo.com/video/'+vimeoVideos[button.dataset.reel]:null;}
+
 const preparedVideos=new Map(), playerShells=new WeakMap();
 function prepareVideo(button){
  const source=button.dataset.src || '/assets/reel-'+button.dataset.reel+'.mp4?v=20261017';
@@ -33,20 +36,33 @@ function createPlayer(video){
  shell.tabIndex=0;shell.addEventListener('keydown',e=>{if(e.target!==shell)return;if(e.key===' '){e.preventDefault();toggle();}if(e.key==='ArrowRight')video.currentTime=Math.min(video.duration,video.currentTime+5);if(e.key==='ArrowLeft')video.currentTime=Math.max(0,video.currentTime-5);});playerShells.set(video,shell);return shell;
 }
 
-document.querySelectorAll('dialog').forEach(dialog=>{dialog.querySelector('.close')?.addEventListener('click',()=>dialog.close());dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});});
+document.querySelectorAll('dialog').forEach(dialog=>{dialog.querySelector('.close')?.addEventListener('click',()=>{if(dialog===videoDialog)document.querySelector('#video-container')?.replaceChildren();dialog.close();});dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});});
 document.querySelectorAll('video').forEach(video=>createPlayer(video));
 document.querySelectorAll('[data-reel]').forEach(button=>{
- const warm=()=>{if((button.dataset.reel || button.dataset.src) && !navigator.connection?.saveData)prepareVideo(button);};
+ const warm=()=>{if(!vimeoSource(button) && (button.dataset.reel || button.dataset.src) && !navigator.connection?.saveData)prepareVideo(button);};
  button.addEventListener('pointerenter',warm);button.addEventListener('focus',warm);button.addEventListener('pointerdown',warm,{passive:true});
  button.addEventListener('click',()=>{
  if(!videoDialog || (!button.dataset.reel && !button.dataset.src))return;
  document.querySelectorAll('video').forEach(v=>v.pause());
+ const external=vimeoSource(button);
+ if(external){
+  const match=external.match(/^https:\/\/(?:player\.vimeo\.com\/video\/|(?:www\.)?vimeo\.com\/)([0-9]+)/);
+  if(!match)return;
+  const url=new URL('https://player.vimeo.com/video/'+match[1]);
+  const hash=new URL(external).searchParams.get('h');if(hash)url.searchParams.set('h',hash);
+  url.searchParams.set('autoplay','1');url.searchParams.set('dnt','1');
+  const frame=document.createElement('iframe');frame.src=url.href;frame.title=button.dataset.title || 'فيديو الدكتور';frame.allow='autoplay; fullscreen; picture-in-picture';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';frame.style.cssText='display:block;width:100%;height:min(74dvh,650px);border:0';
+  document.querySelector('#video-container').replaceChildren(frame);
+  videoDialog.querySelector('h3').textContent=frame.title;
+  const link=videoDialog.querySelector('a');link.href='https://vimeo.com/'+match[1];link.textContent='مشاهدة على Vimeo';link.hidden=false;
+  videoDialog.showModal();return;
+ }
  const video=prepareVideo(button);
  if(!playerShells.has(video)){document.querySelector('#video-container').replaceChildren(video);createPlayer(video);}
  else document.querySelector('#video-container').replaceChildren(playerShells.get(video));
  video.currentTime=0;
  videoDialog.querySelector('h3').textContent=button.dataset.title || 'فيديو الدكتور';
- const sourceLink=videoDialog.querySelector('a');sourceLink.hidden=!/^\d+$/.test(button.dataset.reel || '');if(!sourceLink.hidden)sourceLink.href='https://www.facebook.com/reel/'+encodeURIComponent(button.dataset.reel)+'/';
+ const sourceLink=videoDialog.querySelector('a');sourceLink.textContent='مشاهدة على فيسبوك';sourceLink.hidden=!/^\d+$/.test(button.dataset.reel || '');if(!sourceLink.hidden)sourceLink.href='https://www.facebook.com/reel/'+encodeURIComponent(button.dataset.reel)+'/';
  videoDialog.showModal();video.play().catch(()=>{ /* The visible play button permits playback if autoplay is blocked. */ });
 });});
 videoDialog?.addEventListener('close',()=>{videoDialog.querySelectorAll('video').forEach(v=>v.pause());document.querySelector('#video-container')?.replaceChildren();});
