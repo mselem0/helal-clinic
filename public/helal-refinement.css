@@ -63,3 +63,26 @@ main>.section-shell>.google-reviews{padding-inline:0}
 #video-dialog>a{font-size:11px;opacity:.75;padding-top:12px;margin-top:0}
 #video-dialog::backdrop{background:#071113eb;backdrop-filter:blur(10px)}
 @media(max-width:480px){#video-dialog{width:min(calc(100vw - 32px),calc((100dvh - 140px)*9/16))}#video-dialog h3{font-size:14px;margin-bottom:12px}#video-container{border-radius:12px}}
+
+/* Compact editorial video cards: fill the row and end with one clear action. */
+#videos .reels-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:26px;align-items:stretch}
+#videos .video-tile{display:flex;flex-direction:column;border-radius:22px;box-shadow:0 5px 22px #164b4e06;background:#fff}
+#videos .tile-art{height:auto;aspect-ratio:4/5;background:#eaf2ee;isolation:isolate}
+#videos .real-thumbnail{object-fit:cover;object-position:center 30%;transition:transform .3s}
+#videos .tile-art:after{background:linear-gradient(#082e3020,transparent 45%,#082e3059)}
+#videos .video-label{top:16px;right:16px;max-width:calc(100% - 32px);padding:5px 12px;background:#fffffff0;font-size:11px}
+#videos .tile-art button{width:58px;height:58px;top:calc(50% - 29px);right:calc(50% - 29px);border:1px solid #ffffffa0;background:#fffffff0;box-shadow:0 4px 24px #003f4326;font-size:20px}
+#videos .tile-copy{padding:24px;display:flex;flex-direction:column;flex:1}
+#videos .tile-copy h3{font-size:20px;line-height:1.8;margin:0 0 12px;min-height:0}
+#videos .tile-copy p{font-size:14px;line-height:1.9;margin:0 0 20px;min-height:0;flex:1}
+#videos .tile-copy .video-watch{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;border-top:1px solid var(--section-line);padding:14px 0 0;margin-top:auto;font-size:14px;font-weight:500}
+#videos .video-section-footer{display:flex;align-items:center;justify-content:space-between;gap:28px;border-top:1px solid var(--section-line);margin-top:32px;padding-top:24px}
+#videos .video-section-footer p{margin:0;max-width:700px;line-height:1.9}
+#videos .video-section-footer .button{flex-shrink:0}
+#videos .video-tile:hover .real-thumbnail{transform:scale(1.025)}
+@media(min-width:761px) and (max-width:1000px){#videos .reels-grid{gap:18px}#videos .tile-copy{padding:18px}#videos .tile-copy h3{font-size:17px}#videos .tile-copy p{font-size:13px}}
+@media(max-width:760px){#videos .reels-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}#videos .tile-copy{padding:18px}#videos .tile-copy h3{font-size:17px}#videos .tile-copy p{font-size:13px}#videos .video-section-footer{flex-direction:column;align-items:flex-start;gap:20px;margin-top:28px}#videos .tile-art button{width:48px;height:48px;top:calc(50% - 24px);right:calc(50% - 24px)}}
+@media(max-width:540px){#videos .reels-grid{grid-template-columns:1fr;gap:24px}#videos .tile-art{aspect-ratio:6/5}#videos .real-thumbnail{object-position:center 25%}#videos .tile-copy{padding:22px}#videos .tile-copy h3{font-size:20px}#videos .tile-copy p{font-size:14px}}
+@media(prefers-reduced-motion:reduce){#videos .real-thumbnail{transition:none}#videos .video-tile:hover .real-thumbnail{transform:none}}
+#videos .tile-art button{top:auto;right:auto;bottom:18px;left:18px}
+@media(max-width:760px){#videos .tile-art button{top:auto;right:auto;bottom:16px;left:16px}}
