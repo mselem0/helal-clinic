@@ -19,15 +19,20 @@ class PageSeo
             $legacy->forceFill(array_replace(collect($page->draft_data ?? [])->only(['meta_title', 'meta_description', 'og_image', 'canonical_url', 'robots'])->all(), $legacy->draft_data ?? []));
         }
         $title = $item?->meta_title ?: ($item ? ($item->title ?? $item->name).' | عيادات د. محمد هلال' : ($legacy?->meta_title ?: $page->meta_title ?: $page->title.' | عيادات د. محمد هلال'));
-        $description = $item?->meta_description ?: ($item?->description ?: ($item instanceof ClinicBranch ? 'عيادة د. محمد هلال — '.$item->name.'. العنوان: '.$item->address : null) ?: ($legacy?->meta_description ?: $page->meta_description ?: $page->intro));
+        $description = $item
+            ? ($item->meta_description ?: $item->description ?: ($item instanceof ClinicBranch ? 'عيادة د. محمد هلال — '.$item->name.'. العنوان: '.$item->address : null))
+            : ($legacy?->meta_description ?: $page->meta_description ?: $page->intro);
         $description = str(strip_tags($description ?? ''))->squish()->limit(170, '')->toString();
         $canonical = $item ? url($item->publicPath()) : ($legacy?->canonical_url ?: $page->canonical_url ?: SiteView::pageUrl($page));
         if (request()->integer('page', 1) > 1) {
             $canonical .= '?page='.request()->integer('page');
         }
-        $image = $item?->og_image ?: ($legacy?->og_image ?: $page->og_image);
+        $image = $item?->og_image;
         if (! $image && $item && method_exists($item, 'getFirstMediaUrl')) {
             $image = $item->getFirstMediaUrl($item instanceof Article ? 'article-image' : 'service-image');
+        }
+        if (! $item) {
+            $image = $legacy?->og_image ?: $page->og_image;
         }
         $image = ContentUrl::resolve($image ?: $item?->image_path ?: 'assets/cover.jpg');
         if (! str_starts_with($image, 'http')) {
@@ -82,6 +87,6 @@ class PageSeo
             $schema[] = ['@type' => 'BreadcrumbList', 'itemListElement' => $crumbs];
         }
 
-        return ['meta_title' => $title, 'meta_description' => $description, 'canonical_url' => $canonical, 'robots' => $robots, 'og_title' => $legacy?->og_title ?: $title, 'og_description' => $legacy?->og_description ?: $description, 'og_image' => $image, 'og_type' => $item instanceof Article ? 'article' : 'website', 'schema' => ['@context' => 'https://schema.org', '@graph' => $schema]];
+        return ['meta_title' => $title, 'meta_description' => $description, 'canonical_url' => $canonical, 'robots' => $robots, 'og_title' => $item ? $title : ($legacy?->og_title ?: $title), 'og_description' => $item ? $description : ($legacy?->og_description ?: $description), 'og_image' => $image, 'og_type' => $item instanceof Article ? 'article' : 'website', 'schema' => ['@context' => 'https://schema.org', '@graph' => $schema]];
     }
 }
