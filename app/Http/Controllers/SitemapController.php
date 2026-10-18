@@ -43,8 +43,8 @@ class SitemapController extends Controller
             if ($videos && $page->page_key === 'videos') {
                 $videoObjects = array_filter(PageSeo::data($page)['schema']['@graph'], fn ($node) => $node['@type'] === 'VideoObject' && trim(strip_tags($node['description'] ?? '')) !== '');
             }
-            // Draft saves update updated_at too; omit optional lastmod until a reliable public timestamp exists.
-            $add($url, null, $seo?->og_image ?: $page->og_image, $videoObjects);
+            $date = collect([$page->public_updated_at, $seo?->public_updated_at])->filter()->sort()->last();
+            $add($url, $date, $seo?->og_image ?: $page->og_image, $videoObjects);
         }
         foreach ([Service::class => 'services.show', Article::class => 'blog.show', ClinicBranch::class => 'branches.show'] as $class => $route) {
             [$setting, $legacyKey] = match ($class) {
