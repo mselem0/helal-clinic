@@ -59,14 +59,36 @@ class PageSeo
             $schema[] = $branch;
         }
         if ($item instanceof Article) {
-            $article = ['@type' => 'Article', 'headline' => $item->title, 'description' => $description, 'image' => $image, 'mainEntityOfPage' => $canonical, 'dateModified' => $item->updated_at?->toIso8601String()];
+            $article = ['@type' => 'Article', '@id' => $canonical.'#article', 'headline' => $item->title, 'description' => $description, 'image' => $image, 'mainEntityOfPage' => $canonical, 'dateModified' => $item->updated_at?->toIso8601String()];
             if ($item->published_at) {
                 $article['datePublished'] = $item->published_at->toIso8601String();
             }
             if ($item->author_name) {
                 $article['author'] = ['@type' => 'Person', 'name' => $item->author_name];
             }
+            $citations = [];
+            foreach ($item->sources ?? [] as $source) {
+                $url = $source['url'] ?? '';
+                if (filter_var($url, FILTER_VALIDATE_URL) && in_array(strtolower(parse_url($url, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true)) {
+                    $citation = ['@type' => 'CreativeWork', 'url' => $url];
+                    if (trim($source['title'] ?? '') !== '') {
+                        $citation['name'] = $source['title'];
+                    }
+                    $citations[] = $citation;
+                }
+            }
+            if ($citations) {
+                $article['citation'] = $citations;
+            }
+            $medicalPage = ['@type' => 'MedicalWebPage', '@id' => $canonical.'#webpage', 'url' => $canonical, 'name' => $item->title, 'inLanguage' => 'ar-EG', 'mainEntity' => ['@id' => $canonical.'#article']];
+            if (trim($item->medical_reviewer ?? '') !== '') {
+                $medicalPage['reviewedBy'] = ['@type' => 'Person', 'name' => $item->medical_reviewer];
+            }
+            if ($item->reviewed_at && $item->reviewed_at->lte(now())) {
+                $medicalPage['lastReviewed'] = $item->reviewed_at->toDateString();
+            }
             $schema[] = $article;
+            $schema[] = $medicalPage;
         }
         if ($page->page_key === 'videos') {
             foreach (Video::where('is_active', true)->get() as $video) {

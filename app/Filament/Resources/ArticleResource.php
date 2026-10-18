@@ -60,10 +60,10 @@ class ArticleResource extends Resource
 
                 Forms\Components\Section::make('التأليف والمراجعة الطبية')->description('استخدمي أسماء ومصادر وتواريخ مراجعة فعلية فقط.')->schema([
                     Forms\Components\TextInput::make('author_name')->label('كاتب المقال')->maxLength(255),
-                    Forms\Components\TextInput::make('medical_reviewer')->label('المراجع الطبي')->maxLength(255),
+                    Forms\Components\TextInput::make('medical_reviewer')->label('المراجع الطبي')->maxLength(255)->helperText('يظهر اسم المراجع في المقال وفي البيانات المنظمة للصفحة الطبية؛ أدخلي اسم من راجع المحتوى فعليًا.'),
                     Forms\Components\DateTimePicker::make('published_at')->label('تاريخ النشر')->helperText('التاريخ المستقبلي يخفي المقال حتى موعده.'),
                     Forms\Components\DatePicker::make('reviewed_at')->label('آخر مراجعة طبية')->maxDate(now()),
-                    Forms\Components\Repeater::make('sources')->defaultItems(0)->label('المصادر')->schema([Forms\Components\TextInput::make('title')->label('المصدر')->required(), Forms\Components\TextInput::make('url')->label('الرابط')->url()->required()]),
+                    Forms\Components\Repeater::make('sources')->defaultItems(0)->label('المصادر')->helperText('روابط المصادر الظاهرة للقارئ تُضاف أيضًا إلى بيانات المقال المنظمة. استخدمي روابط HTTP أو HTTPS موثوقة.')->schema([Forms\Components\TextInput::make('title')->label('المصدر')->required(), Forms\Components\TextInput::make('url')->label('الرابط')->url()->required()]),
                     Forms\Components\Select::make('service_ids')->label('الخدمات المرتبطة')->multiple()->options(fn () => Service::pluck('name', 'id')),
                     Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
                 ]),
