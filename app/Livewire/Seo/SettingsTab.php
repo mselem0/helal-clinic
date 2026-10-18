@@ -88,9 +88,9 @@ class SettingsTab extends Component implements HasActions, HasForms
                                 Forms\Components\Grid::make(2)
                                     ->visible(fn ($get) => $get('sitemap_enabled'))
                                     ->schema([
-                                        TextInput::make('posts_per_sitemap')->label('عدد الروابط في كل ملف')->numeric()->default(500),
+                                        TextInput::make('posts_per_sitemap')->label('عدد الروابط في كل ملف')->numeric()->integer()->minValue(1)->maxValue(1000)->default(500)->helperText('يُقسّم الملف تلقائيًا عند تجاوز هذا العدد، بحد أقصى 1000 رابط لكل ملف.'),
                                         Select::make('homepage_priority')
-                                            ->label('أولوية الصفحة الرئيسية')
+                                            ->label('أولوية الصفحة الرئيسية')->helperText('قيمة اختيارية في Sitemap؛ Google لا يستخدمها كعامل ترتيب.')
                                             ->options(['1.0' => '1.0 (الأعلى)', '0.8' => '0.8', '0.5' => '0.5'])
                                             ->default('1.0'),
                                         Toggle::make('include_homepage')->label('تضمين الصفحة الرئيسية')->default(true),

@@ -17,6 +17,7 @@ Route::get('/blog', [PageController::class, 'blogIndex'])->name('blog.index');
 Route::get('/blog/{slug}', [PageController::class, 'blogShow'])->name('blog.show');
 Route::post('/bookings', [HomeController::class, 'storeBooking'])->middleware('throttle:10,1')->name('bookings.store');
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
+Route::get('/sitemap-{part}.xml', [SitemapController::class, 'index'])->whereNumber('part');
 
 Route::get('/branches', [PageController::class, 'branches'])->name('branches');
 Route::get('/branches/{slug}', [PageController::class, 'branchShow'])->name('branches.show');
