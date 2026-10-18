@@ -55,6 +55,10 @@ class SitePageResource extends Resource
                 Forms\Components\Toggle::make('is_published')->label('إظهار الصفحة بعد النشر')->default(false),
             ]),
             Forms\Components\Section::make('المؤهلات والتخصصات والعضويات')->description('تظهر في صفحة عن الدكتور مع ملخص في الرئيسية. الحفظ مسودة، والنشر من استوديو الموقع.')->visible(fn ($record) => $record?->page_key === 'about')->schema([
+                Forms\Components\Repeater::make('doctor_profile.official_links')->label('الحسابات الرسمية')->helperText('روابط الحسابات التابعة للدكتور والعيادة فقط؛ تظهر للزوار ولمحركات البحث بعد النشر.')->schema([
+                    Forms\Components\TextInput::make('label')->label('اسم المنصة')->required()->maxLength(100),
+                    Forms\Components\TextInput::make('url')->label('رابط الحساب')->url()->regex('/^https:\/\//i')->required()->maxLength(2000),
+                ])->defaultItems(0)->reorderable(),
                 Forms\Components\TextInput::make('doctor_profile.headline')->label('الصفة المهنية')->maxLength(255),
                 Forms\Components\Repeater::make('doctor_profile.qualifications')->label('المؤهلات العلمية')->schema([
                     Forms\Components\TextInput::make('title')->label('المؤهل')->required()->maxLength(255),
