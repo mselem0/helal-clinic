@@ -49,6 +49,11 @@ class PageSeo
         if (in_array($page->page_key, ['home', 'about'], true)) {
             $about = SiteView::draft(SitePage::where('page_key', 'about')->where('is_published', true)->first());
             $doctor = ['@type' => ['Person', 'Physician'], '@id' => url('/').'#doctor', 'name' => 'د. محمد هلال', 'url' => $about ? SiteView::pageUrl($about) : url('/')];
+            $identityProfile = $page->page_key === 'about' ? ($page->doctor_profile ?? []) : ($about?->doctor_profile ?? []);
+            $officialLinks = \App\Support\DoctorIdentity::links($identityProfile);
+            if ($officialLinks) {
+                $doctor['sameAs'] = array_column($officialLinks, 'url');
+            }
             // Full credentials are visible on the about page only, and come from its editor.
             if ($page->page_key === 'about') {
                 $profile = $page->doctor_profile ?? [];

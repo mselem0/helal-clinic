@@ -16,4 +16,9 @@
     @if(!empty($profile['specialties']))
     <div class="profile-specialties"><h3>مجالات التخصص والرعاية</h3><ul>@foreach($profile['specialties'] as $specialty)<li>{{ $specialty['title'] }}</li>@endforeach</ul><p class="fine">تُحدَّد الفحوصات وخيارات العلاج المناسبة بعد التقييم الطبي لكل حالة.</p></div>
     @endif
+    @if($officialLinks = \App\Support\DoctorIdentity::links($profile))
+    <div class="profile-specialties"><h3>الحسابات الرسمية للدكتور والعيادة</h3><ul>
+        @foreach($officialLinks as $link)<li><a href="{{ $link['url'] }}" target="_blank" rel="noopener noreferrer">{{ $link['label'] }}</a></li>@endforeach
+    </ul></div>
+    @endif
 </section>

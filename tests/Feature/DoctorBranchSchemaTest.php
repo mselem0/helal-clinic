@@ -28,6 +28,23 @@ class DoctorBranchSchemaTest extends TestCase
         $this->assertArrayNotHasKey('aggregateRating', $doctor);
     }
 
+    public function test_official_profiles_are_visible_and_draft_links_are_not_exposed(): void
+    {
+        $this->seed();
+        $page = SitePage::where('page_key', 'about')->firstOrFail();
+        $page->update(['doctor_profile' => ['official_links' => [
+            ['label' => 'Facebook', 'url' => 'https://www.facebook.com/HelalClinic0/'],
+            ['label' => 'Unsafe', 'url' => 'javascript:alert(1)'],
+        ]], 'draft_data' => ['doctor_profile' => ['official_links' => [['label' => 'Draft', 'url' => 'https://example.com/private-draft']]]]]);
+        foreach (['/', '/about-us'] as $path) {
+            $html = $this->get($path)->assertOk()->assertDontSee('https://example.com/private-draft')->getContent();
+            preg_match('~<script type="application/ld\\+json">(.*?)</script>~s', $html, $matches);
+            $doctor = collect(json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR)['@graph'])->first(fn ($node) => ($node['@id'] ?? '') === url('/').'#doctor');
+            $this->assertSame(['https://www.facebook.com/HelalClinic0/'], $doctor['sameAs']);
+        }
+        $this->get('/about-us')->assertSee('href="https://www.facebook.com/HelalClinic0/"', false)->assertDontSee('javascript:alert');
+    }
+
     public function test_branch_schema_omits_missing_fields_and_invented_hours_or_ratings(): void
     {
         $this->seed();
