@@ -1,7 +1,7 @@
 <div class="wrap detail-grid"><article class="detail-body">
 @if($type !== 'branch')
     @php($image = $item->getFirstMediaUrl($type === 'article' ? 'article-image' : 'service-image') ?: $item->image_path)
-    @if($image)<img class="detail-image" src="{{ \App\Support\ContentUrl::resolve($image) }}" alt="{{ $item->title ?? $item->name }}" width="960" height="640" fetchpriority="high">@endif
+    @if($image)<img class="detail-image" src="{{ \App\Support\ContentUrl::resolve($image) }}" srcset="{{ \App\Support\ResponsiveImage::srcset($image) }}" sizes="(max-width: 760px) 100vw, 960px" alt="{{ $item->title ?? $item->name }}" width="960" height="640" fetchpriority="high">@endif
     @if($type === 'article')<div class="article-meta">@if($item->author_name)<p>بقلم: {{ $item->author_name }}</p>@endif @if($item->medical_reviewer)<p>المراجعة الطبية: {{ $item->medical_reviewer }}</p>@endif @if($item->published_at)<p>نُشر في <time datetime="{{ $item->published_at->toDateString() }}">{{ $item->published_at->format('Y/m/d') }}</time></p>@endif @if($item->reviewed_at)<p>آخر مراجعة طبية: {{ $item->reviewed_at->format('Y/m/d') }}</p>@endif</div>@endif
     <div class="prose-content">{!! str($item->content ?? $item->rich_description ?? $item->description ?? '')->sanitizeHtml() !!}</div>
     @if($type === 'article' && $item->sources)<h2>المصادر</h2><ul>@foreach($item->sources as $source)<li><a href="{{ \App\Support\ContentUrl::resolve($source['url'] ?? '') }}" rel="noopener" target="_blank">{{ $source['title'] ?? $source['url'] }}</a></li>@endforeach</ul>@endif

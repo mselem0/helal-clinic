@@ -68,6 +68,7 @@ class SitePageResource extends Resource
                 ])->defaultItems(0)->reorderable(),
             ]),
             Forms\Components\Section::make('محركات البحث والمشاركة')->schema([
+                Forms\Components\Placeholder::make('public_updated_at')->label('آخر تحديث للمحتوى المنشور')->content(fn (?SitePage $record) => $record?->public_updated_at?->format('Y-m-d H:i') ?? 'لم يُسجل تحديث منشور بعد')->helperText('يُحدّث تلقائيًا عند تغيير المحتوى المنشور؛ حفظ المسودة لا يغيّره.'),
                 Forms\Components\TextInput::make('meta_title')->label('عنوان البحث')->maxLength(255),
                 Forms\Components\Textarea::make('meta_description')->label('وصف البحث')->maxLength(320),
                 Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),

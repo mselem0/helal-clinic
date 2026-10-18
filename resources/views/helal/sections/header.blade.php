@@ -2,7 +2,7 @@
 @php($currentPage = ['service'=>'services','article'=>'articles','branch'=>'branches'][$pageKey ?? ''] ?? ($pageKey ?? 'home'))
 <header class="clinic-header"><div class="header-inner">
     <a class="brand header-brand" href="{{ route('home') }}" aria-label="عيادات د. محمد هلال — الرئيسية">
-        <img class="brand-logo" width="56" height="56" src="{{ asset('assets/logo.png') }}" alt="شعار عيادات هلال">
+        <img class="brand-logo" width="56" height="56" src="{{ asset('assets/logo-small.webp') }}" alt="شعار عيادات هلال">
         <span>{{ $content['field_2'] ?? 'د. محمد هلال' }}<small>{{ $content['field_3'] ?? 'عيادات هلال' }}</small></span>
     </a>
     <button class="menu-toggle" type="button" aria-label="فتح قائمة الموقع" aria-expanded="false" aria-controls="main-menu"><span></span><span></span><span></span></button>

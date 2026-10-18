@@ -97,3 +97,26 @@ main>.section-shell>.google-reviews{padding-inline:0}
 .inner-page>.page-masthead+.section-shell .booking{margin-block:28px 40px}
 .inner-page>.page-masthead+.detail-grid{padding-top:36px}
 @media(max-width:760px){.inner-page>.page-masthead{padding-block:18px 22px}.inner-page>.page-masthead .breadcrumbs{margin-bottom:10px}.inner-page>.page-masthead h1{font-size:27px}.inner-page>.page-masthead+.section-shell :is(.services,.videos,.clinics,.articles,.google-reviews,.faq,.personal-journey,.about){padding-top:28px}.inner-page>.page-masthead+.section-shell .booking{margin-block:22px 28px}.inner-page>.page-masthead+.detail-grid{padding-top:28px}}
+
+/* Hero portrait and compact video trigger separated cleanly without face overlays. */
+#home.hero{grid-template-columns:1.1fr 1fr;gap:56px;align-items:center}
+#home .hero-copy{max-width:580px}
+#home .doctor-name{margin:18px 0 10px;font-size:19px;font-weight:600;color:var(--ink)}
+#home .hero-visual{width:100%;max-width:460px;margin-inline:auto;padding:0}
+#home .feature-preview{position:relative;display:grid;grid-template-rows:auto auto;width:100%;height:auto;padding:0;border:1px solid var(--section-line);border-radius:24px;background:#fff;color:var(--ink);text-align:right;box-shadow:0 16px 40px #164b4e12;overflow:hidden}
+#home .feature-preview:after{display:none;content:none;background:none}
+#home .hero-portrait-frame{display:block;width:100%;height:440px;overflow:hidden;background:#eaf2ee}
+#home .feature-preview img{display:block;width:100%;height:100%;object-fit:cover;object-position:center top;transform:none;transition:transform .3s ease}
+#home .feature-preview:hover img{transform:scale(1.02)}
+#home .hero-video-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;padding:16px 20px;background:#fff;border-top:1px solid var(--section-line)}
+#home .feature-caption{position:static;inset:auto;display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+#home .feature-caption small{font-size:12px;line-height:1.6;color:var(--teal);font-weight:500}
+#home .feature-caption strong{font-size:19px;line-height:1.55;font-weight:600;color:var(--ink)}
+#home .feature-caption>span{display:block;font-size:13px;line-height:1.7;color:var(--muted)}
+#home .feature-play{position:static;inset:auto;flex-shrink:0;width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:var(--mint);border:1px solid #cbe0d4;color:var(--teal);font-size:17px;backdrop-filter:none;transition:background .2s ease,color .2s ease}
+#home .feature-preview:hover .feature-play{background:var(--teal);border-color:var(--teal);color:#fff}
+#home .feature-foot{padding:12px 4px 0;margin-top:0;background:none}
+@media(min-width:761px) and (max-width:1100px){#home.hero{gap:32px}#home .hero-portrait-frame{height:400px}}
+@media(max-width:760px){#home.hero{grid-template-columns:1fr;gap:28px}#home .hero-copy{order:1;max-width:100%}#home .hero-visual{order:2;max-width:440px}#home .feature-preview{border-radius:20px}#home .hero-portrait-frame{height:340px}#home .hero-video-bar{padding:14px 16px;gap:12px}#home .feature-caption strong{font-size:17px}#home .feature-caption>span{font-size:12px}#home .feature-play{width:42px;height:42px;font-size:16px}}
+@media(max-width:360px){#home .feature-caption strong{font-size:16px}}
+@media(prefers-reduced-motion:reduce){#home .feature-preview img,#home .feature-play{transition:none}#home .feature-preview:hover img{transform:none}}

@@ -4,6 +4,7 @@
 
 namespace App\Models;
 
+use App\Support\TracksPublishedUpdate;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
@@ -12,6 +13,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class SeoPage extends Model implements HasMedia
 {
     use InteractsWithMedia;
+    use TracksPublishedUpdate;
 
     protected $fillable = [
         'draft_data',
@@ -36,7 +38,7 @@ class SeoPage extends Model implements HasMedia
         'readability_score',
     ];
 
-    protected $casts = [
+    protected $casts = ['public_updated_at' => 'datetime',
         'draft_data' => 'array',
         'meta_keywords' => 'array',
         'focus_keywords' => 'array',

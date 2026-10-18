@@ -4,6 +4,7 @@
 
 namespace App\Models;
 
+use App\Support\TracksPublishedUpdate;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -11,6 +12,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class PageSection extends Model
 {
     use LogsActivity;
+    use TracksPublishedUpdate;
 
     protected $fillable = [
         'section_key',
@@ -29,7 +31,7 @@ class PageSection extends Model
         'published_at',
     ];
 
-    protected $casts = [
+    protected $casts = ['public_updated_at' => 'datetime',
         'draft_data' => 'array',
         'published_at' => 'datetime',
         'is_active' => 'boolean',

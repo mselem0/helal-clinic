@@ -17,16 +17,16 @@
             
             <h4 class="text-base font-bold text-gray-900 dark:text-white mb-2"> البطاقات الأربع في أعلى الصفحة</h4>
             
-            <h5 class="font-bold text-gray-800 dark:text-gray-200 mt-4 mb-1">بطاقة 1 — متوسط درجة SEO</h5>
+            <h5 class="font-bold text-gray-800 dark:text-gray-200 mt-4 mb-1">بطاقة 1 — متوسط التقييم الداخلي</h5>
             <ul class="list-disc list-inside space-y-1 mb-4">
-                <li><strong>ماذا تعني؟</strong> متوسط جودة تحسين كل صفحات موقعك لمحركات البحث.</li>
-                <li><span class="text-success-600 font-bold">🟢 80–100</span> = ممتاز، الموقع محسّن جيداً</li>
+                <li><strong>ماذا تعني؟</strong> تقييم إرشادي للسجلات الموجودة؛ لا يثبت الفهرسة أو ترتيب الموقع ولا يغني عن المراجعة.</li>
+                <li><span class="text-success-600 font-bold">🟢 80–100</span> = ممتاز، الاختبارات الداخلية جيدة</li>
                 <li><span class="text-warning-600 font-bold">🟡 50–79</span> = متوسط، يحتاج تحسين</li>
                 <li><span class="text-danger-600 font-bold">🔴 0–49</span> = ضعيف، يحتاج عناية فورية</li>
             </ul>
 
-            <h5 class="font-bold text-gray-800 dark:text-gray-200 mt-4 mb-1">بطاقة 2 — صفحات مؤرشفة</h5>
-            <p class="mb-4">عدد الصفحات التي تسمح لـ Google بفهرستها وإظهارها في نتائج البحث.</p>
+            <h5 class="font-bold text-gray-800 dark:text-gray-200 mt-4 mb-1">بطاقة 2 — سجلات SEO تسمح بالفهرسة</h5>
+            <p class="mb-4">عدد سجلات SEO التي تسمح بالفهرسة؛ العدد الفعلي للصفحات المفهرسة يُراجع في Search Console بعد النشر.</p>
 
             <h5 class="font-bold text-gray-800 dark:text-gray-200 mt-4 mb-1">بطاقة 3 — روابط 404 نشطة</h5>
             <ul class="list-disc list-inside space-y-1 mb-4">
@@ -63,14 +63,14 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <x-filament::card class="p-4 flex flex-col items-center justify-center text-center">
-            <div class="text-gray-500 text-sm mb-1">متوسط درجة SEO</div>
+            <div class="text-gray-500 text-sm mb-1">متوسط التقييم الداخلي</div>
             <div class="text-3xl font-bold @if($stats['avg_score'] > 80) text-success-600 @elseif($stats['avg_score'] > 50) text-warning-600 @else text-danger-600 @endif">
                 {{ $stats['avg_score'] }}/100
             </div>
         </x-filament::card>
 
         <x-filament::card class="p-4 flex flex-col items-center justify-center text-center">
-            <div class="text-gray-500 text-sm mb-1">صفحات مؤرشفة</div>
+            <div class="text-gray-500 text-sm mb-1">سجلات SEO تسمح بالفهرسة</div>
             <div class="text-3xl font-bold text-primary-600">
                 {{ $stats['indexed_pages'] }}
             </div>
