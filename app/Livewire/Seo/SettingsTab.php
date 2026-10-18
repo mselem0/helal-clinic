@@ -20,6 +20,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\HtmlString;
 use Livewire\Component;
 
@@ -33,6 +34,10 @@ class SettingsTab extends Component implements HasActions, HasForms
     public function mount(): void
     {
         $settings = SeoGlobalSetting::all()->pluck('value', 'key')->toArray();
+
+        foreach (['include_homepage', 'include_services', 'include_branches', 'include_articles', 'include_pages'] as $key) {
+            $settings[$key] = in_array($settings[$key] ?? '1', ['1', 1, true, 'true'], true);
+        }
 
         // Load robots.txt
         $robotsPath = public_path('robots.txt');
@@ -89,8 +94,10 @@ class SettingsTab extends Component implements HasActions, HasForms
                                             ->options(['1.0' => '1.0 (الأعلى)', '0.8' => '0.8', '0.5' => '0.5'])
                                             ->default('1.0'),
                                         Toggle::make('include_homepage')->label('تضمين الصفحة الرئيسية')->default(true),
-                                        Toggle::make('include_services')->label('تضمين صفحات الخدمات'),
-                                        Toggle::make('include_branches')->label('تضمين صفحات الفروع'),
+                                        Toggle::make('include_services')->label('تضمين صفحات الخدمات')->default(true)->helperText('صفحة الخدمات وجميع تفاصيل الخدمات المنشورة.'),
+                                        Toggle::make('include_branches')->label('تضمين صفحات الفروع')->default(true)->helperText('صفحة الفروع وجميع تفاصيل الفروع المفعلة.'),
+                                        Toggle::make('include_articles')->label('تضمين المقالات')->default(true)->helperText('صفحة المقالات وتفاصيل المقالات المنشورة التي حان موعد نشرها.'),
+                                        Toggle::make('include_pages')->label('تضمين الصفحات الأخرى')->default(true)->helperText('مثل عن الدكتور والتواصل؛ لا يشمل الرئيسية أو الخدمات أو المقالات أو الفروع.'),
                                         Toggle::make('include_images_sitemap')->label('تضمين الصور لـ Sitemap'),
                                         Toggle::make('include_videos_sitemap')->label('تضمين الفيديوهات لـ Sitemap'),
                                     ]),
@@ -138,6 +145,10 @@ class SettingsTab extends Component implements HasActions, HasForms
                                                 $token = SeoHelper::getSetting('google_access_token');
                                                 if ($token) {
                                                     return new HtmlString('<span class="text-success-600 font-bold flex items-center gap-2"><span class="w-2 h-2 bg-success-500 rounded-full animate-pulse"></span> متصل بحساب جوجل (API)</span>');
+                                                }
+
+                                                if (! Route::has('admin.google.connect')) {
+                                                    return 'ربط Google غير متاح في هذه النسخة.';
                                                 }
 
                                                 return new HtmlString('<a href="'.route('admin.google.connect').'" class="bg-navy text-white px-4 py-2 rounded-lg text-xs font-bold inline-block hover:bg-black transition">ربط حساب جوجل الآن</a>');
@@ -270,7 +281,7 @@ class SettingsTab extends Component implements HasActions, HasForms
         if (in_array($key, ['facebook_page_url', 'twitter_username', 'linkedin_url', 'default_og_image'])) {
             return 'social';
         }
-        if (in_array($key, ['sitemap_enabled', 'posts_per_sitemap', 'include_images_sitemap', 'include_videos_sitemap', 'include_homepage', 'include_services', 'include_branches', 'homepage_priority'])) {
+        if (in_array($key, ['sitemap_enabled', 'posts_per_sitemap', 'include_images_sitemap', 'include_videos_sitemap', 'include_homepage', 'include_services', 'include_branches', 'include_articles', 'include_pages', 'homepage_priority'])) {
             return 'sitemap';
         }
         if (in_array($key, ['business_name', 'business_type', 'business_phone', 'business_email', 'business_address', 'business_lat', 'business_lng'])) {

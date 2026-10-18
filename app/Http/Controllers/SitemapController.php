@@ -16,6 +16,8 @@ class SitemapController extends Controller
     public function index()
     {
         abort_unless(in_array(SeoHelper::getSetting('sitemap_enabled'), ['1', 1, true, 'true'], true), 404);
+        $enabled = fn (string $key): bool => in_array(SeoHelper::getSetting($key, '1'), ['1', 1, true, 'true'], true);
+        $categoryKeys = ['home' => 'include_homepage', 'services' => 'include_services', 'articles' => 'include_articles', 'branches' => 'include_branches'];
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
         $add = function ($url, $date) use ($xml) {
             $node = $xml->addChild('url');
@@ -25,6 +27,9 @@ class SitemapController extends Controller
             }
         };
         foreach (SitePage::where('is_published', true)->get() as $page) {
+            if (! $enabled($categoryKeys[$page->page_key] ?? 'include_pages')) {
+                continue;
+            }
             $seo = SeoPage::where('page_key', $page->page_key)->first();
             $url = SiteView::pageUrl($page);
             if (str_contains($seo?->robots ?: $page->robots, 'noindex')) {
@@ -37,6 +42,14 @@ class SitemapController extends Controller
             $add($url, $page->updated_at);
         }
         foreach ([Service::class => 'services.show', Article::class => 'blog.show', ClinicBranch::class => 'branches.show'] as $class => $route) {
+            [$setting, $legacyKey] = match ($class) {
+                Service::class => ['include_services', 'service'],
+                Article::class => ['include_articles', 'article'],
+                ClinicBranch::class => ['include_branches', 'branch'],
+            };
+            if (! $enabled($setting) || str_contains(SeoPage::where('page_key', $legacyKey)->value('robots') ?? '', 'noindex')) {
+                continue;
+            }
             $query = $class::where($class === Article::class ? 'is_published' : 'is_active', true);
             if ($class === Article::class) {
                 $query->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()));
