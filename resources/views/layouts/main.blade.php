@@ -2,10 +2,10 @@
 <html lang="ar" dir="rtl" data-theme="{{ $theme }}"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
 @include('helal.seo')
-<link rel="preload" href="{{ asset('fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="{{ asset('fonts/ibm-plex-arabic.css') }}">
+<link rel="preload" href="{{ asset('fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="{{ asset('assets/logo.png') }}">
-<link rel="stylesheet" href="{{ asset('helal.css') }}"><link rel="stylesheet" href="{{ asset('helal-modern.css') }}"><link rel="stylesheet" href="{{ asset('helal-pages.css') }}">
-<link rel="stylesheet" href="{{ asset('helal-refinement.css') }}?v={{ substr(hash_file('sha256', public_path('helal-refinement.css')), 0, 12) }}">
+@php($siteCss = 'site-assets/'.($theme === 'helal_modern' ? 'modern' : 'classic').'.css')
+<link rel="stylesheet" href="{{ asset($siteCss) }}?v={{ substr(hash_file('sha256', public_path($siteCss)), 0, 12) }}">
 <style>:root { --teal: {{ $style['primary'] }}; --orange: {{ $style['accent'] }}; }</style>
 @unless($preview) @seoGlobal @endunless
 </head><body>

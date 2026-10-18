@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Helpers\SeoHelper;
 use App\Models\Article;
 use App\Models\ClinicBranch;
+use App\Models\PageSection;
 use App\Models\SeoPage;
 use App\Models\Service;
+use App\Models\SiteNavigation;
 use App\Models\SitePage;
 use App\Services\PageSeo;
 use App\Services\SiteView;
@@ -43,7 +45,12 @@ class SitemapController extends Controller
             if ($videos && $page->page_key === 'videos') {
                 $videoObjects = array_filter(PageSeo::data($page)['schema']['@graph'], fn ($node) => $node['@type'] === 'VideoObject' && trim(strip_tags($node['description'] ?? '')) !== '');
             }
-            $date = collect([$page->public_updated_at, $seo?->public_updated_at])->filter()->sort()->last();
+            $keys = collect($page->sections ?? [])->map(fn ($section) => is_array($section) ? ($section['key'] ?? '') : $section)->merge(['header', 'footer']);
+            // The home template also reads doctor profile highlights.
+            $profileDate = $page->page_key === 'home' ? SitePage::where('page_key', 'about')->where('is_published', true)->value('public_updated_at') : null;
+            $sectionDate = PageSection::whereIn('section_key', $keys)->max('public_updated_at');
+            $navigationDate = SiteNavigation::max('public_updated_at');
+            $date = collect([$page->public_updated_at, $seo?->public_updated_at, $sectionDate, $navigationDate, $profileDate])->filter()->map(fn ($value) => Carbon::parse($value))->sort()->last();
             $add($url, $date, $seo?->og_image ?: $page->og_image, $videoObjects);
         }
         foreach ([Service::class => 'services.show', Article::class => 'blog.show', ClinicBranch::class => 'branches.show'] as $class => $route) {

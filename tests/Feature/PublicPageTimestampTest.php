@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\PageSection;
 use App\Models\SeoPage;
+use App\Models\SiteNavigation;
 use App\Models\SitePage;
 use App\Models\ThemeRevision;
 use App\Services\ThemeDraftService;
@@ -57,6 +59,24 @@ class PublicPageTimestampTest extends TestCase
                 $this->assertSame(now()->startOfSecond()->toAtomString(), (string) $node->lastmod);
             }
         }
+        $this->travelBack();
+    }
+
+    public function test_shared_section_and_menu_drafts_do_not_change_public_dates_until_publish(): void
+    {
+        $this->seed();
+        $before = $this->get('/sitemap.xml')->getContent();
+        $this->travel(1)->days();
+        PageSection::where('section_key', 'header')->firstOrFail()->update(['draft_data' => ['title' => 'عنوان رأس جديد']]);
+        $menu = SiteNavigation::firstOrFail();
+        $items = $menu->items;
+        $items[0]['label'] = 'قائمة جديدة';
+        $menu->update(['draft_data' => ['items' => $items]]);
+        $this->assertSame($before, $this->get('/sitemap.xml')->getContent());
+        app(ThemeDraftService::class)->publish();
+        $after = $this->get('/sitemap.xml')->getContent();
+        $this->assertNotSame($before, $after);
+        $this->assertStringContainsString(now()->startOfSecond()->toAtomString(), $after);
         $this->travelBack();
     }
 }

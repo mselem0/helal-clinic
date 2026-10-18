@@ -39,7 +39,7 @@
                 <img
                     width="640"
                     height="640"
-                    src="{{ \App\Support\ContentUrl::resolve(($content['field_15'] ?? '')) }}"
+                    src="{{ \App\Support\ContentUrl::resolve(($content['field_15'] ?? '')) }}" srcset="{{ \App\Support\ResponsiveImage::srcset(($content['field_15'] ?? '')) }}" sizes="(max-width: 760px) 100vw, 640px"
                     alt="د. محمد هلال في مؤتمر طبي"
                     fetchpriority="high"
                 >

@@ -41,8 +41,9 @@ class MedicalArticleSchemaTest extends TestCase
 
     public function test_missing_review_fields_and_invalid_sources_are_not_invented(): void
     {
-        $article = Article::create(['title' => 'مقال غير مراجع', 'slug' => 'unreviewed-article', 'is_published' => true, 'sources' => [['title' => 'غير صالح', 'url' => 'javascript:alert(1)']]]);
+        $article = Article::create(['title' => 'مقال غير مراجع', 'slug' => 'unreviewed-article', 'is_published' => true, 'content' => '<p>محتوى طبي فعلي للوصف</p>', 'sources' => [['title' => 'غير صالح', 'url' => 'javascript:alert(1)']]]);
         $graph = $this->graph($article);
+        $this->assertSame('محتوى طبي فعلي للوصف', $graph['Article']['description']);
         $this->assertArrayNotHasKey('author', $graph['Article']);
         $this->assertArrayNotHasKey('citation', $graph['Article']);
         $this->assertArrayNotHasKey('reviewedBy', $graph['MedicalWebPage']);

@@ -10,6 +10,9 @@ class ContentUrl
     public static function resolve(?string $value): string
     {
         $value = trim($value ?? '');
+        if ($value === 'assets/logo.png' && is_file(public_path('assets/logo-small.webp'))) {
+            $value = 'assets/logo-small.webp';
+        }
         if ($value === '') {
             return '';
         }

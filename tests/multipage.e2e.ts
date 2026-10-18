@@ -58,3 +58,24 @@ test('doctor qualifications and specialties render clearly in both themes',async
   expect(await browser.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  }
 });
+
+test('SEO settings saved in the admin control public robots and sitemap',async({app,browser,screen})=>{
+ await login(app,browser,screen);
+ await app.open('/codeAiAdminDash/seo-management?tab=settings');
+ await screen.getByRole('tab','أدوات المشرفين و Robots.txt',{exact:true}).click();
+ await browser.locator('[id="data.robots_extra"]').fill('Disallow: /e2e-private/');
+ await screen.getByRole('button','حفظ الإعدادات',{exact:true}).click();
+ await expect(screen.getByText('تم حفظ إعدادات SEO بنجاح',{exact:true})).toBeVisible();
+ expect(await browser.evaluate(async()=>await(await fetch('/robots.txt')).text())).toContain('Disallow: /e2e-private/');
+ await screen.getByRole('tab','Sitemap',{exact:true}).click();
+ await browser.locator('[id="data.include_services"]').click();
+ await browser.locator('[id="data.posts_per_sitemap"]').fill('1000');
+ await screen.getByRole('button','حفظ الإعدادات',{exact:true}).click();
+ await expect(screen.getByText('تم حفظ إعدادات SEO بنجاح',{exact:true}).first()).toBeVisible();
+ const state=await browser.evaluate(async()=>await(await fetch('/sitemap.xml')).text());
+ expect(state).not.toContain('/services');
+ expect(state).toContain('/branches');
+ await app.open('/codeAiAdminDash/seo-management?tab=settings');
+ await screen.getByRole('tab','Sitemap',{exact:true}).click();
+ expect(await browser.locator('[id="data.include_services"]').getAttribute('aria-checked')).toBe('false');
+});

@@ -116,4 +116,11 @@ class VideoStructuredDataTest extends TestCase
         $this->assertCount(1, $objects, 'Seeded videos without an upload date and every incomplete record must be omitted.');
         $this->assertSame('فيديو مكتمل للمرجع', $objects[0]['name']);
     }
+
+    public function test_hidden_video_section_does_not_emit_video_schema(): void
+    {
+        $this->makeVideo(['video_path' => 'landing/clinic-tour.mp4']);
+        SitePage::where('page_key', 'videos')->update(['sections' => []]);
+        $this->assertSame([], $this->videoObjectsIn('helal_classic'));
+    }
 }

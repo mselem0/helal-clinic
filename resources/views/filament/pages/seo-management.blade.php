@@ -17,7 +17,7 @@
                 </div>
                 <div>
                     <div style="font-size:22px;font-weight:700;color:{{ $stats['score_color'] }};line-height:1;">{{ $stats['avg_score'] }}<span style="font-size:12px;color:#94a3b8;">/100</span></div>
-                    <div style="font-size:11px;color:#94a3b8;margin-top:2px;">متوسط درجة SEO</div>
+                    <div style="font-size:11px;color:#94a3b8;margin-top:2px;">متوسط التقييم الداخلي</div>
                 </div>
             </div>
 
@@ -28,7 +28,7 @@
                 </div>
                 <div>
                     <div style="font-size:22px;font-weight:700;color:#3b82f6;line-height:1;">{{ $stats['page_count'] }}</div>
-                    <div style="font-size:11px;color:#94a3b8;margin-top:2px;">صفحات مُحسَّنة</div>
+                    <div style="font-size:11px;color:#94a3b8;margin-top:2px;">سجلات SEO</div>
                 </div>
             </div>
 

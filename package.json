@@ -2,7 +2,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && node scripts/build-site-css.mjs",
     "dev": "vite",
     "test:e2e": "e2e run",
     "test:e2e:full": "e2e run",

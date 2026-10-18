@@ -6,6 +6,7 @@ use App\Helpers\SeoHelper;
 use App\Models\Seo404Monitor;
 use App\Models\SeoPage;
 use App\Models\SeoRedirect;
+use App\Services\SeoContentReadiness;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables;
@@ -55,7 +56,7 @@ class OverviewTab extends Component implements HasForms, HasTable
             $issues[] = ['type' => 'warning', 'message' => 'خريطة الموقع (Sitemap) غير مفعلة حالياً.'];
         }
 
-        return $issues;
+        return array_merge($issues, SeoContentReadiness::issues());
     }
 
     protected function getStats(): array
@@ -81,7 +82,7 @@ class OverviewTab extends Component implements HasForms, HasTable
                     ->badge()
                     ->color(fn ($state) => $state > 80 ? 'success' : ($state > 50 ? 'warning' : 'danger')),
                 Tables\Columns\IconColumn::make('robots')
-                    ->label('مؤرشف؟')
+                    ->label('السماح بالفهرسة؟')
                     ->icon(fn ($state) => $state === 'index_follow' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
                     ->color(fn ($state) => $state === 'index_follow' ? 'success' : 'danger'),
             ])
