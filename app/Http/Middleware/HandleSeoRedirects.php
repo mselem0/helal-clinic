@@ -23,6 +23,10 @@ class HandleSeoRedirects
                 ->where('id', $redirect->id)
                 ->increment('hit_count', 1, ['last_accessed_at' => now()]);
 
+            if ((int) $redirect->redirect_type === 410) {
+                return response('هذه الصفحة لم تعد متاحة.', 410)->header('X-Robots-Tag', 'noindex');
+            }
+
             return redirect($redirect->target_url, (int) $redirect->redirect_type);
         }
 

@@ -53,11 +53,9 @@ class SeoRedirectResource extends Resource
                             ->default('301')
                             ->required(),
                         Forms\Components\Select::make('match_type')
-                            ->label('نوع المطابقة')
+                            ->label('نوع المطابقة')->helperText('المطابقة التامة للمسار هي المدعومة حاليًا.')
                             ->options([
                                 'exact' => 'مطابقة تامة',
-                                'prefix' => 'يبدأ بـ (Prefix)',
-                                'regex' => 'تعبير نمطي (Regex)',
                             ])
                             ->default('exact')
                             ->required(),

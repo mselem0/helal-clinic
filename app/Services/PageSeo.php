@@ -25,8 +25,12 @@ class PageSeo
             : ($legacy?->meta_description ?: $page->meta_description ?: $page->intro);
         $description = str(strip_tags($description ?? ''))->squish()->limit(170, '')->toString();
         $canonical = $item ? url($item->publicPath()) : ($legacy?->canonical_url ?: $page->canonical_url ?: SiteView::pageUrl($page));
-        if (request()->integer('page', 1) > 1) {
-            $canonical .= '?page='.request()->integer('page');
+        $canonical = explode('#', $canonical, 2)[0];
+        if (! $item && $page->page_key === 'articles' && request()->integer('page', 1) > 1) {
+            [$base, $query] = array_pad(explode('?', $canonical, 2), 2, '');
+            parse_str($query, $parameters);
+            $parameters['page'] = request()->integer('page');
+            $canonical = $base.'?'.http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         }
         $image = $item?->og_image;
         if (! $image && $item && method_exists($item, 'getFirstMediaUrl')) {
