@@ -31,8 +31,8 @@ class VideoResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\DateTimePicker::make('uploaded_at')->label('تاريخ نشر الفيديو الفعلي')->maxDate(now()),
-                Forms\Components\FileUpload::make('image_path')->label('صورة البطاقة')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(51200),
+                Forms\Components\DateTimePicker::make('uploaded_at')->label('تاريخ نشر الفيديو الفعلي')->maxDate(now())->helperText('التاريخ الفعلي لنشر الفيديو يلزم لبيانات الفيديو المنظمة (Schema) في نتائج البحث؛ بدون تاريخ نشر فعلي لن يُدرج الفيديو في هذه البيانات ولن يتم اختراع تاريخ بديل.'),
+                Forms\Components\FileUpload::make('image_path')->label('صورة البطاقة')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(51200)->helperText('صورة فعلية للفيديو (هذه أو الصورة المصغرة المرفقة) تلزم لبيانات الفيديو المنظمة (Schema) في نتائج البحث؛ بدون صورة فعلية لن يُدرج الفيديو في هذه البيانات ولن يتم اختراع صورة بديلة.'),
                 Forms\Components\TextInput::make('external_video_url')->label('رابط Vimeo')->url()->maxLength(500)->rules(['nullable', 'regex:~^https://(?:www\\.)?(?:vimeo\\.com/|player\\.vimeo\\.com/video/)[0-9]+(?:[/?#].*)?$~'])->helperText('رابط الفيديو فقط، بدون كود iframe. عند ملئه يُستخدم بدل الملف المحلي.'),
                 Forms\Components\FileUpload::make('video_path')->label('ملف الفيديو')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'video/mp4'])->maxSize(51200),
                 Forms\Components\TextInput::make('reel')->label('رقم ريل فيسبوك')->maxLength(1000),

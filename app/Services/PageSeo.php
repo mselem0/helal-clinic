@@ -8,6 +8,7 @@ use App\Models\SeoPage;
 use App\Models\SitePage;
 use App\Models\Video;
 use App\Support\ContentUrl;
+use App\Support\VideoSource;
 
 class PageSeo
 {
@@ -65,12 +66,22 @@ class PageSeo
         }
         if ($page->page_key === 'videos') {
             foreach (Video::where('is_active', true)->get() as $video) {
-                $thumb = $video->getFirstMediaUrl('video-thumbnail') ?: $video->image_path;
-                $file = $video->getFirstMediaUrl('video-file') ?: $video->video_path;
-                // Do not invent an upload date: incomplete video metadata is not emitted.
-                if ($thumb && $file && $video->uploaded_at) {
-                    $schema[] = ['@type' => 'VideoObject', 'name' => $video->title, 'description' => $video->description, 'thumbnailUrl' => ContentUrl::resolve($thumb), 'contentUrl' => ContentUrl::resolve($file), 'uploadDate' => $video->uploaded_at->toIso8601String()];
+                $thumb = ContentUrl::resolve($video->getFirstMediaUrl('video-thumbnail') ?: $video->image_path);
+                if ($thumb && ! str_starts_with($thumb, 'http')) {
+                    $thumb = url($thumb);
                 }
+                $source = VideoSource::resolve($video->external_video_url ?: ($video->getFirstMediaUrl('video-file') ?: $video->video_path), $video->reel);
+                // Do not invent an upload date: incomplete video metadata is not emitted.
+                if (trim((string) $video->title) === '' || ! $thumb || ! $source || ! $video->uploaded_at?->lte(now())) {
+                    continue;
+                }
+                $object = ['@type' => 'VideoObject', 'name' => $video->title, 'description' => $video->description, 'thumbnailUrl' => $thumb, 'uploadDate' => $video->uploaded_at->toIso8601String()];
+                if (str_starts_with($source, 'https://player.vimeo.com/video/')) {
+                    $object['embedUrl'] = $source;
+                } else {
+                    $object['contentUrl'] = $source;
+                }
+                $schema[] = $object;
             }
         }
         if ($page->page_key !== 'home') {
