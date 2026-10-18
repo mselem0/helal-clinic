@@ -39,10 +39,6 @@ class SettingsTab extends Component implements HasActions, HasForms
             $settings[$key] = in_array($settings[$key] ?? '1', ['1', 1, true, 'true'], true);
         }
 
-        // Load robots.txt
-        $robotsPath = public_path('robots.txt');
-        $settings['robots_txt'] = file_exists($robotsPath) ? file_get_contents($robotsPath) : '';
-
         // Decode custom_scripts if it exists
         if (isset($settings['custom_scripts']) && is_string($settings['custom_scripts'])) {
             $settings['custom_scripts'] = json_decode($settings['custom_scripts'], true);
@@ -127,14 +123,23 @@ class SettingsTab extends Component implements HasActions, HasForms
                         Tabs\Tab::make('أدوات المشرفين و Robots.txt')
                             ->schema([
                                 Section::make('ملف Robots.txt')
-                                    ->description('تحرير ملف تعليمات محركات البحث مباشرة.')
+                                    ->description('القواعد الأساسية للإدارة والمعاينات تُضاف تلقائيًا. تُحفظ القواعد الإضافية في قاعدة البيانات.')
                                     ->schema([
-                                        Textarea::make('robots_txt')
-                                            ->label('محتوى robots.txt')
+                                        Textarea::make('robots_extra')
+                                            ->label('قواعد إضافية لـ robots.txt')
                                             ->rows(6)
                                             ->string()
                                             ->maxLength(10000)
-                                            ->helperText('كن حذراً عند تعديل هذا الملف، قد يؤدي الخطأ فيه لحجب الموقع من محركات البحث.'),
+                                            ->rules([function () {
+                                                return function (string $attribute, $value, \Closure $fail): void {
+                                                    foreach (preg_split('/\R/', $value ?? '') as $line) {
+                                                        if (trim($line) !== '' && ! preg_match('~^\s*(?:#|Disallow\s*:\s*/|Allow\s*:\s*/)~i', $line)) {
+                                                            $fail('استخدمي قواعد Allow أو Disallow بمسار يبدأ بـ /، أو تعليقًا يبدأ بـ #.');
+                                                            break;
+                                                        }
+                                                    }
+                                                };
+                                            }])->helperText('مثال: Disallow: /private/ . رابط Sitemap يُضاف تلقائيًا عند تفعيله. هذا الملف يوجه الزحف ولا يحمي البيانات؛ الوصول محمي بالصلاحيات.'),
                                     ]),
                                 Section::make('Google Analytics (GA4)')
                                     ->description('اربط حساب جوجل لجلب البيانات مباشرة إلى لوحة التحكم.')
@@ -252,12 +257,6 @@ class SettingsTab extends Component implements HasActions, HasForms
         $data = $this->form->getState();
 
         foreach ($data as $key => $value) {
-            if ($key === 'robots_txt') {
-                file_put_contents(public_path('robots.txt'), $value);
-
-                continue;
-            }
-
             // Encode custom_scripts if it's an array
             if ($key === 'custom_scripts' && is_array($value)) {
                 $value = json_encode($value);
@@ -287,7 +286,7 @@ class SettingsTab extends Component implements HasActions, HasForms
         if (in_array($key, ['business_name', 'business_type', 'business_phone', 'business_email', 'business_address', 'business_lat', 'business_lng'])) {
             return 'local_business';
         }
-        if (in_array($key, ['google_verification', 'bing_verification', 'yandex_verification', 'baidu_verification', 'google_property_id', 'google_access_token', 'google_refresh_token', 'google_analytics_id', 'facebook_pixel_id', 'gtm_id'])) {
+        if (in_array($key, ['robots_extra', 'google_verification', 'bing_verification', 'yandex_verification', 'baidu_verification', 'google_property_id', 'google_access_token', 'google_refresh_token', 'google_analytics_id', 'facebook_pixel_id', 'gtm_id'])) {
             return 'verification';
         }
 
