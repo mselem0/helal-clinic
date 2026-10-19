@@ -45,6 +45,22 @@ class DoctorBranchSchemaTest extends TestCase
         $this->get('/about-us')->assertSee('href="https://www.facebook.com/HelalClinic0/"', false)->assertDontSee('javascript:alert');
     }
 
+    public function test_search_identity_uses_admin_site_name_and_square_default_icons(): void
+    {
+        $this->seed();
+        \App\Helpers\SeoHelper::setSetting('site_name', 'عيادات هلال الرسمية');
+        $html = $this->get('/')->assertOk()->assertSee('assets/favicon-96.png')->assertSee('sizes="144x144"', false)->getContent();
+        preg_match('~<script type="application/ld\\+json">(.*?)</script>~s', $html, $matches);
+        $site = collect(json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR)['@graph'])->firstWhere('@type', 'WebSite');
+        $this->assertSame('عيادات هلال الرسمية', $site['name']);
+        foreach ([96, 144] as $size) {
+            $dimensions = getimagesize(public_path('assets/favicon-'.$size.'.png'));
+            $this->assertSame([$size, $size], array_slice($dimensions, 0, 2));
+        }
+        \App\Helpers\SeoHelper::setSetting('site_favicon', 'seo/custom-icon.png');
+        $this->get('/')->assertOk()->assertSee('/storage/seo/custom-icon.png')->assertDontSee('assets/favicon-96.png');
+    }
+
     public function test_branch_schema_omits_missing_fields_and_invented_hours_or_ratings(): void
     {
         $this->seed();

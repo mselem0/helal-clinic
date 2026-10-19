@@ -55,7 +55,8 @@ class SettingsTab extends Component implements HasActions, HasForms
                     ->tabs([
                         Tabs\Tab::make('إعدادات عامة')
                             ->schema([
-                                TextInput::make('site_name')->label('اسم الموقع'),
+                                TextInput::make('site_name')->label('اسم الموقع')->helperText('الاسم المفضل في نتائج البحث؛ الاختيار النهائي لمحرك البحث.'),
+                                FileUpload::make('site_favicon')->label('أيقونة الموقع في المتصفح والبحث')->image()->acceptedFileTypes(['image/png', 'image/webp', 'image/jpeg'])->rules(['dimensions:min_width=48,min_height=48,ratio=1/1'])->disk('public')->directory('seo')->helperText('صورة مربعة لا تقل عن 48×48. يفضل 96×96 أو أكبر. اتركيها فارغة لاستخدام شعار هلال الافتراضي؛ تحديث Google ليس فوريًا.'),
                                 TextInput::make('site_tagline')->label('وصف الموقع (Tagline)'),
                                 Select::make('separator_char')
                                     ->label('فاصل العناوين')
