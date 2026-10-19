@@ -14,6 +14,15 @@ class VideoSource
     public static function resolve(?string $source, ?string $reel = null): string
     {
         $source = trim($source ?? '');
+        // Local previews should not depend on third-party embed availability.
+        if (app()->environment('local') && $reel && isset(self::VIMEO[$reel])) {
+            $local = 'assets/reel-'.$reel.'.mp4';
+            $mapped = 'https://player.vimeo.com/video/'.self::VIMEO[$reel];
+            if (($source === '' || $source === $local || $source === $mapped || $source === 'https://vimeo.com/'.self::VIMEO[$reel]) && is_file(public_path($local))) {
+                return ContentUrl::resolve($local);
+            }
+        }
+
         if ($reel && ($source === '' || $source === 'assets/reel-'.$reel.'.mp4') && isset(self::VIMEO[$reel])) {
             return 'https://player.vimeo.com/video/'.self::VIMEO[$reel];
         }
