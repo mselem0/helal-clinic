@@ -40,11 +40,18 @@ class PageSeo
         if (! $item) {
             $image = $legacy?->og_image ?: $page->og_image;
         }
-        $image = ContentUrl::resolve($image ?: $item?->image_path ?: 'assets/cover.jpg');
+        $defaultImage = \App\Helpers\SeoHelper::getSetting('default_og_image', 'assets/doctor-social-cover.jpg');
+        if ($defaultImage && ! str_starts_with($defaultImage, 'assets/') && ! filter_var($defaultImage, FILTER_VALIDATE_URL)) {
+            $defaultImage = \Illuminate\Support\Facades\Storage::disk('public')->url($defaultImage);
+        }
+        $image = ContentUrl::resolve($image ?: $item?->image_path ?: $defaultImage ?: 'assets/doctor-social-cover.jpg');
         if (! str_starts_with($image, 'http')) {
             $image = url($image);
         }
         $robots = SiteView::preview() ? 'noindex,nofollow' : str_replace('_', ',', $legacy?->robots ?: $page->robots ?: 'index_follow');
+        if (! str_contains($robots, 'noindex')) {
+            $robots .= ',max-image-preview:large';
+        }
         $schema = [['@type' => 'WebSite', '@id' => url('/').'#website', 'name' => trim((string) \App\Helpers\SeoHelper::getSetting('site_name')) ?: 'د. محمد هلال', 'alternateName' => ['د. محمد هلال', 'Helal Clinic'], 'url' => url('/'), 'inLanguage' => 'ar-EG']];
         if (in_array($page->page_key, ['home', 'about'], true)) {
             $about = SiteView::draft(SitePage::where('page_key', 'about')->where('is_published', true)->first());
