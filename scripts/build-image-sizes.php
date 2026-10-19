@@ -24,7 +24,8 @@ foreach (glob(__DIR__.'/../public/assets/*') as $path) {
             continue;
         }
         $target = imagescale($image, $size, (int) round($height * $size / $width));
-        imagewebp($target, dirname($path).'/'.pathinfo($path, PATHINFO_FILENAME).'-'.$size.'.webp', 80);
+        $quality = str_starts_with(basename($path), 'portrait-') ? IMG_WEBP_LOSSLESS : 80;
+        imagewebp($target, dirname($path).'/'.pathinfo($path, PATHINFO_FILENAME).'-'.$size.'.webp', $quality);
         imagedestroy($target);
     }
     imagedestroy($image);
