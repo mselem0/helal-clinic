@@ -20,7 +20,7 @@ class PageSeo
             $legacy = clone $legacy;
             $legacy->forceFill(array_replace(collect($page->draft_data ?? [])->only(['meta_title', 'meta_description', 'og_image', 'canonical_url', 'robots'])->all(), $legacy->draft_data ?? []));
         }
-        $title = $item?->meta_title ?: ($item ? ($item->title ?? $item->name).' | عيادات د. محمد هلال' : ($legacy?->meta_title ?: $page->meta_title ?: $page->title.' | عيادات د. محمد هلال'));
+        $title = $item?->meta_title ?: ($item ? ($item->title ?? $item->name).' | د. محمد هلال' : ($legacy?->meta_title ?: $page->meta_title ?: $page->title.' | د. محمد هلال'));
         $description = $item
             ? ($item->meta_description ?: ($item instanceof Article ? $item->content : $item->description) ?: ($item instanceof ClinicBranch ? 'عيادة د. محمد هلال — '.$item->name.'. العنوان: '.$item->address : null))
             : ($legacy?->meta_description ?: $page->meta_description ?: $page->intro);
@@ -45,10 +45,10 @@ class PageSeo
             $image = url($image);
         }
         $robots = SiteView::preview() ? 'noindex,nofollow' : str_replace('_', ',', $legacy?->robots ?: $page->robots ?: 'index_follow');
-        $schema = [['@type' => 'WebSite', '@id' => url('/').'#website', 'name' => trim((string) \App\Helpers\SeoHelper::getSetting('site_name')) ?: 'عيادات د. محمد هلال', 'alternateName' => ['د. محمد هلال', 'Helal Clinic'], 'url' => url('/'), 'inLanguage' => 'ar-EG']];
+        $schema = [['@type' => 'WebSite', '@id' => url('/').'#website', 'name' => trim((string) \App\Helpers\SeoHelper::getSetting('site_name')) ?: 'د. محمد هلال', 'alternateName' => ['د. محمد هلال', 'Helal Clinic'], 'url' => url('/'), 'inLanguage' => 'ar-EG']];
         if (in_array($page->page_key, ['home', 'about'], true)) {
             $about = SiteView::draft(SitePage::where('page_key', 'about')->where('is_published', true)->first());
-            $doctor = ['@type' => ['Person', 'Physician'], '@id' => url('/').'#doctor', 'name' => 'د. محمد هلال', 'url' => $about ? SiteView::pageUrl($about) : url('/')];
+            $doctor = ['@type' => 'Person', '@id' => url('/').'#doctor', 'name' => 'د. محمد هلال', 'url' => $about ? SiteView::pageUrl($about) : url('/')];
             $identityProfile = $page->page_key === 'about' ? ($page->doctor_profile ?? []) : ($about?->doctor_profile ?? []);
             $officialLinks = \App\Support\DoctorIdentity::links($identityProfile);
             if ($officialLinks) {

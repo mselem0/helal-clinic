@@ -22,7 +22,7 @@ class MultipageSeeder extends Seeder
         foreach ($pages as [$key,$slug,$title,$sections]) {
             $available = $key === 'home' || count($sections) === PageSection::whereIn('section_key', $sections)->count();
             SitePage::firstOrCreate(['page_key' => $key], ['slug' => $slug, 'title' => $title, 'sections' => $sections, 'is_published' => $available, 'published_at' => $available ? now() : null,
-                'meta_title' => $title.' | عيادات د. محمد هلال', 'meta_description' => 'تعرّفي على '.$title.' في عيادات د. محمد هلال لأمراض النساء والتوليد، واطلبي موعدًا في الفرع المناسب لكِ.']);
+                'meta_title' => $title.' | د. محمد هلال', 'meta_description' => 'تعرّفي على '.$title.' في عيادات د. محمد هلال لأمراض النساء والتوليد، واطلبي موعدًا في الفرع المناسب لكِ.']);
         }
         $aboutPage = SitePage::where('page_key', 'about')->first();
         if ($aboutPage && $aboutPage->doctor_profile === null) {
