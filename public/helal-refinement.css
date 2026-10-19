@@ -126,6 +126,6 @@ main>.section-shell>.google-reviews{padding-inline:0}
 #home .hero-portrait-frame{height:auto;aspect-ratio:2/3}
 #home .feature-preview img{object-fit:contain;object-position:center;transform:none}
 #home .feature-preview:hover img{transform:none}
-.service-grid .service-photo{height:360px;object-fit:contain;object-position:center;background:#f2f6f4}
+.service-grid .service-photo{width:100%;height:auto;aspect-ratio:2/3;object-fit:cover;object-position:center;background:#f2f6f4}
 .about-image img{aspect-ratio:2/3;object-fit:contain}
-@media(max-width:760px){#home .hero-visual{max-width:340px}.service-grid .service-photo{height:auto;aspect-ratio:2/3;max-height:480px}}
+@media(max-width:760px){#home .hero-visual{max-width:340px}.service-grid .service-photo{height:auto;aspect-ratio:2/3;max-height:none}}
