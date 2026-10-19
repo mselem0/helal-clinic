@@ -7,8 +7,6 @@
     $featuredVideoTitle = trim($content['field_20'] ?? '') ?: trim($featuredItem?->title ?? '');
 @endphp
 <section class="hero wrap" id="home">
-    @php($heroBackground = \App\Helpers\SeoHelper::getSetting('hero_background_image', 'assets/doctor-brand-banner.webp'))
-    @if($heroBackground)<img class="hero-background-art" src="{{ \App\Support\ContentUrl::resolve($heroBackground) }}" alt="" aria-hidden="true" width="1556" height="592">@endif
     <div class="hero-copy">
         <span class="eyebrow"><i></i>{{ ($content['field_1'] ?? '') }}</span>
         <p class="doctor-name">{{ ($content['field_2'] ?? '') }}</p>
