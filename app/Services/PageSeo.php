@@ -45,7 +45,7 @@ class PageSeo
             $image = url($image);
         }
         $robots = SiteView::preview() ? 'noindex,nofollow' : str_replace('_', ',', $legacy?->robots ?: $page->robots ?: 'index_follow');
-        $schema = [['@type' => 'WebSite', '@id' => url('/').'#website', 'name' => 'عيادات د. محمد هلال', 'url' => url('/'), 'inLanguage' => 'ar-EG']];
+        $schema = [['@type' => 'WebSite', '@id' => url('/').'#website', 'name' => trim((string) \App\Helpers\SeoHelper::getSetting('site_name')) ?: 'عيادات د. محمد هلال', 'alternateName' => ['د. محمد هلال', 'Helal Clinic'], 'url' => url('/'), 'inLanguage' => 'ar-EG']];
         if (in_array($page->page_key, ['home', 'about'], true)) {
             $about = SiteView::draft(SitePage::where('page_key', 'about')->where('is_published', true)->first());
             $doctor = ['@type' => ['Person', 'Physician'], '@id' => url('/').'#doctor', 'name' => 'د. محمد هلال', 'url' => $about ? SiteView::pageUrl($about) : url('/')];
