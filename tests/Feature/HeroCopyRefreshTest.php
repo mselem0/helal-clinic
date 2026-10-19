@@ -139,7 +139,7 @@ class HeroCopyRefreshTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('alt="د. محمد هلال في مؤتمر طبي"', false)
+            ->assertSee('alt="د. محمد هلال"', false)
             ->assertSee('data-title="طبيعي ولا قيصري؟"', false)
             ->assertSee('aria-label="شاهدي د. محمد هلال: طبيعي ولا قيصري؟"', false)
             ->assertDontSee('الدكتور محمد هلال — فيديو عن سكر الحمل وطريقة الولادة', false);
