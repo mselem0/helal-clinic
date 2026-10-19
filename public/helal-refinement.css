@@ -120,3 +120,12 @@ main>.section-shell>.google-reviews{padding-inline:0}
 @media(max-width:760px){#home.hero{grid-template-columns:1fr;gap:28px}#home .hero-copy{order:1;max-width:100%}#home .hero-visual{order:2;max-width:440px}#home .feature-preview{border-radius:20px}#home .hero-portrait-frame{height:340px}#home .hero-video-bar{padding:14px 16px;gap:12px}#home .feature-caption strong{font-size:17px}#home .feature-caption>span{font-size:12px}#home .feature-play{width:42px;height:42px;font-size:16px}}
 @media(max-width:360px){#home .feature-caption strong{font-size:16px}}
 @media(prefers-reduced-motion:reduce){#home .feature-preview img,#home .feature-play{transition:none}#home .feature-preview:hover img{transform:none}}
+
+/* Portrait photographs keep their full composition in both themes. */
+#home .hero-visual{width:100%;max-width:360px;justify-self:center}
+#home .hero-portrait-frame{height:auto;aspect-ratio:2/3}
+#home .feature-preview img{object-fit:contain;object-position:center;transform:none}
+#home .feature-preview:hover img{transform:none}
+.service-grid .service-photo{height:360px;object-fit:contain;object-position:center;background:#f2f6f4}
+.about-image img{aspect-ratio:2/3;object-fit:contain}
+@media(max-width:760px){#home .hero-visual{max-width:340px}.service-grid .service-photo{height:auto;aspect-ratio:2/3;max-height:480px}}
