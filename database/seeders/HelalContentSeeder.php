@@ -26,7 +26,7 @@ class HelalContentSeeder extends Seeder
                 'is_active' => true, 'body' => json_encode(['fields' => $section['fields'], 'faqs' => $section['faqs'] ?? [], 'stages' => $section['key'] === 'your-journey' ? json_decode(file_get_contents(database_path('content/journey.json')), true) : []], JSON_UNESCAPED_UNICODE),
             ]);
         }
-        SeoPage::firstOrCreate(['page_key' => 'home'], ['page_label' => 'الرئيسية', 'meta_title' => 'عيادات د. محمد هلال | أمراض النساء والتوليد', 'meta_description' => 'عيادات د. محمد هلال لأمراض النساء والتوليد والمناظير والحقن المجهري.', 'robots' => 'index_follow']);
+        SeoPage::firstOrCreate(['page_key' => 'home'], ['page_label' => 'الرئيسية', 'meta_title' => 'د. محمد هلال | استشاري أمراض النساء والتوليد والحقن المجهري', 'meta_description' => 'د. محمد هلال، مدرس واستشاري أمراض النساء والتوليد والحقن المجهري. حاصل على دكتوراه وماجستير أمراض النساء والتوليد من كلية الطب بجامعة الأزهر.', 'robots' => 'index_follow']);
         SeoGlobalSetting::firstOrCreate(['key' => 'sitemap_enabled'], ['value' => '1', 'group' => 'general']);
         HeroSetting::firstOrCreate([], ['doctor_name' => 'د. محمد هلال', 'doctor_title' => 'استشاري أمراض النساء والتوليد', 'doctor_university' => '', 'badge_text' => 'عيادات هلال', 'whatsapp_button_text' => 'تواصل عبر واتساب', 'booking_button_text' => 'طلب موعد', 'whatsapp_number' => '201017900354']);
         AboutDoctor::firstOrCreate([], ['bio_title' => 'عن د. محمد هلال', 'bio_text' => 'استشاري أمراض النساء والتوليد والمناظير والحقن المجهري.']);

@@ -22,6 +22,7 @@ class DoctorBranchSchemaTest extends TestCase
         preg_match('~<script type="application/ld\\+json">(.*?)</script>~s', $html, $matches);
         $graph = json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR)['@graph'];
         $doctor = collect($graph)->first(fn ($node) => ($node['@id'] ?? '') === url('/').'#doctor');
+        $this->assertSame('Person', $doctor['@type']);
         $this->assertSame('صفة مؤكدة', $doctor['jobTitle']);
         $this->assertSame('مؤهل مؤكد', $doctor['hasCredential'][0]['name']);
         $this->assertSame('جمعية مؤكدة', $doctor['memberOf'][0]['name']);
