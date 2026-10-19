@@ -243,7 +243,7 @@
         "key": "field_15",
         "label": "صورة أو فيديو",
         "type": "image",
-        "value": "assets/doctor-conference.jpg"
+        "value": "assets/portrait-clinic.webp"
       },
       {
         "key": "field_16",
@@ -480,7 +480,7 @@
         "key": "field_1",
         "label": "صورة أو فيديو",
         "type": "image",
-        "value": "assets/doctor-conference.jpg"
+        "value": "assets/portrait-office.webp"
       },
       {
         "key": "field_2",

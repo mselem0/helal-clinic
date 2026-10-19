@@ -4,7 +4,7 @@
             "order": 0,
             "title": "الحمل والولادة",
             "description": "متابعة الحمل والتخطيط للولادة، ومناقشة خيارات الولادة وتخفيف الألم حسب حالتكِ.",
-            "image": "assets\/service-pregnancy.jpg?v=2",
+            "image": "assets\/portrait-ultrasound.webp",
             "name": "متابعة الحمل والولادة"
         },
         {
@@ -18,7 +18,7 @@
             "order": 2,
             "title": "المناظير وصحة المرأة",
             "description": "استشارات المناظير النسائية وجراحات أورام الرحم والأورام الليفية، وفق تقييم الطبيب.",
-            "image": "assets\/service-laparoscopy.jpg",
+            "image": "assets\/portrait-surgery.webp",
             "name": "المناظير وصحة المرأة"
         }
     ],

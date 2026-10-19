@@ -59,6 +59,7 @@ class SitePageResource extends Resource
                     Forms\Components\TextInput::make('label')->label('اسم المنصة')->required()->maxLength(100),
                     Forms\Components\TextInput::make('url')->label('رابط الحساب')->url()->regex('/^https:\/\//i')->required()->maxLength(2000),
                 ])->defaultItems(0)->reorderable(),
+                Forms\Components\FileUpload::make('doctor_profile.image')->label('صورة التعريف بجوار المؤهلات')->image()->disk('public')->directory('landing'),
                 Forms\Components\TextInput::make('doctor_profile.headline')->label('الصفة المهنية')->maxLength(255),
                 Forms\Components\Repeater::make('doctor_profile.qualifications')->label('المؤهلات العلمية')->schema([
                     Forms\Components\TextInput::make('title')->label('المؤهل')->required()->maxLength(255),
