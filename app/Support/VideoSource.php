@@ -19,7 +19,7 @@ class VideoSource
             $local = 'assets/reel-'.$reel.'.mp4';
             $mapped = 'https://player.vimeo.com/video/'.self::VIMEO[$reel];
             if (($source === '' || $source === $local || $source === $mapped || $source === 'https://vimeo.com/'.self::VIMEO[$reel]) && is_file(public_path($local))) {
-                return ContentUrl::resolve($local);
+                return url('/local-video/'.$reel.'.mp4');
             }
         }
 

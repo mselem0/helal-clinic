@@ -32,3 +32,13 @@ Route::get('/robots.txt', function () {
     return response($body, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
 });
 Route::get('/{slug}', [PageController::class, 'page'])->where('slug', '(?!(?i:'.implode('|', array_map(fn ($slug) => preg_quote($slug, '~'), SitePage::RESERVED_SLUGS)).')$)[^/]+')->name('site.page');
+
+// Development-only streaming endpoint with byte ranges for seeking.
+if (app()->environment('local')) {
+    Route::get('/local-video/{reel}.mp4', function (string $reel) {
+        abort_unless(isset(\App\Support\VideoSource::VIMEO[$reel]), 404);
+        $path = public_path('assets/reel-'.$reel.'.mp4');
+        abort_unless(is_file($path), 404);
+        return response()->file($path, ['Content-Type' => 'video/mp4', 'Cache-Control' => 'private, max-age=3600']);
+    })->whereNumber('reel');
+}
