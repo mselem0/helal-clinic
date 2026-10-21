@@ -191,3 +191,9 @@ main>.section-shell>.google-reviews{padding-inline:0}
 #video-container .modern-player:fullscreen video{flex:1;min-height:0;height:0;aspect-ratio:auto}
 .modern-player:fullscreen .player-controls{width:min(100%,800px);margin-inline:auto}
 @media(max-width:380px){.player-toolbar{grid-template-columns:32px 32px minmax(55px,1fr) 32px 36px 32px;gap:0}.player-toolbar button{width:32px}.player-toolbar .speed{width:36px}.player-time{font-size:10px}}
+
+.clinic-header .menu-toggle{color:var(--teal);flex-shrink:0}
+.menu-toggle .menu-icon{display:block;flex:none;width:24px;height:24px}
+.menu-toggle .menu-icon-close{display:none}
+.menu-toggle[aria-expanded=true] .menu-icon-lines{display:none}
+.menu-toggle[aria-expanded=true] .menu-icon-close{display:block}
