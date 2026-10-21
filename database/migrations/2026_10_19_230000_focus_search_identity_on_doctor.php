@@ -8,7 +8,7 @@ return new class extends Migration
     public function up(): void
     {
         $title = 'د. محمد هلال | استشاري أمراض النساء والتوليد والحقن المجهري';
-        $description = 'د. محمد هلال، مدرس واستشاري أمراض النساء والتوليد والحقن المجهري. حاصل على دكتوراه وماجستير أمراض النساء والتوليد من كلية الطب بجامعة الأزهر. تعرّفي على مؤهلاته وتخصصاته.';
+        $description = 'د. محمد هلال، مدرس واستشاري أمراض النساء والتوليد والحقن المجهري. دكتوراه وماجستير أمراض النساء والتوليد، كلية الطب بجامعة الأزهر.';
         foreach (['home' => $title, 'about' => 'عن د. محمد هلال | المؤهلات العلمية والتخصصات'] as $key => $pageTitle) {
             $data = ['meta_title' => $pageTitle, 'meta_description' => $description, 'og_image' => 'assets/portrait-office.webp', 'public_updated_at' => now()];
             DB::table('site_pages')->where('page_key', $key)->update($data);

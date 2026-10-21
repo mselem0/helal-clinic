@@ -5,6 +5,9 @@
 @isset($item)
     @include('helal.content-detail')
 @else
+    @if($pageKey === 'contact')
+        @include('helal.contact-channels')
+    @endif
     @foreach($page->sections ?? [] as $key)
         @php($section = $sections->firstWhere('section_key', is_array($key) ? ($key['key'] ?? '') : $key))
         @if($section && view()->exists('helal.sections.'.$section->section_key))<div class="section-shell" data-section="{{ $section->section_key }}" @if($section->background_color) style="background-color:{{ $section->background_color }}" @endif>@include('helal.sections.'.$section->section_key,['content'=>$section->content])</div>@endif
@@ -12,7 +15,7 @@
     @if($pageKey === 'about' && !empty($page->doctor_profile))
         @include('helal.doctor-profile', ['profile' => $page->doctor_profile])
     @endif
-    @if($pageKey === 'articles' && $articles instanceof \Illuminate\Pagination\LengthAwarePaginator)<nav class="wrap pagination" aria-label="صفحات المقالات">@if($articles->previousPageUrl())<a class="button outline" href="{{ $articles->previousPageUrl() }}">السابق</a>@endif<span>صفحة {{ $articles->currentPage() }} من {{ $articles->lastPage() }}</span>@if($articles->nextPageUrl())<a class="button" href="{{ $articles->nextPageUrl() }}">التالي</a>@endif</nav>@endif
+    @if($pageKey === 'articles' && $articles instanceof \Illuminate\Pagination\LengthAwarePaginator && $articles->hasPages())<nav class="wrap pagination" aria-label="صفحات المقالات">@if($articles->previousPageUrl())<a class="button outline" href="{{ $articles->previousPageUrl() }}">السابق</a>@endif<span>صفحة {{ $articles->currentPage() }} من {{ $articles->lastPage() }}</span>@if($articles->nextPageUrl())<a class="button" href="{{ $articles->nextPageUrl() }}">التالي</a>@endif</nav>@endif
 @endif
-@if($pageKey !== 'appointment')<section class="wrap page-teaser"><div><h2>الخطوة التالية تبدأ بسؤال</h2><p>اختاري الفرع المناسب وأرسلي طلب موعد لفريق العيادة.</p></div><a class="button" href="{{ \App\Models\SitePage::where('page_key','appointment')->first()?->url }}">طلب موعد</a></section>@endif
+@if($pageKey !== 'appointment' && !isset($item))<section class="wrap page-teaser"><div><h2>الخطوة التالية تبدأ بسؤال</h2><p>اختاري الفرع المناسب وأرسلي طلب موعد لفريق العيادة.</p></div><a class="button" href="{{ \App\Models\SitePage::where('page_key','appointment')->first()?->url }}">طلب موعد</a></section>@endif
 @endsection

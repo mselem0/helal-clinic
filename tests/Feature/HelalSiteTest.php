@@ -26,7 +26,9 @@ class HelalSiteTest extends TestCase
 
     public function test_homepage_and_both_signed_theme_previews_render(): void
     {
-        $this->get('/')->assertOk()->assertSee('هلال')->assertDontSee('محمد رجب')->assertSee('helal_classic');
+        $this->get('/')->assertOk()->assertSee('هلال')->assertDontSee('محمد رجب')->assertSee('helal_classic')
+            ->assertSee('اختاري اليوم المناسب')
+            ->assertSee('حددي يومًا مفضلًا، ويؤكد فريق العيادة الوقت معكِ.');
         foreach (['helal_classic', 'helal_modern'] as $theme) {
             $this->get(URL::temporarySignedRoute('home', now()->addMinutes(5), ['preview' => 1, 'theme' => $theme]))->assertOk()->assertSee($theme)->assertHeader('X-Robots-Tag', 'noindex, nofollow');
         }
