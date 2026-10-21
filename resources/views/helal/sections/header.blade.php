@@ -1,8 +1,8 @@
 @php($headerLinks = \App\Services\SiteView::menu('header'))
 @php($currentPage = ['service'=>'services','article'=>'articles','branch'=>'branches'][$pageKey ?? ''] ?? ($pageKey ?? 'home'))
 <header class="clinic-header"><div class="header-inner">
-    <a class="brand header-brand" href="{{ route('home') }}" aria-label="عيادات د. محمد هلال — الرئيسية">
-        <img class="brand-logo" width="56" height="56" src="{{ asset('assets/logo-small.webp') }}" alt="شعار عيادات هلال">
+    <a class="brand header-brand" href="{{ route('home') }}" title="الصفحة الرئيسية">
+        <img class="brand-logo" width="56" height="56" src="{{ asset('assets/logo-small.webp') }}" alt="">
         <span>{{ $content['field_2'] ?? 'د. محمد هلال' }}<small>{{ $content['field_3'] ?? 'عيادات هلال' }}</small></span>
     </a>
     <button class="menu-toggle" type="button" aria-label="فتح قائمة الموقع" aria-expanded="false" aria-controls="main-menu"><svg class="menu-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path class="menu-icon-lines" d="M4 6h16M4 12h16M4 18h16"/><path class="menu-icon-close" d="m6 6 12 12M18 6 6 18"/></svg></button>
