@@ -153,3 +153,41 @@ main>.section-shell>.google-reviews{padding-inline:0}
 #video-dialog .close{background:#ffffff15;border:1px solid #ffffff35}
 @media(max-width:380px){.player-toolbar{gap:0}.player-toolbar button{width:29px}.player-time{font-size:9px}.player-toolbar .speed{width:35px}.player-controls{padding-inline:9px}.player-toolbar .pip{display:none}}
 @media(prefers-reduced-motion:reduce){.player-toolbar button{transition:none}}
+
+/* Balanced introductory composition with the full portrait preserved. */
+#home.hero{--hero-gap:32px;--hero-space:36px;max-width:940px;grid-template-columns:minmax(0,1fr) minmax(0,300px);gap:var(--hero-gap);padding-block:var(--hero-space);align-items:center}
+#home .hero-copy{max-width:560px}
+#home .hero-visual{max-width:300px;justify-self:start;margin-inline:0}
+#home .doctor-name{margin-block:12px 8px}
+#home h1{font-size:clamp(32px,3.4vw,48px);line-height:1.5;margin-bottom:16px;letter-spacing:-1px}
+#home .lead{max-width:520px;margin-block:0;line-height:1.9}
+#home .actions{margin-top:22px;gap:22px}
+#home .hero-foot{margin-top:24px;padding-top:18px;gap:24px}
+#home .hero-video-bar{padding:12px 14px}
+#home .feature-caption strong{font-size:17px}
+#home .feature-caption>span{font-size:12px}
+#home .feature-foot{padding-top:8px;font-size:11px}
+@media(max-width:760px){#home.hero{grid-template-columns:minmax(0,1fr);--hero-space:28px;--hero-gap:28px}#home .hero-visual{max-width:300px;justify-self:center}#home h1{font-size:32px}#home .hero-foot{gap:20px}#home .hero-copy{width:100%}}
+
+/* Player chrome stays outside the video composition. */
+#video-dialog{width:min(420px,calc(100vw - 32px),calc((100dvh - 190px)*9/16));max-height:calc(100dvh - 24px)}
+#video-container{aspect-ratio:auto;overflow:hidden;border-radius:18px}
+#video-container .modern-player{display:flex;flex-direction:column;height:auto;aspect-ratio:auto}
+#video-container .modern-player video{height:auto;aspect-ratio:9/16;flex:none;object-fit:contain}
+.player-controls{position:relative;inset:auto;padding:4px 10px 10px;background:#0c2023;flex:none}
+.player-toolbar{display:grid;grid-template-columns:36px 36px minmax(64px,1fr) 36px 44px 36px;gap:2px;align-items:center}
+.player-toolbar .forward{display:none}
+.player-toolbar .pip{display:none}
+.player-toolbar button{width:36px;height:36px}
+.player-time{margin:0;text-align:center;font-size:11px}
+.player-toolbar .speed{width:44px}
+.player-toolbar small{top:15px}
+.modern-player.has-started .player-center{display:none}
+.player-center{width:52px;height:52px;left:calc(50% - 26px);top:calc(50% - 60px);box-shadow:none}
+.player-progress{padding-block:10px}
+#video-dialog h3{font-size:14px;margin-bottom:10px}
+#video-dialog>a{padding-top:8px}
+.modern-player:fullscreen{display:flex;flex-direction:column}
+#video-container .modern-player:fullscreen video{flex:1;min-height:0;height:0;aspect-ratio:auto}
+.modern-player:fullscreen .player-controls{width:min(100%,800px);margin-inline:auto}
+@media(max-width:380px){.player-toolbar{grid-template-columns:32px 32px minmax(55px,1fr) 32px 36px 32px;gap:0}.player-toolbar button{width:32px}.player-toolbar .speed{width:36px}.player-time{font-size:10px}}
