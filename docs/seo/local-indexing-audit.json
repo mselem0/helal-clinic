@@ -1,0 +1,207 @@
+{
+  "date": "2026-10-23",
+  "scope": "Local HTTP only. No production or search engine account accessed. Public URLs from current local sitemap; model-to-sitemap completeness separately covered by PublicIndexingCoverageTest.",
+  "publicPages": 22,
+  "passed": true,
+  "robotsTxt": "User-agent: *\nDisallow: /codeAiAdminDash\nDisallow: /site-preview/\nDisallow: /patient/\nDisallow: /patient-auth/\nDisallow: /*?*preview=\n\nSitemap: http://127.0.0.1:8765/sitemap.xml\n",
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/about-us",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/services",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/patient-journey",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/gallery",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/blog",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/branches",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/frequently-asked-questions",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/contact-us",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/appointment",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/services/service-1",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/services/service-2",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/services/service-3",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/blog/article-1",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/blog/article-2",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/blog/article-3",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/blog/gestational-diabetes-birth-options",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/blog/c-section-perineal-wound-care",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/blog/postpartum-emergency-warning-signs",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/branches/branch-braih5ts8e",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/branches/branch-xprydvuodr",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    },
+    {
+      "path": "/branches/branch-0qjru35cyk",
+      "status": 200,
+      "canonicalMatches": true,
+      "robots": "index,follow,max-image-preview:large",
+      "robotsHeader": "index, follow, max-image-preview:large",
+      "titlePresent": true,
+      "passed": true
+    }
+  ]
+}

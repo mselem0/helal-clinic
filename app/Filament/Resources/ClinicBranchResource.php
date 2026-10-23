@@ -9,6 +9,7 @@ use App\Models\ClinicBranch;
 use App\Models\Service;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -51,9 +52,46 @@ class ClinicBranchResource extends Resource
                             ->tel()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('working_hours')
-                            ->label('مواعيد العمل')
+                            ->label('وصف مواعيد العمل العام')
+                            ->helperText('نص تعريفي للفروع التي لم يُفعّل جدول الحجز المنظم لها.')
                             ->placeholder('السبت - الخميس: 5م - 10م')
                             ->maxLength(255),
+                        Forms\Components\Toggle::make('booking_schedule_enabled')
+                            ->label('تفعيل مواعيد الحجز لهذا الفرع')
+                            ->live()
+                            ->default(false)
+                            ->helperText('عند عدم التفعيل يستمر الحجز بالطريقة الحالية.'),
+                        Forms\Components\Section::make('الجدول الأسبوعي للحجز')
+                            ->description('المواعيد بتوقيت القاهرة وتُطبّق على جميع خدمات الفرع. اترك اليوم مغلقًا عند عدم استقبال الحجوزات.')
+                            ->schema(self::weeklyScheduleFields())
+                            ->columns(1)
+                            ->columnSpanFull()
+                            ->visible(fn (Get $get): bool => (bool) $get('booking_schedule_enabled')),
+                        Forms\Components\Repeater::make('schedule_exceptions')
+                            ->label('استثناءات التواريخ')
+                            ->helperText('يمكن إغلاق يوم محدد أو تحديد ساعات مختلفة لذلك اليوم فقط.')
+                            ->default([])
+                            ->schema([
+                                Forms\Components\DatePicker::make('date')->label('التاريخ')->required()->distinct(),
+                                Forms\Components\Toggle::make('closed')->label('مغلق طوال اليوم')->default(false)->live(),
+                                Forms\Components\TimePicker::make('from')->label('من')->seconds(false)->required(fn (Get $get): bool => ! (bool) $get('closed'))->hidden(fn (Get $get): bool => (bool) $get('closed'))->rules(['date_format:H:i']),
+                                Forms\Components\TimePicker::make('to')->label('إلى')->seconds(false)->required(fn (Get $get): bool => ! (bool) $get('closed'))->hidden(fn (Get $get): bool => (bool) $get('closed'))->rules([
+                                    'date_format:H:i',
+                                    function (Get $get): \Closure {
+                                        return function (string $attribute, mixed $value, \Closure $fail) use ($get): void {
+                                            $from = $get('from');
+                                            if (is_string($from) && is_string($value) && $from >= $value) {
+                                                $fail('يجب أن يكون وقت الإغلاق بعد وقت الفتح.');
+                                            }
+                                        };
+                                    },
+                                ]),
+                            ])
+                            ->columns(4)
+                            ->defaultItems(0)
+                            ->collapsible()
+                            ->visible(fn (Get $get): bool => (bool) $get('booking_schedule_enabled'))
+                            ->columnSpanFull(),
                         Forms\Components\Textarea::make('address')
                             ->label('العنوان التفصيلي')
                             ->required()
@@ -121,6 +159,48 @@ class ClinicBranchResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /** @return array<int, Forms\Components\Component> */
+    private static function weeklyScheduleFields(): array
+    {
+        $days = [
+            0 => 'الأحد', 1 => 'الإثنين', 2 => 'الثلاثاء', 3 => 'الأربعاء',
+            4 => 'الخميس', 5 => 'الجمعة', 6 => 'السبت',
+        ];
+
+        $fields = [];
+        foreach ($days as $weekday => $label) {
+            $fields[] = Forms\Components\Fieldset::make($label)
+                ->schema([
+                    Forms\Components\Toggle::make("weekly_schedule.{$weekday}.open")
+                        ->label('مفتوح للحجز')
+                        ->default(false)
+                        ->live(),
+                    Forms\Components\TimePicker::make("weekly_schedule.{$weekday}.from")
+                        ->label('من')->seconds(false)
+                        ->required(fn (Get $get): bool => (bool) $get("weekly_schedule.{$weekday}.open"))
+                        ->hidden(fn (Get $get): bool => ! (bool) $get("weekly_schedule.{$weekday}.open"))
+                        ->rules(['date_format:H:i']),
+                    Forms\Components\TimePicker::make("weekly_schedule.{$weekday}.to")
+                        ->label('إلى')->seconds(false)
+                        ->required(fn (Get $get): bool => (bool) $get("weekly_schedule.{$weekday}.open"))
+                        ->hidden(fn (Get $get): bool => ! (bool) $get("weekly_schedule.{$weekday}.open"))
+                        ->rules([
+                            'date_format:H:i',
+                            function (Get $get) use ($weekday): \Closure {
+                                return function (string $attribute, mixed $value, \Closure $fail) use ($get, $weekday): void {
+                                    $from = $get("weekly_schedule.{$weekday}.from");
+                                    if (is_string($from) && is_string($value) && $from >= $value) {
+                                        $fail('يجب أن يكون وقت الإغلاق بعد وقت الفتح.');
+                                    }
+                                };
+                            },
+                        ]),
+                ])->columns(3);
+        }
+
+        return $fields;
     }
 
     public static function getRelations(): array

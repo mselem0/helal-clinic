@@ -70,18 +70,21 @@ class HomeController extends Controller
             $pageSections = $sections->whereNotIn('section_key', ['header', 'footer']);
         }
 
-        return response()->view($page->page_key === 'home' ? 'helal.home' : 'helal.page', array_merge([
+        $videoLibrary = Video::where('is_active', true)->orderBy('order')->get();
+
+        return response(\App\Support\DisplayNumbers::html(view($page->page_key === 'home' ? 'helal.home' : 'helal.page', array_merge([
             'page' => $page, 'pageKey' => $page->page_key,
             'contact' => SiteSettingHelper::group('contact'), 'whatsappNumber' => SiteSettingHelper::get('wa_number', '201017900354'),
             'pageSections' => $pageSections, 'sections' => $sections, 'theme' => $theme, 'style' => $style,
-            'videos' => Video::where('is_active', true)->orderBy('order')->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
+            'videos' => $page->page_key === 'home' ? $videoLibrary->take(3) : $videoLibrary,
+            'videoLibrary' => $videoLibrary,
             'testimonials' => Testimonial::where('is_active', true)->orderBy('order')->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
             'articles' => Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()))->latest()->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
             'services' => Service::where('is_active', true)->orderBy('order')->get(),
             'branches' => ClinicBranch::where('is_active', true)->orderBy('order')->get(),
             'journey' => json_decode($sections->firstWhere('section_key', 'your-journey')?->body ?? '{}', true)['stages'] ?? [],
             'bookingEnabled' => ClinicFeatures::enabled('Booking'), 'preview' => $preview,
-        ], $extra))->header('Cache-Control', $preview ? 'private, no-store' : 'no-cache')->header('X-Robots-Tag', str_replace(',', ', ', $seo['robots']));
+        ], $extra))->render()))->header('Cache-Control', $preview ? 'private, no-store' : 'no-cache')->header('X-Robots-Tag', str_replace(',', ', ', $seo['robots']));
     }
 
     public function storeBooking(Request $request): JsonResponse
@@ -89,12 +92,16 @@ class HomeController extends Controller
         $data = $request->validate([
             'patient_name' => ['required', 'string', 'max:70'],
             'patient_phone' => ['required', 'regex:/^01[0125][0-9]{8}$/'],
-            'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
+            'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:'.now('Africa/Cairo')->toDateString()],
             'service_id' => ['required', 'integer', 'exists:services,id'],
             'clinic_branch_id' => ['required', 'integer', 'exists:clinic_branches,id'],
         ]);
         $service = Service::where('is_active', true)->findOrFail($data['service_id']);
         $branch = ClinicBranch::where('is_active', true)->findOrFail($data['clinic_branch_id']);
+        $availability = \App\Support\BranchSchedule::forDate($branch, $data['booking_date']);
+        if (! $availability['available']) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['booking_date' => 'الفرع غير متاح في اليوم المختار. اختاري يومًا آخر.']);
+        }
         $stored = false;
         if (ClinicFeatures::enabled('Booking')) {
             abort_unless(class_exists(Booking::class), 503);
@@ -106,7 +113,8 @@ class HomeController extends Controller
         }
         $number = preg_replace('/[^0-9]/', '', SiteSettingHelper::get('wa_number', HeroSetting::first()?->whatsapp_number ?? ''));
         abort_if($number === '', 503, 'رقم التواصل غير مُعدّ.');
-        $message = "مرحبًا د. محمد هلال، أرغب في طلب موعد باسم {$data['patient_name']}، رقم {$data['patient_phone']}، يوم {$data['booking_date']}، فرع {$branch->name}، خدمة {$service->name}. الموعد قيد التأكيد.";
+        $hours = $availability['from'] && $availability['to'] ? ' مواعيد العيادة من '.$availability['from'].' إلى '.$availability['to'].' بتوقيت القاهرة.' : '';
+        $message = "مرحبًا د. محمد هلال، أرغب في طلب موعد باسم {$data['patient_name']}، رقم {$data['patient_phone']}، يوم {$data['booking_date']}، فرع {$branch->name}، خدمة {$service->name}. الموعد قيد التأكيد.".$hours;
 
         return response()->json([
             'stored' => $stored, 'status' => 'pending',

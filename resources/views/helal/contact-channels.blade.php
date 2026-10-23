@@ -1,6 +1,6 @@
 @php($footerContent = $sections->firstWhere('section_key', 'footer')?->content ?? [])
 <section class="contact-channels wrap" aria-labelledby="contact-channels-title">
-    <h2 id="contact-channels-title">تواصلي مع فريق العيادة</h2>
+    <{{ $sectionHeadingTag ?? 'h2' }} id="contact-channels-title">تواصلي مع فريق العيادة</{{ $sectionHeadingTag ?? 'h2' }}>
     <p>للاستفسارات أو لتأكيد موعد زيارتكِ، تواصلي مع فريق العيادة عبر القنوات التالية.</p>
     <div class="contact-actions">
         @if(!empty($footerContent['field_25']) && !empty($footerContent['field_26']))

@@ -21,10 +21,15 @@
 @include('helal.sections.header', ['content' => $sections->firstWhere('section_key','header')?->content ?? []])
 <main id="main-content" class="{{ request()->routeIs('home') ? 'home-page' : 'inner-page' }}">@yield('content')</main>
 @include('helal.sections.footer', ['content' => $sections->firstWhere('section_key','footer')?->content ?? []])
-@php($journeyWithVideoSources = collect($journey)->map(function ($stage) {
+@php($journeyWithVideoSources = collect($journey)->map(function ($stage) use ($videoLibrary, $videos) {
     $reel = (string) ($stage['reel'] ?? '');
-    $stage['source'] = $reel === '' ? '' : \App\Support\VideoSource::resolve('assets/reel-'.$reel.'.mp4', $reel);
+    $video = ($videoLibrary ?? $videos)->firstWhere('reel', $reel);
+    $stage['reel'] = $video ? $reel : null;
+    $stage['source'] = $video ? \App\Support\VideoSource::resolve($video->external_video_url ?: ($video->getFirstMediaUrl('video-file') ?: $video->video_path), $video->reel) : '';
+    $stage['poster'] = $video ? \App\Support\ContentUrl::resolve($video->getFirstMediaUrl('video-thumbnail') ?: $video->image_path) : '';
     return $stage;
 }))
-<script>window.helalJourney = @json($journeyWithVideoSources); window.helalBooking = @json(['url' => route('bookings.store'), 'enabled' => $bookingEnabled]);</script>
+@php($bookingSchedules = $branches->mapWithKeys(fn ($branch) => [(string) $branch->id => ['enabled' => (bool) $branch->booking_schedule_enabled, 'weekly' => $branch->weekly_schedule ?? [], 'exceptions' => $branch->schedule_exceptions ?? [], 'legacy_hours' => $branch->working_hours]]))
+<script>window.helalJourney = @json($journeyWithVideoSources); window.helalBooking = @json(['url' => route('bookings.store'), 'enabled' => $bookingEnabled, 'schedules' => $bookingSchedules]);</script>
+<script src="{{ asset('journey-card.js') }}?v={{ substr(hash_file('sha256', public_path('journey-card.js')), 0, 12) }}" defer></script>
 <script src="{{ asset('helal.js') }}?v={{ substr(hash_file('sha256', public_path('helal.js')), 0, 12) }}" defer></script></body></html>

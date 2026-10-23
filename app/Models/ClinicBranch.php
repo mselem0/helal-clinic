@@ -27,10 +27,12 @@ class ClinicBranch extends Model
         'google_maps_url',
         'google_maps_embed',
         'is_active',
+        'booking_schedule_enabled', 'weekly_schedule', 'schedule_exceptions',
         'order',
     ];
 
     protected $casts = [
         'is_active' => 'boolean', 'service_ids' => 'array',
+        'booking_schedule_enabled' => 'boolean', 'weekly_schedule' => 'array', 'schedule_exceptions' => 'array',
     ];
 }

@@ -1,0 +1,22 @@
+[
+  {
+    "asset": "public/assets/video-gestational-diabetes.webp",
+    "prompt": "Use case: photorealistic-natural. Asset: clinic educational video thumbnail, landscape 4:3. A realistic editorial still life of a plain unbranded blood glucose meter with blank dark screen, a test strip and a neatly folded soft maternity garment. No blood, needles or people. Soft natural side daylight, believable material texture, gentle shadows, pale sage and warm ivory palette with restrained deep teal accents. One clear large central subject readable at small size, composition crop safe in central square. Premium understated healthcare editorial, not glossy CGI. No text, logos, watermark, decorative icons or borders.",
+    "generator": "built-in image_gen"
+  },
+  {
+    "asset": "public/assets/video-postpartum-care.webp",
+    "prompt": "Use case: photorealistic-natural. Asset: clinic educational video thumbnail, landscape 4:3. A realistic editorial still life of a clean sterile gauze pad, wrapped dressing packet with no writing, a roll of medical paper tape and soft cotton fabric on a small tray. No wounds, bodies or people. Soft natural side daylight, believable material texture, gentle shadows, pale sage and warm ivory palette with restrained deep teal accents. One clear large central subject readable at small size, composition crop safe in central square. Premium understated healthcare editorial, not glossy CGI. No text, logos, watermark, decorative icons or borders.",
+    "generator": "built-in image_gen"
+  },
+  {
+    "asset": "public/assets/video-uterine-polyps.webp",
+    "prompt": "Use case: scientific-educational. Asset: clinic educational video thumbnail, landscape 4:3. A refined educational illustration of a single anatomically recognizable uterus in frontal cutaway, fallopian tubes and ovaries, showing one small smooth polyp attached inside the uterine cavity. Matte ivory and muted dusty pink anatomical teaching model against pale sage. Non graphic, no blood, no labels. Soft natural side daylight, believable material texture, gentle shadows, pale sage and warm ivory palette with restrained deep teal accents. One clear large central subject readable at small size, composition crop safe in central square. Premium understated healthcare editorial, not glossy CGI. No text, logos, watermark, decorative icons or borders.",
+    "generator": "built-in image_gen"
+  },
+  {
+    "asset": "public/assets/video-postpartum-warning.webp",
+    "prompt": "Use case: photorealistic-natural. Asset: clinic educational video thumbnail, landscape 4:3. A realistic editorial still life of a plain digital thermometer with unlit screen, a glass of water and a soft folded hospital bag fabric. Calm postpartum health check concept. No pills, people, text or brands. Soft natural side daylight, believable material texture, gentle shadows, pale sage and warm ivory palette with restrained deep teal accents. One clear large central subject readable at small size, composition crop safe in central square. Premium understated healthcare editorial, not glossy CGI. No text, logos, watermark, decorative icons or borders.",
+    "generator": "built-in image_gen"
+  }
+]

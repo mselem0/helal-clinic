@@ -12,8 +12,14 @@ class MultipageSeeder extends Seeder
 {
     public function run(): void
     {
+        $homeSectionOrder = ['home', 'services', 'about', 'your-journey', 'videos', 'reviews', 'section-5', 'clinics', 'articles', 'faq', 'booking'];
+        $availableHomeSections = PageSection::whereNotIn('section_key', ['header', 'footer'])->orderBy('order')->pluck('section_key')->all();
+        $homeSections = array_values(array_merge(
+            array_filter($homeSectionOrder, fn ($key) => in_array($key, $availableHomeSections, true)),
+            array_values(array_diff($availableHomeSections, $homeSectionOrder)),
+        ));
         $pages = [
-            ['home', 'home', 'الرئيسية', PageSection::whereNotIn('section_key', ['header', 'footer'])->orderBy('order')->pluck('section_key')->all()], ['about', 'about-us', 'عن د. محمد هلال', ['about']],
+            ['home', 'home', 'الرئيسية', $homeSections], ['about', 'about-us', 'عن د. محمد هلال', ['about']],
             ['services', 'services-index', 'خدمات العيادة', ['services']], ['journey', 'patient-journey', 'رحلة المريضة', ['your-journey']],
             ['videos', 'gallery', 'فيديوهات الدكتور', ['videos']], ['articles', 'articles-index', 'المقالات الطبية', ['articles']],
             ['branches', 'branches-index', 'فروع العيادة', ['clinics']], ['faq', 'frequently-asked-questions', 'الأسئلة الشائعة', ['faq']],

@@ -1,5 +1,7 @@
 'use strict';
-function selectByText(selector,text) { const select=document.querySelector(selector); if(!select)return; const option=[...select.options].find(o=>o.textContent===text); if(option)select.value=option.value; }
+function displayNumbers(value){return String(value).replace(/[٠-٩۰-۹]/g,digit=>String('٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)%10)).replace(/([0-9])[٫٬](?=[0-9])/g,(match,digit)=>digit+(match.includes('٫')?'.':','));}
+
+function selectByText(selector,text) { const select=document.querySelector(selector); if(!select)return; const option=[...select.options].find(o=>o.textContent===text); if(option){select.value=option.value;select.dispatchEvent(new Event('change',{bubbles:true}));} }
 const videoDialog=document.querySelector('#video-dialog');
 const vimeoVideos={"2129128044360416": "1236786561", "2013840505981997": "1236786559", "1683918787070180": "1236786562", "1122351437148430": "1236786560"};
 function vimeoSource(button){const source=button.dataset.src || '';if(/^https:\/\/(?:www\.)?vimeo\.com\//.test(source)||/^https:\/\/player\.vimeo\.com\/video\//.test(source))return source;return !source && vimeoVideos[button.dataset.reel]?'https://player.vimeo.com/video/'+vimeoVideos[button.dataset.reel]:null;}
@@ -22,7 +24,7 @@ function createPlayer(video){
  video.controls=false;
  const shell=document.createElement('div');shell.className='modern-player';shell.tabIndex=0;shell.setAttribute('aria-label','مشغل فيديو د. محمد هلال');video.parentNode.insertBefore(shell,video);shell.append(video);
  const overlay=document.createElement('button');overlay.className='player-center';overlay.type='button';overlay.setAttribute('aria-label','تشغيل الفيديو');overlay.innerHTML=icon('play');shell.append(overlay);
- const bar=document.createElement('div');bar.className='player-controls';bar.innerHTML='<div class="player-progress"><input class="seek" type="range" min="0" max="100" step="0.1" value="0" aria-label="تقديم الفيديو"></div><div class="player-toolbar"><button class="toggle" type="button" aria-label="تشغيل أو إيقاف الفيديو">'+icon('play')+'</button><button class="rewind" type="button" aria-label="رجوع 10 ثوانٍ"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 7a8 8 0 111 12M5 3v5h5"/></svg><small>10</small></button><button class="forward" type="button" aria-label="تقديم 10 ثوانٍ"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 7a8 8 0 10-1 12M19 3v5h-5"/></svg><small>10</small></button><span class="player-time">0:00 / 0:00</span><button class="mute" type="button" aria-label="كتم الصوت" aria-pressed="false">'+icon('sound')+'</button><select class="speed" aria-label="سرعة التشغيل"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><button class="pip" type="button" aria-label="صورة داخل صورة">'+icon('pip')+'</button><button class="fullscreen" type="button" aria-label="ملء الشاشة">'+icon('expand')+'</button></div>';shell.append(bar);
+ const bar=document.createElement('div');bar.className='player-controls';bar.innerHTML='<div class="player-progress"><input class="seek" type="range" min="0" max="100" step="0.1" value="0" aria-label="تقديم الفيديو"></div><div class="player-toolbar"><button class="toggle" type="button" aria-label="تشغيل أو إيقاف الفيديو">'+icon('play')+'</button><button class="rewind" type="button" aria-label="رجوع 10 ثوانٍ"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 7a8 8 0 111 12M5 3v5h5"/></svg><small>10</small></button><button class="forward" type="button" aria-label="تقديم 10 ثوانٍ"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 7a8 8 0 10-1 12M19 3v5h-5"/></svg><small>10</small></button><span class="player-time">0:00 / 0:00</span><button class="mute" type="button" aria-label="كتم الصوت" aria-pressed="false">'+icon('sound')+'</button><button class="speed" type="button" aria-label="سرعة التشغيل: 1، اضغطي للتغيير">1×</button><button class="pip" type="button" aria-label="صورة داخل صورة">'+icon('pip')+'</button><button class="fullscreen" type="button" aria-label="ملء الشاشة">'+icon('expand')+'</button></div>';shell.append(bar);
  const status=document.createElement('p');status.className='player-status';status.setAttribute('role','status');status.hidden=true;shell.append(status);
  const showStatus=text=>{status.textContent=text;status.hidden=!text;};
  const play=()=>video.play().catch(error=>{if(error.name!=='AbortError')showStatus(error.name==='NotAllowedError'?'اضغطي تشغيل لبدء الفيديو.':'تعذر تشغيل الفيديو. حاولي مرة أخرى.');});
@@ -41,7 +43,7 @@ function createPlayer(video){
  bar.querySelector('.seek').addEventListener('input',e=>{if(Number.isFinite(video.duration))video.currentTime=Number(e.target.value)/100*video.duration;});
  const mute=()=>{video.muted=!video.muted;};bar.querySelector('.mute').addEventListener('click',mute);
  video.addEventListener('volumechange',()=>{bar.querySelector('.mute').innerHTML=icon(video.muted?'muted':'sound');bar.querySelector('.mute').setAttribute('aria-pressed',String(video.muted));bar.querySelector('.mute').setAttribute('aria-label',video.muted?'تشغيل الصوت':'كتم الصوت');});
- bar.querySelector('.speed').addEventListener('change',e=>video.playbackRate=Number(e.target.value));
+ const rates=[1,1.25,1.5,2,0.75];const speed=bar.querySelector('.speed');speed.addEventListener('click',()=>{video.playbackRate=rates[(rates.indexOf(video.playbackRate)+1)%rates.length];speed.textContent=video.playbackRate+'×';speed.setAttribute('aria-label','سرعة التشغيل: '+video.playbackRate+'×، اضغطي للتغيير');});
  const full=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(shell.requestFullscreen)await shell.requestFullscreen();else if(video.webkitEnterFullscreen)video.webkitEnterFullscreen();else shell.classList.toggle('expanded-player');}catch{shell.classList.toggle('expanded-player');}};
  bar.querySelector('.fullscreen').addEventListener('click',full);
  const pip=bar.querySelector('.pip');pip.hidden=!document.pictureInPictureEnabled;pip.addEventListener('click',async()=>{try{if(document.pictureInPictureElement)await document.exitPictureInPicture();else await video.requestPictureInPicture();}catch{showStatus('وضع الصورة المصغرة غير متاح في هذا المتصفح.');}});
@@ -49,81 +51,167 @@ function createPlayer(video){
  playerShells.set(video,shell);return shell;
 }
 
-document.querySelectorAll('dialog').forEach(dialog=>{dialog.querySelector('.close')?.addEventListener('click',()=>{if(dialog===videoDialog)document.querySelector('#video-container')?.replaceChildren();dialog.close();});dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});});
+document.querySelectorAll('dialog').forEach(dialog=>{const pause=()=>dialog.querySelectorAll('video').forEach(video=>video.pause());const dismiss=()=>{pause();dialog.close();};dialog.querySelector('.close')?.addEventListener('click',dismiss);dialog.addEventListener('cancel',pause);dialog.addEventListener('click',event=>{if(event.target===dialog)dismiss();});});
 document.querySelectorAll('video').forEach(video=>createPlayer(video));
-document.querySelectorAll('[data-reel]').forEach(button=>{
- const warm=()=>{if(!vimeoSource(button) && (button.dataset.reel || button.dataset.src) && !navigator.connection?.saveData)prepareVideo(button);};
+let activeVideoTrigger=null, activeVideoItem=null;
+const videoLibrary=[...document.querySelectorAll('[data-video-library] [data-reel]')];
+function openVideoDialog(button,media){
+ if(!videoDialog)return;
+ activeVideoItem=button;
+ document.querySelector('#video-container').replaceChildren(media);
+ videoDialog.querySelector('h3').textContent=button.dataset.title||'فيديو الدكتور';
+ const facebookUrl=/^\d+$/.test(button.dataset.reel||'')?'https://www.facebook.com/reel/'+encodeURIComponent(button.dataset.reel)+'/':'https://www.facebook.com/HelalClinic0';
+ videoDialog.querySelectorAll('[data-reel-facebook]').forEach(link=>link.href=facebookUrl);
+ if(videoDialog.open)return;
+ videoDialog.showModal();
+ videoDialog.querySelector('.close').focus({preventScroll:true});
+}
+document.querySelectorAll('button[data-reel]').forEach(button=>{
+ const warm=()=>{if(!vimeoSource(button)&&(button.dataset.reel||button.dataset.src)&&!navigator.connection?.saveData)prepareVideo(button);};
  button.addEventListener('pointerenter',warm);button.addEventListener('focus',warm);button.addEventListener('pointerdown',warm,{passive:true});
+ button.addEventListener('click',()=>{activeVideoTrigger=button;playLibraryVideo(button);});
+});
+function playLibraryVideo(button){
+  if(!videoDialog||(!button.dataset.reel&&!button.dataset.src))return;
+  document.querySelectorAll('video').forEach(video=>video.pause());
+  const external=vimeoSource(button);
+  if(external){
+   const match=external.match(/^https:\/\/(?:player\.vimeo\.com\/video\/|(?:www\.)?vimeo\.com\/)([0-9]+)/);if(!match)return;
+   const url=new URL('https://player.vimeo.com/video/'+match[1]);const hash=new URL(external).searchParams.get('h');if(hash)url.searchParams.set('h',hash);
+   url.searchParams.set('autoplay','1');url.searchParams.set('dnt','1');for(const key of ['title','byline','portrait','badge'])url.searchParams.set(key,'0');url.searchParams.set('color','008b91');url.searchParams.set('playsinline','1');
+   const frame=document.createElement('iframe');frame.src=url.href;frame.title=button.dataset.title||'فيديو الدكتور';frame.allow='autoplay; fullscreen; picture-in-picture';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';frame.className='vimeo-player';openVideoDialog(button,frame);return;
+  }
+  const video=prepareVideo(button);let shell=playerShells.get(video);
+  if(shell)openVideoDialog(button,shell);else{openVideoDialog(button,video);shell=createPlayer(video);}
+  video.currentTime=0;video.play().catch(()=>{ /* A visible play control permits retrying a blocked autoplay. */ });
+}
+videoDialog?.querySelectorAll('[data-video-step]').forEach(button=>{
+ button.hidden=videoLibrary.length<2;
  button.addEventListener('click',()=>{
- if(!videoDialog || (!button.dataset.reel && !button.dataset.src))return;
- document.querySelectorAll('video').forEach(v=>v.pause());
- const external=vimeoSource(button);
- if(external){
-  const match=external.match(/^https:\/\/(?:player\.vimeo\.com\/video\/|(?:www\.)?vimeo\.com\/)([0-9]+)/);
-  if(!match)return;
-  const url=new URL('https://player.vimeo.com/video/'+match[1]);
-  const hash=new URL(external).searchParams.get('h');if(hash)url.searchParams.set('h',hash);
-  url.searchParams.set('autoplay','1');url.searchParams.set('dnt','1');
-  for(const key of ['title','byline','portrait','badge'])url.searchParams.set(key,'0');
-  url.searchParams.set('color','008b91');url.searchParams.set('playsinline','1');
-  const frame=document.createElement('iframe');frame.src=url.href;frame.title=button.dataset.title || 'فيديو الدكتور';frame.allow='autoplay; fullscreen; picture-in-picture';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';frame.className='vimeo-player';
-  document.querySelector('#video-container').replaceChildren(frame);
-  videoDialog.querySelector('h3').textContent=frame.title;
-  const link=videoDialog.querySelector('a');link.href='https://vimeo.com/'+match[1];link.textContent='مشاهدة على Vimeo';link.hidden=false;
-  videoDialog.showModal();return;
- }
- const video=prepareVideo(button);
- if(!playerShells.has(video)){document.querySelector('#video-container').replaceChildren(video);createPlayer(video);}
- else document.querySelector('#video-container').replaceChildren(playerShells.get(video));
- video.currentTime=0;
- videoDialog.querySelector('h3').textContent=button.dataset.title || 'فيديو الدكتور';
- const sourceLink=videoDialog.querySelector('a');sourceLink.textContent='مشاهدة على فيسبوك';sourceLink.hidden=!/^\d+$/.test(button.dataset.reel || '');if(!sourceLink.hidden)sourceLink.href='https://www.facebook.com/reel/'+encodeURIComponent(button.dataset.reel)+'/';
- videoDialog.showModal();video.play().catch(()=>{ /* The visible play button permits playback if autoplay is blocked. */ });
-});});
-videoDialog?.addEventListener('close',()=>{videoDialog.querySelectorAll('video').forEach(v=>v.pause());document.querySelector('#video-container')?.replaceChildren();});
+  const index=videoLibrary.findIndex(item=>item.dataset.reel===activeVideoItem?.dataset.reel);
+  const step=Number(button.dataset.videoStep);
+  playLibraryVideo(videoLibrary[(index+step+videoLibrary.length)%videoLibrary.length]);
+ });
+});
+function resetVideoDialog(){
+ videoDialog.querySelectorAll('video').forEach(video=>video.pause());document.querySelector('#video-container')?.replaceChildren();activeVideoTrigger?.focus({preventScroll:true});activeVideoTrigger=null;activeVideoItem=null;
+}
+videoDialog?.addEventListener('close',resetVideoDialog);
+videoDialog?.querySelector('.close').addEventListener('click',resetVideoDialog);
 const form=document.querySelector('#booking-form');
 let showBookingStep=()=>{};
 if(form){
  const date=document.querySelector('#date'), today=new Date();
  date.min=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit'}).format(today);
- let bookingStep=1,selectedTime='',offer='كشف',calendarMonth=new Date(today.getFullYear(),today.getMonth(),1);
+ let bookingStep=1,selectedTime='',offer='كشف',calendarMonth=new Date(Number(date.min.slice(0,4)),Number(date.min.slice(5,7))-1,1);
  const errorBox=document.querySelector('#booking-error'),bookingHeading=form.querySelector('.form-head');
  bookingHeading?.setAttribute('tabindex','-1');
- function summary(){ const clinic=document.querySelector('#clinic'),service=document.querySelector('#service');return clinic.selectedOptions[0].textContent+' · '+service.selectedOptions[0].textContent+'\n'+offer+' · '+date.value+' · الوقت بالتنسيق مع العيادة'; }
- showBookingStep=function(step,focusHeading=false){document.querySelector('#appointment-success').hidden=true;document.querySelector('.appointment-actions').hidden=false;document.querySelector('.booking-progress').hidden=false;bookingStep=step;errorBox.textContent='';document.querySelectorAll('.booking-step').forEach(el=>el.hidden=Number(el.dataset.step)!==step);document.querySelectorAll('[data-step-label]').forEach(el=>el.classList.toggle('active',Number(el.dataset.stepLabel)===step));document.querySelector('#booking-back').hidden=step===1;document.querySelector('#booking-next').hidden=step===3;document.querySelector('#booking-confirm').hidden=step!==3;document.querySelector('#patient').required=step===3;document.querySelector('#appointment-phone').required=step===3;if(step===3)document.querySelector('#appointment-summary').textContent=summary();if(focusHeading&&bookingHeading){bookingHeading.focus({preventScroll:true});bookingHeading.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}};
- function renderCalendar(){document.querySelector('#calendar-month').textContent=calendarMonth.toLocaleDateString('ar-EG',{month:'long',year:'numeric'});const grid=document.querySelector('#calendar-days');grid.replaceChildren();const offset=(calendarMonth.getDay()+1)%7;for(let i=0;i<offset;i++)grid.append(document.createElement('span'));const days=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0).getDate();for(let d=1;d<=days;d++){const value=[calendarMonth.getFullYear(),String(calendarMonth.getMonth()+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-');const button=document.createElement('button');button.type='button';button.textContent=d.toLocaleString('ar-EG');button.disabled=value<date.min;button.setAttribute('aria-label',value);button.setAttribute('aria-pressed',String(date.value===value));button.addEventListener('click',()=>{date.value=value;renderCalendar();});grid.append(button);}}
+ function availability(value){
+  const schedule=window.helalBooking.schedules?.[document.querySelector('#clinic').value];
+  if(!schedule?.enabled)return {available:true,label:schedule?.legacy_hours||'لم تُضف مواعيد هذا الفرع بعد.'};
+  const override=(schedule.exceptions||[]).find(item=>item.date===value);
+  const day=new Date(value+'T12:00:00Z').getUTCDay();
+  const entry=override||schedule.weekly?.[day];
+  const open=override?override.closed===false:entry?.open===true;
+  const valid=entry&&/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.from||'')&&/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.to||'')&&entry.to>entry.from;
+  if(!open||!valid)return {available:false,label:'العيادة مغلقة في اليوم ده. اختاري يومًا آخر.'};
+  const format=time=>{const [hour,minute]=time.split(':').map(Number);return (hour%12||12)+':'+String(minute).padStart(2,'0')+' '+(hour<12?'صباحًا':'مساءً');};
+  return {available:true,label:'من '+format(entry.from)+' إلى '+format(entry.to)};
+ }
+ function updateHours(){const hours=document.querySelector('#booking-hours');if(hours)hours.textContent=date.value?availability(date.value).label:(document.querySelector('#calendar-days button:not([disabled])')?'اختاري اليوم لعرض مواعيد العيادة.':'لا توجد أيام متاحة في الشهر ده. جرّبي شهرًا آخر.');}
+ document.querySelector('#clinic').addEventListener('change',()=>{date.value='';renderCalendar();});
+ function summary(){ const clinic=document.querySelector('#clinic'),service=document.querySelector('#service');return clinic.selectedOptions[0].textContent+' · '+service.selectedOptions[0].textContent+'\n'+offer+' · '+date.value+' · '+availability(date.value).label; }
+ showBookingStep=function(step,focusHeading=false){document.querySelector('.appointment-actions').hidden=false;document.querySelector('.booking-progress').hidden=false;bookingStep=step;errorBox.textContent='';const stepCaption=document.querySelector('#booking-step-caption');if(stepCaption)stepCaption.textContent='الخطوة '+String(step)+' من 3';const stepHint=form.querySelector('.booking-step-hint');if(stepHint)stepHint.textContent=JSON.parse(stepHint.dataset.hints)[step-1];form.querySelectorAll('[data-step-label]').forEach(label=>{if(Number(label.dataset.stepLabel)===step)label.setAttribute('aria-current','step');else label.removeAttribute('aria-current');label.classList.toggle('completed',Number(label.dataset.stepLabel)<step);});document.querySelectorAll('.booking-step').forEach(el=>el.hidden=Number(el.dataset.step)!==step);document.querySelectorAll('[data-step-label]').forEach(el=>el.classList.toggle('active',Number(el.dataset.stepLabel)===step));document.querySelector('#booking-back').hidden=step===1;document.querySelector('#booking-next').hidden=step===3;document.querySelector('#booking-confirm').hidden=step!==3;document.querySelector('#patient').required=step===3;document.querySelector('#appointment-phone').required=step===3;if(step===3)document.querySelector('#appointment-summary').textContent=summary();if(focusHeading&&bookingHeading){bookingHeading.focus({preventScroll:true});bookingHeading.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}};
+ function renderCalendar(){document.querySelector('#calendar-month').textContent=calendarMonth.toLocaleDateString('ar-EG-u-nu-latn',{month:'long',year:'numeric'});const grid=document.querySelector('#calendar-days');grid.replaceChildren();const offset=(calendarMonth.getDay()+1)%7;for(let i=0;i<offset;i++)grid.append(document.createElement('span'));const days=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0).getDate();for(let d=1;d<=days;d++){const value=[calendarMonth.getFullYear(),String(calendarMonth.getMonth()+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-');const button=document.createElement('button');button.type='button';button.textContent=String(d);button.disabled=value<date.min||!availability(value).available;button.dataset.date=value;button.setAttribute('aria-label',new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),d).toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'long',year:'numeric'}));button.setAttribute('aria-pressed',String(date.value===value));button.addEventListener('click',()=>{date.value=value;renderCalendar();});grid.append(button);}updateHours();}
  document.querySelectorAll('[data-offer]').forEach(button=>button.addEventListener('click',()=>{offer=button.dataset.offer;document.querySelectorAll('[data-offer]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));}));
  document.querySelectorAll('[data-time]').forEach(button=>button.addEventListener('click',()=>{selectedTime=button.dataset.time;document.querySelectorAll('[data-time]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));}));
  document.querySelector('#month-prev').addEventListener('click',()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);renderCalendar();});
  document.querySelector('#month-next').addEventListener('click',()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);renderCalendar();});
- document.querySelector('#booking-next').addEventListener('click',()=>{if(bookingStep===1&&(!document.querySelector('#clinic').value||!document.querySelector('#service').value)){errorBox.textContent='اختاري العيادة والخدمة أولًا.';return;}if(bookingStep===2&&!date.value){errorBox.textContent='اختاري اليوم المفضل أولًا.';return;}showBookingStep(bookingStep+1,true);});
+ document.querySelector('#booking-next').addEventListener('click',()=>{if(bookingStep===1&&(!document.querySelector('#clinic').value||!document.querySelector('#service').value)){errorBox.textContent='اختاري العيادة والخدمة أولًا.';return;}if(bookingStep===2&&(!date.value||!availability(date.value).available)){errorBox.textContent='اختاري اليوم المفضل أولًا.';return;}showBookingStep(bookingStep+1,true);});
  document.querySelector('#booking-back').addEventListener('click',()=>showBookingStep(bookingStep-1,true));
  form.addEventListener('submit',async event=>{
   event.preventDefault();if(bookingStep!==3 || !form.reportValidity())return;
   if(!document.querySelector('#patient').value.trim()){errorBox.textContent='اكتبي الاسم أولًا.';return;}
-  const submit=document.querySelector('#booking-confirm');submit.disabled=true;errorBox.textContent='';
+  const submit=document.querySelector('#booking-confirm');
+  // Reserve the new tab during the click so async validation does not trigger popup blocking.
+  const handoff=window.open('about:blank','_blank');
+  if(!handoff){errorBox.textContent='اسمحي بفتح تاب جديدة في المتصفح، وبعدها حاولي الإرسال مرة تانية.';return;}
+  handoff.opener=null;
+  submit.disabled=true;errorBox.textContent='';
+  let requestSucceeded=false;
   try {
    const response=await fetch(window.helalBooking.url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({patient_name:document.querySelector('#patient').value.trim(),patient_phone:document.querySelector('#appointment-phone').value,booking_date:date.value,service_id:document.querySelector('#service').value,clinic_branch_id:document.querySelector('#clinic').value})});
    const result=await response.json();if(!response.ok)throw new Error(Object.values(result.errors || {}).flat()[0] || result.message || 'تعذر إرسال الطلب. حاولي مجددًا.');
-   document.querySelectorAll('.booking-step,.appointment-actions,.booking-progress').forEach(el=>el.hidden=true);
-   document.querySelector('#appointment-success').hidden=false;document.querySelector('#success-details').textContent=result.message+'\n'+summary();
-   const link=document.querySelector('#booking-whatsapp');link.href=result.whatsapp_url;link.hidden=false;
-  } catch(error){errorBox.textContent=error.message || 'تعذر الاتصال. حاولي مجددًا.';} finally {submit.disabled=false;}
+   if(!result.whatsapp_url)throw new Error('تعذر تجهيز رابط واتساب. حاولي مجددًا.');
+   const whatsappUrl=new URL(result.whatsapp_url);
+   if(whatsappUrl.protocol!=='https:'||whatsappUrl.hostname!=='wa.me')throw new Error('تعذر تجهيز رابط واتساب. حاولي مجددًا.');
+   requestSucceeded=true;
+   if(!handoff.closed)handoff.location.href=whatsappUrl.href;
+   form.reset();date.value='';selectedTime='';offer='كشف';calendarMonth=new Date(Number(date.min.slice(0,4)),Number(date.min.slice(5,7))-1,1);
+   form.querySelectorAll('[data-offer]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.offer===offer)));
+   form.querySelectorAll('[data-time]').forEach(button=>button.setAttribute('aria-pressed','false'));
+   document.querySelector('#appointment-summary').textContent='';showBookingStep(1);renderCalendar();
+   // Leave the wizard ready for a new request when the visitor returns.
+   if(location.search)history.replaceState(history.state,'',location.pathname+location.hash);
+   if(handoff.closed){const link=document.createElement('a');link.href=whatsappUrl.href;link.target='_blank';link.rel='noopener';link.textContent='افتحي واتساب لإكمال إرسال طلبكِ';errorBox.replaceChildren(link);}
+  } catch(error){if(!requestSucceeded&&!handoff.closed)handoff.close();errorBox.textContent=error.message || 'تعذر الاتصال. حاولي مجددًا.';} finally {submit.disabled=false;}
  });
- document.querySelector('#booking-restart').addEventListener('click',()=>showBookingStep(1,true));
  showBookingStep(1);renderCalendar();
 }
 document.querySelectorAll('[data-service],[data-clinic]').forEach(button=>button.addEventListener('click',()=>{if(!form){location.href='/appointment'+(button.dataset.service?'?service='+encodeURIComponent(button.dataset.service):'?branch='+encodeURIComponent(button.dataset.clinic));return;}selectByText(button.dataset.service?'#service':'#clinic',button.dataset.service || button.dataset.clinic);showBookingStep(1);document.querySelector('#booking').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}));
 if(document.querySelector('#journey-name') && document.querySelector('[data-stage]')) {
-const stages=window.helalJourney || {};
-let selectedStage=null;
-document.querySelectorAll('[data-stage]').forEach(button=>button.addEventListener('click',()=>{selectedStage=stages[button.dataset.stage];document.querySelectorAll('[data-stage]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));document.querySelector('#journey-placeholder').hidden=true;document.querySelector('#journey-result').hidden=false;document.querySelector('.personal-journey').classList.add('journey-active');document.querySelector('.journey-status').textContent='رحلتكِ جاهزة.. اختاري خطوتكِ التالية.';document.querySelector('#journey-tag').textContent=selectedStage.tag;document.querySelector('#journey-title').textContent=selectedStage.title;document.querySelector('#journey-description').textContent=selectedStage.description;document.querySelector('#journey-questions').replaceChildren(...selectedStage.questions.map(text=>{let li=document.createElement('li');li.textContent=text;return li;}));const videoButton=document.querySelector('#journey-video');videoButton.dataset.reel=selectedStage.reel||'';videoButton.dataset.src=selectedStage.source||'';videoButton.dataset.title=selectedStage.video;videoButton.textContent=(selectedStage.reel?'▶ ':'')+selectedStage.video;document.querySelector('#journey-video-note').textContent=selectedStage.note;}));
-document.querySelector('#journey-video').addEventListener('click',event=>{if(!selectedStage?.reel){event.stopImmediatePropagation();window.open('https://www.facebook.com/HelalClinic0','_blank','noopener');}},true);
-document.querySelector('#journey-book').addEventListener('click',()=>{if(!selectedStage)return;if(!form){location.href='/appointment?service='+encodeURIComponent(selectedStage.service)+'&name='+encodeURIComponent(document.querySelector('#journey-name').value.trim());return;}selectByText('#service',selectedStage.service);const name=document.querySelector('#journey-name').value.trim();if(name)document.querySelector('#patient').value=name;if(typeof showBookingStep==='function')showBookingStep(1);document.querySelector('#booking').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});
-document.querySelector('#journey-save').addEventListener('click',async()=>{if(!selectedStage)return;await document.fonts.ready;const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1080;const ctx=canvas.getContext('2d');ctx.fillStyle='#edf7ed';ctx.fillRect(0,0,1080,1080);ctx.fillStyle='#ed8b19';ctx.fillRect(890,180,100,6);ctx.direction='rtl';ctx.textAlign='right';ctx.fillStyle='#006f76';ctx.font='600 46px "IBM Plex Sans Arabic",sans-serif';ctx.fillText('رحلتكِ مع د. محمد هلال',990,330);const name=document.querySelector('#journey-name').value.trim();ctx.font='500 38px "IBM Plex Sans Arabic",sans-serif';ctx.fillText(name?'يا '+name+'، كل رحلة تبدأ بخطوة.':'كل رحلة تبدأ بخطوة.',990,445);ctx.fillStyle='#ed8b19';ctx.font='600 44px "IBM Plex Sans Arabic",sans-serif';ctx.fillText(selectedStage.tag,990,555);ctx.fillStyle='#547276';ctx.font='400 27px "IBM Plex Sans Arabic",sans-serif';selectedStage.questions.forEach((q,i)=>ctx.fillText(q,990,665+i*65,900));ctx.font='500 30px "IBM Plex Sans Arabic",sans-serif';ctx.fillText('للحجز: 01017900354 · 01509011313',990,900);ctx.font='400 21px "IBM Plex Sans Arabic",sans-serif';ctx.fillText('بطاقة لترتيب أسئلتكِ قبل الزيارة',990,980);canvas.toBlob(blob=>{const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='رحلتك-مع-د-محمد-هلال.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},'image/png');});
-
-
- document.querySelector('[data-stage="planning"]')?.click();
+ const stages=window.helalJourney||{},personalQuestions={},questionDrafts={};
+ let selectedStage=null,selectedKey=null;
+ const input=document.querySelector('#journey-personal-question'),questionStatus=document.querySelector('#journey-question-status');
+ function questions(){return [...(selectedStage?.questions||[]),...(personalQuestions[selectedKey]||[])];}
+ function renderQuestions(){
+  const list=document.querySelector('#journey-questions');list.replaceChildren();
+  for(const question of selectedStage?.questions||[]){const li=document.createElement('li');li.textContent=question;list.append(li);}
+  (personalQuestions[selectedKey]||[]).forEach((question,index)=>{const li=document.createElement('li');li.className='personal-question';const text=document.createElement('span');text.textContent=question;const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.setAttribute('aria-label','حذف السؤال: '+question);remove.addEventListener('click',()=>{personalQuestions[selectedKey].splice(index,1);renderQuestions();questionStatus.textContent='تم حذف السؤال.';});li.append(text,remove);list.append(li);});
+ }
+ document.querySelectorAll('[data-stage]').forEach(button=>button.addEventListener('click',()=>{
+  const stage=stages[button.dataset.stage];if(!stage)return;
+  if(selectedKey)questionDrafts[selectedKey]=input.value;
+  selectedKey=button.dataset.stage;selectedStage={...stage,questions:(stage.questions||[]).map(displayNumbers)};
+  for(const key of ['tag','title','description','video','note','service'])if(selectedStage[key])selectedStage[key]=displayNumbers(selectedStage[key]);
+  document.querySelectorAll('[data-stage]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+  document.querySelector('#journey-placeholder').hidden=true;document.querySelector('#journey-result').hidden=false;document.querySelector('.personal-journey').classList.add('journey-active');
+  document.querySelector('.journey-status').textContent='جهّزي أسئلتكِ، وبعدها كمّلي لطلب الموعد.';
+  document.querySelector('#journey-tag').textContent=selectedStage.tag||'';document.querySelector('#journey-title').textContent=selectedStage.title||'';document.querySelector('#journey-description').textContent=selectedStage.description||'';
+  input.value=questionDrafts[selectedKey]||'';input.setCustomValidity('');questionStatus.textContent='';renderQuestions();
+  const videoButton=document.querySelector('#journey-video');videoButton.dataset.reel=selectedStage.reel||'';videoButton.dataset.src=selectedStage.source||'';videoButton.dataset.poster=selectedStage.poster||'';videoButton.dataset.title=selectedStage.video||'';videoButton.hidden=!selectedStage.reel;
+  videoButton.setAttribute('aria-label','تشغيل '+(selectedStage.video||'فيديو الدكتور'));
+  const poster=document.querySelector('#journey-video-poster');if(selectedStage.poster)poster.src=selectedStage.poster;else poster.removeAttribute('src');
+  document.querySelector('#journey-video-title').textContent=selectedStage.video||'';
+  document.querySelector('#journey-video-fallback').hidden=!!selectedStage.reel;document.querySelector('#journey-video-note').textContent=selectedStage.note||'';
+ }));
+ input.addEventListener('input',()=>{input.setCustomValidity('');if(selectedKey)questionDrafts[selectedKey]=input.value;});
+ document.querySelector('#journey-question-form').addEventListener('submit',event=>{
+  event.preventDefault();if(!selectedKey)return;const question=input.value.trim();
+  if(!question){input.setCustomValidity('اكتبي سؤالكِ الأول.');input.reportValidity();return;}
+  const list=personalQuestions[selectedKey]||=[];
+  if(list.length>=10){questionStatus.textContent='يمكنكِ إضافة 10 أسئلة لكل مرحلة. احذفي سؤالًا لو حابة تستبدليه.';return;}
+  list.push(question);input.value='';questionDrafts[selectedKey]='';renderQuestions();questionStatus.textContent='اتضاف سؤالكِ، وهيظهر في بطاقة رحلتكِ.';input.focus();
+ });
+ function showJourneyBooking(open){
+  const panel=document.querySelector('#journey-booking-panel');if(!panel)return;
+  panel.hidden=!open;document.querySelector('#journey-preparation-panel').hidden=open;
+  document.querySelectorAll('[data-journey-step]').forEach(item=>{if(Number(item.dataset.journeyStep)===(open?2:1))item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');});
+  const target=open?panel.querySelector('.form-head'):document.querySelector('#journey-title');if(target){target.tabIndex=-1;target.focus({preventScroll:true});target.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+ }
+ document.querySelector('#journey-book').addEventListener('click',()=>{
+  if(!selectedStage)return;
+  if(!form){location.href='/appointment?service='+encodeURIComponent(selectedStage.service||'')+'&name='+encodeURIComponent(document.querySelector('#journey-name').value.trim());return;}
+  selectByText('#service',selectedStage.service);const name=document.querySelector('#journey-name').value.trim();if(name)document.querySelector('#patient').value=name;showBookingStep(1);
+  if(document.querySelector('#journey-booking-panel'))showJourneyBooking(true);else document.querySelector('#booking').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+ });
+ document.querySelector('#journey-return')?.addEventListener('click',()=>showJourneyBooking(false));
+ document.querySelector('#journey-save').addEventListener('click',async()=>{
+  if(!selectedStage)return;const button=document.querySelector('#journey-save');button.disabled=true;
+  try{await window.saveHelalJourneyCard({tag:selectedStage.tag,name:document.querySelector('#journey-name').value.trim(),questions:questions()});}
+  catch{questionStatus.textContent='تعذر حفظ البطاقة. حاولي مرة تانية.';}finally{button.disabled=false;}
+ });
+ document.querySelector('[data-stage]:not([disabled])')?.click();
 }
 const menuToggle=document.querySelector('.menu-toggle'),mainMenu=document.querySelector('#main-menu');
 function setMenuOpen(open){if(!menuToggle)return;menuToggle.setAttribute('aria-expanded',String(open));menuToggle.setAttribute('aria-label',open?'إغلاق قائمة الموقع':'فتح قائمة الموقع');mainMenu?.classList.toggle('menu-open',open);}
@@ -133,3 +221,89 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')setMenuOpen(
 const year=document.querySelector('#footer-year');if(year)year.textContent=new Date().getFullYear();
 
 if(form){const query=new URLSearchParams(location.search);if(query.has('service'))selectByText('#service',query.get('service'));if(query.has('branch'))selectByText('#clinic',query.get('branch'));if(query.has('name'))document.querySelector('#patient').value=query.get('name');}
+
+// The website prepares a message; WhatsApp handles the final send.
+const chatToggle=document.querySelector('#clinic-chat-toggle'),chatPanel=document.querySelector('#clinic-chat');
+if(chatToggle&&chatPanel){
+ const message=chatPanel.querySelector('textarea');
+ const chatWidget=chatToggle.closest('.clinic-chat-widget');
+ const closeChat=(restoreFocus=false)=>{chatWidget.classList.remove('chat-is-open');chatPanel.hidden=true;chatToggle.setAttribute('aria-expanded','false');if(restoreFocus)chatToggle.focus();};
+ chatToggle.addEventListener('click',event=>{event.preventDefault();const open=chatPanel.hidden;chatPanel.hidden=!open;chatWidget.classList.toggle('chat-is-open',open);chatWidget.classList.add('chat-has-opened');chatToggle.setAttribute('aria-expanded',String(open));if(open)chatPanel.querySelector('.clinic-chat-close').focus();});
+ chatPanel.querySelector('.clinic-chat-close').addEventListener('click',()=>closeChat(true));
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!chatPanel.hidden){closeChat(true);}});
+ document.addEventListener('click',event=>{if(!chatPanel.hidden&&!chatWidget.contains(event.target))closeChat();});
+ message.addEventListener('input',()=>message.setCustomValidity(''));
+ const chatForm=chatPanel.querySelector('form'),chatStatus=chatPanel.querySelector('#clinic-chat-privacy');
+ const chatStatusText=chatStatus.textContent;
+ chatForm.addEventListener('submit',event=>{
+  event.preventDefault();
+  const text=message.value.trim();
+  if(!text){message.setCustomValidity('اكتبي رسالتكِ الأول علشان نقدر نساعدكِ.');message.reportValidity();return;}
+  const url=new URL(chatForm.action);url.searchParams.set('text',text);
+  const handoff=window.open(url.href,'_blank');
+  if(!handoff){chatStatus.textContent='اسمحي بفتح تاب جديدة، وبعدها اضغطي إرسال مرة تانية.';return;}
+  handoff.opener=null;
+  chatForm.reset();message.setCustomValidity('');chatStatus.textContent=chatStatusText;closeChat(true);
+ });
+}
+
+// Keep the form's original values while presenting a consistent accessible listbox.
+document.querySelectorAll('select').forEach((select,selectIndex)=>{
+ if(select.multiple||select.size>1)return;
+ const wrapper=document.createElement('div');wrapper.className='clinic-select';
+ select.before(wrapper);wrapper.append(select);
+ const trigger=document.createElement('button');trigger.type='button';trigger.className='clinic-select-trigger';trigger.id=(select.id||'select-'+selectIndex)+'-choice';
+ trigger.setAttribute('role','combobox');trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-required',String(select.required));trigger.disabled=select.disabled;
+ const label=document.querySelector('label[for="'+select.id+'"]');
+ if(label){label.htmlFor=trigger.id;if(!label.id)label.id=trigger.id+'-label';trigger.setAttribute('aria-labelledby',label.id+' '+trigger.id+'-text');}
+ const text=document.createElement('span');text.id=trigger.id+'-text';
+ const arrow=document.createElementNS('http://www.w3.org/2000/svg','svg');arrow.setAttribute('viewBox','0 0 24 24');arrow.setAttribute('aria-hidden','true');arrow.innerHTML='<path d="m6 9 6 6 6-6"/>';trigger.append(text,arrow);
+ const list=document.createElement('div');list.className='clinic-select-options';list.id=trigger.id+'-options';list.setAttribute('role','listbox');list.setAttribute('aria-label',label?.textContent||select.getAttribute('aria-label')||'الاختيارات');list.hidden=true;trigger.setAttribute('aria-controls',list.id);
+ let active=select.selectedIndex,search='',searchTimer;
+ const options=[...select.options].map((option,index)=>{
+  const row=document.createElement('div');row.id=list.id+'-'+index;row.className='clinic-select-option';row.tabIndex=-1;row.setAttribute('role','option');row.textContent=option.textContent;row.setAttribute('aria-disabled',String(option.disabled));
+  row.addEventListener('click',()=>choose(index));list.append(row);return row;
+ });
+ function highlight(index){active=index;options.forEach((row,i)=>row.classList.toggle('is-active',i===index));if(index>=0){trigger.setAttribute('aria-activedescendant',options[index].id);options[index].scrollIntoView({block:'nearest'});}}
+ function sync(){text.textContent=select.selectedOptions[0]?.textContent||'';options.forEach((row,i)=>row.setAttribute('aria-selected',String(i===select.selectedIndex)));trigger.classList.toggle('is-placeholder',!select.value);}
+ function close(){list.hidden=true;trigger.setAttribute('aria-expanded','false');trigger.removeAttribute('aria-activedescendant');wrapper.classList.remove('is-open');}
+ function open(){document.dispatchEvent(new CustomEvent('clinic-select-open',{detail:wrapper}));list.hidden=false;const rect=trigger.getBoundingClientRect(),below=innerHeight-rect.bottom,above=rect.top;const upwards=below<Math.min(240,list.scrollHeight+14)&&above>below;wrapper.classList.toggle('opens-up',upwards);list.style.maxHeight=Math.min(240,Math.max(88,(upwards?above:below)-12))+'px';wrapper.classList.add('is-open');trigger.setAttribute('aria-expanded','true');highlight(select.selectedIndex);}
+ function choose(index){if(select.options[index].disabled)return;select.selectedIndex=index;select.dispatchEvent(new Event('input',{bubbles:true}));select.dispatchEvent(new Event('change',{bubbles:true}));close();trigger.focus({preventScroll:true});}
+ function move(step){let index=active;for(let n=0;n<options.length;n++){index=(index+step+options.length)%options.length;if(!select.options[index].disabled){highlight(index);break;}}}
+ trigger.addEventListener('click',()=>list.hidden?open():close());
+ trigger.addEventListener('keydown',event=>{
+  if(['ArrowDown','ArrowUp','Home','End','Enter',' ','Escape'].includes(event.key))event.preventDefault();
+  if(event.key==='Escape'){close();return;}
+  if(event.key==='Tab'){close();return;}
+  if(['Enter',' '].includes(event.key)){if(list.hidden)open();else if(active>=0)choose(active);return;}
+  if(['ArrowDown','ArrowUp'].includes(event.key)){if(list.hidden)open();move(event.key==='ArrowDown'?1:-1);return;}
+  if(event.key==='Home'||event.key==='End'){if(list.hidden)open();active=event.key==='Home'?-1:0;move(event.key==='Home'?1:-1);return;}
+  if(event.key.length===1&&!event.ctrlKey&&!event.metaKey&&!event.altKey){if(list.hidden)open();search+=event.key;clearTimeout(searchTimer);searchTimer=setTimeout(()=>search='',700);const index=[...select.options].findIndex(option=>!option.disabled&&option.textContent.trim().startsWith(search));if(index>=0)highlight(index);}
+ });
+ document.addEventListener('clinic-select-open',event=>{if(event.detail!==wrapper)close();});
+ document.addEventListener('click',event=>{if(!wrapper.contains(event.target))close();});
+ wrapper.addEventListener('focusout',event=>{if(!wrapper.contains(event.relatedTarget))close();});
+ select.addEventListener('change',sync);
+ select.addEventListener('invalid',event=>{event.preventDefault();trigger.focus();trigger.setAttribute('aria-invalid','true');});
+ select.addEventListener('change',()=>trigger.removeAttribute('aria-invalid'));
+ select.form?.addEventListener('reset',()=>queueMicrotask(()=>{sync();close();trigger.removeAttribute('aria-invalid');}));
+ wrapper.append(trigger,list);select.hidden=true;select.tabIndex=-1;sync();
+});
+
+// Keep visible introduction slides rotating unless reduced motion is requested.
+document.querySelectorAll('[data-about-carousel]').forEach(carousel=>{
+ const slides=[...carousel.querySelectorAll('[data-about-slide]')],dots=[...carousel.querySelectorAll('[data-about-dot]')];
+ if(slides.length<2)return;
+ const controls=carousel.querySelector('[data-about-controls]'),status=carousel.querySelector('[data-about-status]'),reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ let current=0,visible=false,timer;
+ function show(index,announce=false){current=(index+slides.length)%slides.length;slides.forEach((slide,i)=>{slide.classList.toggle('is-current',i===current);slide.setAttribute('aria-hidden',String(i!==current));slide.inert=i!==current;});dots.forEach((dot,i)=>{if(i===current)dot.setAttribute('aria-current','true');else dot.removeAttribute('aria-current');});if(announce)status.textContent='المعلومة '+(current+1)+' من '+slides.length;}
+ function schedule(){clearInterval(timer);if(visible&&!document.hidden&&!reduced.matches)timer=setInterval(()=>show(current+1),8000);}
+ function manual(index){show(index,true);schedule();}
+ controls.hidden=false;carousel.classList.add('is-enhanced');show(0);
+ carousel.querySelector('[data-about-prev]').addEventListener('click',()=>manual(current-1));
+ carousel.querySelector('[data-about-next]').addEventListener('click',()=>manual(current+1));
+ dots.forEach((dot,i)=>dot.addEventListener('click',()=>manual(i)));
+ document.addEventListener('visibilitychange',schedule);
+ reduced.addEventListener('change',schedule);
+ if('IntersectionObserver' in window)new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;schedule();},{threshold:.4}).observe(carousel);else{visible=true;schedule();}
+});

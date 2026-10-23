@@ -37,11 +37,12 @@ test('mobile menu opens, follows a section and closes', async ({ app, browser, s
   await expect(browser.locator('.menu-toggle')).toHaveAttribute('aria-expanded','false');
 });
 
-test('video player opens the selected local video and closes', async ({ app, browser }) => {
+test('video opens in the viewer and closes back to its preview', async ({ app, browser }) => {
   await app.open('/');await browser.locator('#videos .tile-art button').first().click();
   await expect(browser.locator('#video-dialog')).toBeVisible();
   expect(await browser.evaluate(() => document.querySelector('#video-dialog iframe')?.getAttribute('src')?.startsWith('https://player.vimeo.com/video/'))).toBe(true);
   await browser.locator('#video-dialog .close').click();await expect(browser.locator('#video-dialog')).not.toBeVisible();
+  await expect(browser.locator('#videos .tile-art button').first()).toBeVisible();
 });
 
 test('Vimeo videos load only on click and closing removes the external player', async ({ app, browser }) => {
@@ -61,25 +62,131 @@ test('Vimeo videos load only on click and closing removes the external player', 
   }
 });
 
+test('video arrows navigate the full library circularly on desktop and mobile', async ({ app, browser }) => {
+  for (const width of [390, 1440]) {
+    await browser.setViewport({width,height:900});
+    await app.open('/');
+    const titles = await browser.evaluate(() => [...document.querySelectorAll('[data-video-library] [data-reel]')].map(item => (item as HTMLElement).dataset.title));
+    expect(titles.length).toBeGreaterThan(3);
+    await browser.locator('#videos .tile-art button').first().click();
+    await expect(browser.locator('#video-dialog-title')).toHaveText(titles[0]);
+    await app.screenshot('video-navigation-'+width);
+    await browser.locator('[data-video-step="-1"]').click();
+    await expect(browser.locator('#video-dialog-title')).toHaveText(titles[titles.length-1]);
+    await browser.locator('[data-video-step="1"]').click();
+    await expect(browser.locator('#video-dialog-title')).toHaveText(titles[0]);
+    for (let i=1;i<titles.length;i++) {
+      await browser.locator('[data-video-step="1"]').click();
+      await expect(browser.locator('#video-dialog-title')).toHaveText(titles[i]);
+      expect(await browser.locator('#video-container iframe').count()).toBe(1);
+    }
+    expect(await browser.evaluate(() => [...document.querySelectorAll('.reel-nav')].every(button => {const r=button.getBoundingClientRect();return r.left>=0 && r.right<=innerWidth && r.top>=0 && r.bottom<=innerHeight;}))).toBe(true);
+    await browser.locator('#video-dialog .close').click();
+    expect(await browser.evaluate(() => document.activeElement===document.querySelector('#videos .tile-art button'))).toBe(true);
+  }
+});
+
 test('journey stages update the questions and select the booking service', async ({ app, browser }) => {
   await app.open('/patient-journey');await browser.locator('[data-stage="health"]').click();
   await expect(browser.locator('#journey-title')).toContainText('ابدئي');
-  await browser.locator('#journey-book').click();await expect(browser).toHaveURL(/appointment/);
+  await browser.locator('#journey-book').click();await expect(browser).toHaveURL(/patient-journey/);await expect(browser.locator('#journey-booking-panel')).toBeVisible();
   expect(await browser.evaluate(() => (document.querySelector('#service') as HTMLSelectElement).selectedOptions[0].textContent)).toContain('المناظير');
 });
 
-test('booking validates, submits once and makes the pending status explicit', async ({ app, browser, screen }) => {
+test('journey retains personal questions per stage and when returning from booking', async({app,browser})=>{
+ await app.open('/patient-journey');
+ await browser.locator('#journey-personal-question').fill('سؤالي الخاص بالحمل؟');await browser.locator('#journey-question-form button').click();
+ await browser.locator('[data-stage="waiting"]').click();await expect(browser.locator('#journey-questions')).not.toContainText('سؤالي الخاص بالحمل؟');
+ await browser.locator('#journey-personal-question').fill('سؤالي الخاص بتأخر الإنجاب؟');await browser.locator('#journey-question-form button').click();
+ await browser.locator('[data-stage="planning"]').click();await expect(browser.locator('#journey-questions')).toContainText('سؤالي الخاص بالحمل؟');
+ await expect(browser.locator('#journey-questions')).not.toContainText('سؤالي الخاص بتأخر الإنجاب؟');
+ await browser.locator('#journey-name').fill('سارة');await browser.locator('#journey-book').click();
+ expect(await browser.evaluate(()=>(document.querySelector('#patient') as HTMLInputElement).value)).toBe('سارة');
+ await browser.locator('#journey-return').click();await expect(browser.locator('#journey-questions')).toContainText('سؤالي الخاص بالحمل؟');
+ expect(await browser.locator('#video-dialog iframe').count()).toBe(0);await browser.locator('#journey-video').click();await expect(browser.locator('#video-dialog')).toBeVisible();
+});
+
+test('admin branch schedule controls reveal weekly hours', async ({app,browser,screen})=>{
+ await login(app,screen,browser);await app.open('/codeAiAdminDash/clinic-branches/1/edit');
+ await browser.locator('[id="data.booking_schedule_enabled"]').click();
+ await browser.locator('[id="data.weekly_schedule.0.open"]').click();
+ await browser.locator('[id="data.weekly_schedule.0.from"]').fill('17:00');
+ await browser.locator('[id="data.weekly_schedule.0.to"]').fill('21:00');
+ await expect(browser.locator('[id="data.weekly_schedule.0.to"]')).toBeVisible();
+});
+
+test('branch schedules show daily hours and disable closed dates on mobile and desktop', async ({app,browser})=>{
+ for(const width of [390,1440]) {
+  await browser.setViewport({width,height:1000});await app.open('/appointment');
+  const day=await browser.evaluate(()=>{
+   const day=(document.querySelector('#date') as HTMLInputElement).min;
+   (window as any).helalBooking.schedules={'1':{enabled:true,weekly:{},exceptions:[{date:day,closed:false,from:'17:00',to:'21:00'}]},'2':{enabled:true,weekly:{},exceptions:[]}};
+   return day;
+  });
+  await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-1').click();
+  await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-1').click();
+  await browser.locator('#booking-next').click();
+  expect(await browser.locator('#calendar-days button:not([disabled])').count()).toBe(1);
+  await browser.locator('[data-date="'+day+'"]').click();
+  await expect(browser.locator('#booking-hours')).toContainText('من 5:00 مساءً إلى 9:00 مساءً');
+  await app.screenshot('branch-hours-'+width);
+  await browser.locator('#booking-next').click();await expect(browser.locator('#appointment-summary')).toContainText('من 5:00');
+  await browser.locator('#booking-back').click();await browser.locator('#booking-back').click();
+  await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-2').click();
+  await browser.locator('#booking-next').click();
+  expect(await browser.locator('#calendar-days button:not([disabled])').count()).toBe(0);
+  expect(await browser.evaluate(()=>(document.querySelector('#date') as HTMLInputElement).value)).toBe('');
+ }
+});
+
+test('booking validates, hands off to WhatsApp and resets the wizard', async ({ app, browser }) => {
+  await browser.route(/^https:\/\/wa\.me\//, route => route.fulfill({status:200,contentType:'text/html',body:'<p>WhatsApp handoff intercepted for testing.</p>'}));
   await app.open('/appointment');await browser.locator('#booking-next').click();await expect(browser.locator('#booking-error')).toContainText('اختاري');
-  await browser.locator('#clinic').selectOption({value:'1'});await browser.locator('#service').selectOption({value:'1'});await browser.locator('#booking-next').click();
+  await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-1').click();await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-1').click();await browser.locator('#booking-next').click();
   await browser.locator('#calendar-days button:not([disabled])').first().click();await browser.locator('#booking-next').click();
   await browser.locator('#patient').fill('مريضة اختبار');await browser.locator('#appointment-phone').fill('01012345678');
-  await browser.locator('#booking-confirm').click();await expect(browser.locator('#appointment-success')).toBeVisible();
-  await expect(browser.locator('#success-details')).toContainText(/غير مؤكد|لم يُسجل/);
-  await expect(browser.locator('#booking-whatsapp')).toHaveAttribute('href',/^https:\/\/wa.me\/201017900354/);
+  await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{href:''},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
+  await browser.locator('#booking-confirm').click();await expect(browser.locator('#clinic-choice')).toBeVisible();
+  await expect(browser).toHaveURL(/\/appointment$/);
+  const reset=await browser.evaluate(()=>({clinic:(document.querySelector('#clinic') as HTMLSelectElement).value,service:(document.querySelector('#service') as HTMLSelectElement).value,patient:(document.querySelector('#patient') as HTMLInputElement).value,phone:(document.querySelector('#appointment-phone') as HTMLInputElement).value,date:(document.querySelector('#date') as HTMLInputElement).value,stepOne:!(document.querySelector('[data-step="1"]') as HTMLElement).hidden}));
+  expect(reset).toEqual({clinic:'',service:'',patient:'',phone:'',date:'',stepOne:true});
+  const popup=await browser.evaluate(()=>({url:(window as any).__bookingPopup.location.href,opener:(window as any).__bookingPopup.opener}));
+  expect(popup.url).toContain('https://wa.me/201017900354');expect(popup.opener).toBe(null);
   const state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());
   expect(state.bookings.length).toBe(state.full ? 1 : 0);
   if(state.full)expect(state.bookings[0].status).toBe('new');
-  await browser.locator('#booking-restart').click();await expect(browser.locator('#clinic')).toBeVisible();
+  await expect(browser.locator('#clinic-choice')).toBeVisible();
+});
+
+test('booking preserves details when the browser blocks the new tab or request fails',async({app,browser})=>{
+ await app.open('/appointment');
+ await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-1').click();
+ await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-1').click();await browser.locator('#booking-next').click();
+ await browser.locator('#calendar-days button:not([disabled])').first().click();await browser.locator('#booking-next').click();
+ await browser.locator('#patient').fill('مريضة اختبار');await browser.locator('#appointment-phone').fill('01012345678');
+ await browser.evaluate(()=>{window.open=()=>null;});
+ await browser.locator('#booking-confirm').click();await expect(browser.locator('#booking-error')).toContainText('اسمحي بفتح تاب جديدة');
+ expect(await browser.evaluate(()=>(document.querySelector('#patient') as HTMLInputElement).value)).toBe('مريضة اختبار');
+ await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{href:''},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
+ await browser.route('**/bookings',route=>route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({errors:{booking_date:['اليوم غير متاح']}})}));
+ await browser.locator('#booking-confirm').click();await expect(browser.locator('#booking-error')).toContainText('اليوم غير متاح');
+ expect(await browser.evaluate(()=>(window as any).__bookingPopup.closed)).toBe(true);
+ expect(await browser.evaluate(()=>(document.querySelector('#patient') as HTMLInputElement).value)).toBe('مريضة اختبار');
+});
+
+test('contact message clears and panel closes only after opening WhatsApp', async({app,browser})=>{
+ await app.open('/');await browser.locator('#clinic-chat-toggle').click();
+ await browser.locator('#clinic-chat-message').fill('  سؤال عن المتابعة  ');
+ await browser.evaluate(()=>{window.open=()=>null;});
+ await browser.locator('.clinic-chat-form button[type="submit"]').click();
+ await expect(browser.locator('#clinic-chat')).toBeVisible();
+ expect(await browser.evaluate(()=>(document.querySelector('#clinic-chat-message') as HTMLTextAreaElement).value)).toBe('  سؤال عن المتابعة  ');
+ await browser.evaluate(()=>{window.open=(url)=>{(window as any).__chatHandoff=String(url);return {opener:window} as any;};});
+ await browser.locator('.clinic-chat-form button[type="submit"]').click();
+ await expect(browser.locator('#clinic-chat')).not.toBeVisible();
+ expect(await browser.evaluate(()=>new URL((window as any).__chatHandoff).searchParams.get('text'))).toBe('سؤال عن المتابعة');
+ await browser.locator('#clinic-chat-toggle').click();
+ expect(await browser.evaluate(()=>(document.querySelector('#clinic-chat-message') as HTMLTextAreaElement).value)).toBe('');
 });
 
 test('unsigned previews and disabled modules cannot be reached directly', async ({ app, browser }) => {
