@@ -40,7 +40,8 @@ test('mobile menu opens, follows a section and closes', async ({ app, browser, s
 test('video opens in the viewer and closes back to its preview', async ({ app, browser }) => {
   await app.open('/');await browser.locator('#videos .tile-art button').first().click();
   await expect(browser.locator('#video-dialog')).toBeVisible();
-  expect(await browser.evaluate(() => document.querySelector('#video-dialog iframe')?.getAttribute('src')?.startsWith('https://player.vimeo.com/video/'))).toBe(true);
+  await expect(browser.locator('#video-dialog video')).toHaveAttribute('src', /\/assets\/reel-[0-9]+\.mp4$/);
+  expect(await browser.locator('#video-dialog iframe').count()).toBe(0);
   await browser.locator('#video-dialog .close').click();await expect(browser.locator('#video-dialog')).not.toBeVisible();
   await expect(browser.locator('#videos .tile-art button').first()).toBeVisible();
 });
@@ -50,6 +51,7 @@ test('Vimeo videos load only on click and closing removes the external player', 
     await app.open('/');
     const preview = await browser.evaluate(async theme => (await (await fetch('/__e2e/preview?theme='+theme)).json()).url, theme);
     await app.open(preview);
+    await browser.evaluate(() => document.querySelectorAll('button[data-reel]').forEach(button => (button as HTMLElement).dataset.src='https://player.vimeo.com/video/1236786560'));
     expect(await browser.locator('iframe[src*="vimeo.com"]').count()).toBe(0);
     const count = await browser.locator('#videos .tile-art button').count();
     for (let index = -1; index < count; index++) {
@@ -78,7 +80,7 @@ test('video arrows navigate the full library circularly on desktop and mobile', 
     for (let i=1;i<titles.length;i++) {
       await browser.locator('[data-video-step="1"]').click();
       await expect(browser.locator('#video-dialog-title')).toHaveText(titles[i]);
-      expect(await browser.locator('#video-container iframe').count()).toBe(1);
+      expect(await browser.locator('#video-container video').count()).toBe(1);
     }
     expect(await browser.evaluate(() => [...document.querySelectorAll('.reel-nav')].every(button => {const r=button.getBoundingClientRect();return r.left>=0 && r.right<=innerWidth && r.top>=0 && r.bottom<=innerHeight;}))).toBe(true);
     await browser.locator('#video-dialog .close').click();

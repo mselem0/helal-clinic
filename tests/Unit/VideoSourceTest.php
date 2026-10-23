@@ -7,10 +7,13 @@ use Tests\TestCase;
 
 class VideoSourceTest extends TestCase
 {
-    public function test_supplied_videos_map_to_the_correct_vimeo_ids(): void
+    public function test_supplied_videos_use_same_origin_files_in_production(): void
     {
+        $this->app['env'] = 'production';
         foreach (VideoSource::VIMEO as $reel => $id) {
-            $this->assertSame('https://player.vimeo.com/video/'.$id, VideoSource::resolve('assets/reel-'.$reel.'.mp4', (string) $reel));
+            foreach (['', 'assets/reel-'.$reel.'.mp4', 'https://player.vimeo.com/video/'.$id, 'https://vimeo.com/'.$id] as $source) {
+                $this->assertSame(url('assets/reel-'.$reel.'.mp4'), VideoSource::resolve($source, (string) $reel));
+            }
         }
     }
 

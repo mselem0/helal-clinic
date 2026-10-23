@@ -14,18 +14,16 @@ class VideoSource
     public static function resolve(?string $source, ?string $reel = null): string
     {
         $source = trim($source ?? '');
-        // Local previews should not depend on third-party embed availability.
-        if (app()->environment('local') && $reel && isset(self::VIMEO[$reel])) {
+        // Bundled clinic videos use the same native player on local and production.
+        // Explicit uploads and other external sources retain their CMS choice.
+        if ($reel && isset(self::VIMEO[$reel])) {
             $local = 'assets/reel-'.$reel.'.mp4';
             $mapped = 'https://player.vimeo.com/video/'.self::VIMEO[$reel];
             if (($source === '' || $source === $local || $source === $mapped || $source === 'https://vimeo.com/'.self::VIMEO[$reel]) && is_file(public_path($local))) {
-                return url('/local-video/'.$reel.'.mp4');
+                return app()->environment('local') ? url('/local-video/'.$reel.'.mp4') : url($local);
             }
         }
 
-        if ($reel && ($source === '' || $source === 'assets/reel-'.$reel.'.mp4') && isset(self::VIMEO[$reel])) {
-            return 'https://player.vimeo.com/video/'.self::VIMEO[$reel];
-        }
         if (preg_match('~^https://(?:www\.)?(?:vimeo\.com/|player\.vimeo\.com/video/)(\d+)(?:[/?#]|$)~', $source, $match)) {
             $hash = parse_url($source, PHP_URL_QUERY);
             parse_str($hash ?? '', $query);

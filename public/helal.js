@@ -67,8 +67,6 @@ function openVideoDialog(button,media){
  videoDialog.querySelector('.close').focus({preventScroll:true});
 }
 document.querySelectorAll('button[data-reel]').forEach(button=>{
- const warm=()=>{if(!vimeoSource(button)&&(button.dataset.reel||button.dataset.src)&&!navigator.connection?.saveData)prepareVideo(button);};
- button.addEventListener('pointerenter',warm);button.addEventListener('focus',warm);button.addEventListener('pointerdown',warm,{passive:true});
  button.addEventListener('click',()=>{activeVideoTrigger=button;playLibraryVideo(button);});
 });
 function playLibraryVideo(button){
