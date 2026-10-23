@@ -84,7 +84,7 @@ class VideoStructuredDataTest extends TestCase
         $this->assertArrayNotHasKey('embedUrl', $objects[0]);
     }
 
-    public function test_mapped_reel_fallback_yields_vimeo_embed_url_instead_of_obsolete_local_file(): void
+    public function test_bundled_reel_exposes_native_content_url_in_structured_data(): void
     {
         $this->makeVideo([
             'title' => 'فيديو ريل قديم',
@@ -96,9 +96,8 @@ class VideoStructuredDataTest extends TestCase
         $objects = $this->videoObjectsIn('helal_classic');
 
         $this->assertCount(1, $objects);
-        $this->assertSame('https://player.vimeo.com/video/1236786561', $objects[0]['embedUrl']);
-        $this->assertArrayNotHasKey('contentUrl', $objects[0]);
-        $this->assertStringNotContainsString('assets/reel-2129128044360416.mp4', json_encode($objects[0], JSON_UNESCAPED_SLASHES));
+        $this->assertSame(url('assets/reel-2129128044360416.mp4'), $objects[0]['contentUrl']);
+        $this->assertArrayNotHasKey('embedUrl', $objects[0]);
     }
 
     public function test_journey_bootstrap_uses_resolved_local_video_sources_in_local_environment(): void
