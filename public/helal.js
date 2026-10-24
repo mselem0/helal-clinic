@@ -111,9 +111,9 @@ if(form){
   const day=new Date(value+'T12:00:00Z').getUTCDay();
   const entry=override||schedule.weekly?.[day];
   const open=override?override.closed===false:entry?.open===true;
-  const valid=entry&&/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.from||'')&&/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.to||'')&&entry.to>entry.from;
+  const valid=entry&&/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.from||'')&&/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.to||'')&&(entry.to>entry.from||(entry.to==='00:00'&&entry.from>'00:00'));
   if(!open||!valid)return {available:false,label:'العيادة مغلقة في اليوم ده. اختاري يومًا آخر.'};
-  const format=time=>{const [hour,minute]=time.split(':').map(Number);return (hour%12||12)+':'+String(minute).padStart(2,'0')+' '+(hour<12?'صباحًا':'مساءً');};
+  const format=time=>{if(time==='00:00')return '12 منتصف الليل';const [hour,minute]=time.split(':').map(Number);return (hour%12||12)+':'+String(minute).padStart(2,'0')+' '+(hour<12?'صباحًا':'مساءً');};
   return {available:true,label:'من '+format(entry.from)+' إلى '+format(entry.to)};
  }
  function updateHours(){const hours=document.querySelector('#booking-hours');if(hours)hours.textContent=date.value?availability(date.value).label:(document.querySelector('#calendar-days button:not([disabled])')?'اختاري اليوم لعرض مواعيد العيادة.':'لا توجد أيام متاحة في الشهر ده. جرّبي شهرًا آخر.');}

@@ -7,7 +7,8 @@
     @if($type === 'article' && $item->sources)<h2>المصادر</h2><ul>@foreach($item->sources as $source)<li><a href="{{ \App\Support\ContentUrl::resolve($source['url'] ?? '') }}" rel="noopener" target="_blank">{{ $source['title'] ?? $source['url'] }}</a></li>@endforeach</ul>@endif
 @else
     <p>{{ $item->description }}</p><h2>العنوان والوصول</h2><p>{{ $item->address }}</p><p>{{ $item->directions }}</p>
-    @if($item->phone)<p><a href="tel:{{ preg_replace('/[^+0-9]/','',$item->phone) }}" dir="ltr">{{ $item->phone }}</a></p>@endif
+    @if(filled($item->phone))<p><strong>حجز هذا الفرع:</strong> <a href="tel:{{ preg_replace('/[^+0-9]/','',$item->phone) }}" dir="ltr">{{ $item->phone }}</a></p><p><a class="button outline" href="https://wa.me/{{ \App\Helpers\SiteSettingHelper::formatWhatsappNumber($item->phone) }}" target="_blank" rel="noopener">واتساب هذا الفرع</a></p>@endif
+    @if(filled($contact['doctor_phone'] ?? ''))<p><strong>للتواصل مع الطبيب:</strong> <a href="tel:{{ preg_replace('/[^+0-9]/','',$contact['doctor_phone']) }}" dir="ltr">{{ $contact['doctor_phone'] }}</a></p>@endif
     @if($item->working_hours)<h2>مواعيد العمل</h2><p>{{ $item->working_hours }}</p>@endif
     @if($item->google_maps_url)<a class="button outline" href="{{ \App\Support\ContentUrl::resolve($item->google_maps_url) }}" target="_blank" rel="noopener">افتحي الخريطة</a>@endif
     @php($branchServices = $services->whereIn('id', $item->service_ids ?? []))

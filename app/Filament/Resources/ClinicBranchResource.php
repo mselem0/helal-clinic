@@ -80,7 +80,7 @@ class ClinicBranchResource extends Resource
                                     function (Get $get): \Closure {
                                         return function (string $attribute, mixed $value, \Closure $fail) use ($get): void {
                                             $from = $get('from');
-                                            if (is_string($from) && is_string($value) && $from >= $value) {
+                                            if (is_string($from) && is_string($value) && $from >= $value && ! ($value === '00:00' && $from > '00:00')) {
                                                 $fail('يجب أن يكون وقت الإغلاق بعد وقت الفتح.');
                                             }
                                         };
@@ -191,7 +191,7 @@ class ClinicBranchResource extends Resource
                             function (Get $get) use ($weekday): \Closure {
                                 return function (string $attribute, mixed $value, \Closure $fail) use ($get, $weekday): void {
                                     $from = $get("weekly_schedule.{$weekday}.from");
-                                    if (is_string($from) && is_string($value) && $from >= $value) {
+                                    if (is_string($from) && is_string($value) && $from >= $value && ! ($value === '00:00' && $from > '00:00')) {
                                         $fail('يجب أن يكون وقت الإغلاق بعد وقت الفتح.');
                                     }
                                 };

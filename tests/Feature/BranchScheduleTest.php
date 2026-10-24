@@ -58,6 +58,24 @@ class BranchScheduleTest extends TestCase
         $this->assertSame(['available' => false, 'from' => null, 'to' => null], BranchSchedule::forDate($branch, '2026-02-30'));
     }
 
+    public function test_midnight_is_allowed_only_as_the_end_of_a_same_day_schedule(): void
+    {
+        $branch = $this->branchWithSchedule([
+            '0' => ['open' => true, 'from' => '16:00', 'to' => '00:00'],
+        ], [
+            ['date' => '2026-10-26', 'closed' => false, 'from' => '18:30', 'to' => '00:00'],
+        ]);
+
+        $this->assertSame(['available' => true, 'from' => '16:00', 'to' => '00:00'], BranchSchedule::forDate($branch, '2026-10-25'));
+        $this->assertSame(['available' => true, 'from' => '18:30', 'to' => '00:00'], BranchSchedule::forDate($branch, '2026-10-26'));
+
+        $branch->weekly_schedule = ['0' => ['open' => true, 'from' => '00:00', 'to' => '00:00']];
+        $this->assertSame(['available' => false, 'from' => null, 'to' => null], BranchSchedule::forDate($branch, '2026-10-25'));
+
+        $branch->weekly_schedule = ['0' => ['open' => true, 'from' => '22:00', 'to' => '21:00']];
+        $this->assertSame(['available' => false, 'from' => null, 'to' => null], BranchSchedule::forDate($branch, '2026-10-25'));
+    }
+
     private function branchWithSchedule(array $weekly, array $exceptions = []): ClinicBranch
     {
         return new ClinicBranch([

@@ -44,8 +44,9 @@
                     <div><span class="eyebrow">{{ $section->content['field_1'] ?? 'خطوتكِ الأولى تبدأ هنا' }}</span><h2>{{ $destination->title }}</h2><p>{{ filled($destination->intro) ? $destination->intro : 'اختاري الفرع والخدمة واليوم المفضل، وسيتواصل معكِ فريق العيادة لتأكيد الموعد.' }}</p></div>
                     <div class="home-booking-actions">
                         <a class="button home-booking-cta" href="{{ \App\Services\SiteView::pageUrl($destination) }}"><span class="booking-cta-icon"><x-clinic-icon name="calendar" :size="25" /></span><span class="booking-cta-label">اطلبي موعدًا</span><span class="booking-cta-arrow"><x-clinic-icon name="arrow-left" :size="20" /></span></a>
-                        @if(!empty($section->content['field_5']) && !empty($section->content['field_6']))
-                            <a class="home-booking-phone" href="{{ \App\Support\ContentUrl::resolve($section->content['field_5']) }}"><x-clinic-icon name="phone" :size="19" />اتصلي بالعيادة <bdi>{{ $section->content['field_6'] }}</bdi></a>
+                        @php($bookingBranch = $branches->first(fn ($branch) => filled($branch->phone)))
+                        @if($bookingBranch)
+                            <a class="home-booking-phone" href="tel:{{ preg_replace('/[^+0-9]/', '', $bookingBranch->phone) }}"><x-clinic-icon name="phone" :size="19" />حجز {{ $bookingBranch->name }} <bdi dir="ltr">{{ $bookingBranch->phone }}</bdi></a>
                         @endif
                         <p class="fine">{{ $section->content['field_9'] ?? 'الطلب لا يؤكد الموعد؛ يتواصل معكِ فريق العيادة للتأكيد.' }}</p>
                     </div>

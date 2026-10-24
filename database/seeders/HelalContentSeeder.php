@@ -28,10 +28,11 @@ class HelalContentSeeder extends Seeder
         }
         SeoPage::firstOrCreate(['page_key' => 'home'], ['page_label' => 'الرئيسية', 'meta_title' => 'د. محمد هلال | استشاري أمراض النساء والتوليد والحقن المجهري', 'meta_description' => 'د. محمد هلال، مدرس واستشاري أمراض النساء والتوليد والحقن المجهري. حاصل على دكتوراه وماجستير أمراض النساء والتوليد من كلية الطب بجامعة الأزهر.', 'robots' => 'index_follow']);
         SeoGlobalSetting::firstOrCreate(['key' => 'sitemap_enabled'], ['value' => '1', 'group' => 'general']);
-        HeroSetting::firstOrCreate([], ['doctor_name' => 'د. محمد هلال', 'doctor_title' => 'استشاري أمراض النساء والتوليد', 'doctor_university' => '', 'badge_text' => 'عيادات هلال', 'whatsapp_button_text' => 'تواصل عبر واتساب', 'booking_button_text' => 'طلب موعد', 'whatsapp_number' => '201017900354']);
+        HeroSetting::firstOrCreate([], ['doctor_name' => 'د. محمد هلال', 'doctor_title' => 'استشاري أمراض النساء والتوليد', 'doctor_university' => '', 'badge_text' => 'عيادات هلال', 'whatsapp_button_text' => 'تواصل عبر واتساب', 'booking_button_text' => 'طلب موعد', 'whatsapp_number' => '201509011313']);
         AboutDoctor::firstOrCreate([], ['bio_title' => 'عن د. محمد هلال', 'bio_text' => 'استشاري أمراض النساء والتوليد والمناظير والحقن المجهري.']);
         SiteSetting::firstOrCreate(['key' => 'active_theme'], ['group' => 'appearance', 'value' => 'helal_classic']);
-        SiteSetting::firstOrCreate(['key' => 'wa_number'], ['group' => 'whatsapp', 'value' => '201017900354']);
+        SiteSetting::firstOrCreate(['key' => 'wa_number'], ['group' => 'whatsapp', 'value' => '201509011313']);
+        SiteSetting::firstOrCreate(['key' => 'doctor_phone'], ['group' => 'contact', 'value' => '01017900354']);
         foreach (['helal_classic', 'helal_modern'] as $theme) {
             SiteSetting::firstOrCreate(['key' => 'theme_'.$theme], ['group' => 'appearance', 'value' => json_encode(['primary' => '#006f76', 'accent' => '#ed8b19'])]);
         }
@@ -48,7 +49,7 @@ class HelalContentSeeder extends Seeder
             Service::firstOrCreate(['slug' => 'service-'.($i + 1)], ['name' => $row['name'], 'card_title' => $row['title'], 'description' => $row['description'], 'image_path' => $row['image'], 'order' => $i, 'is_active' => true]);
         }
         foreach ($collections['clinics'] as $row) {
-            ClinicBranch::firstOrCreate(['name' => $row['name']], ['address' => $row['address'], 'google_maps_url' => $row['google_maps_url'], 'order' => $row['order'], 'is_active' => true]);
+            ClinicBranch::firstOrCreate(['name' => $row['name']], ['address' => $row['address'], 'google_maps_url' => $row['google_maps_url'], 'order' => $row['order'], 'is_active' => true, 'phone' => $row['phone'] ?? null, 'working_hours' => $row['working_hours'] ?? null, 'booking_schedule_enabled' => $row['booking_schedule_enabled'] ?? false, 'weekly_schedule' => $row['weekly_schedule'] ?? null]);
         }
         foreach ($collections['videos'] as $row) {
             Video::firstOrCreate(['reel' => $row['reel']], ['title' => $row['title'], 'description' => $row['description'], 'category' => $row['category'], 'image_path' => $row['image'], 'video_path' => 'assets/reel-'.$row['reel'].'.mp4', 'order' => $row['order'], 'is_active' => true]);

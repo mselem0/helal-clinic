@@ -11,6 +11,7 @@
                     <h3>@if($item->slug)<a href="{{ route('branches.show', $item->slug) }}">{{ $item->name }}</a>@else{{ $item->name }}@endif</h3>
                 </div>
                 <p class="branch-card-address"><x-clinic-icon name="pin" :size="18" /><span>{{ $item->address }}</span></p>
+                @if(filled($item->phone))<p class="branch-card-phone"><x-clinic-icon name="phone" :size="17" /><span>الحجز</span><a href="tel:{{ preg_replace('/[^+0-9]/', '', $item->phone) }}" dir="ltr">{{ $item->phone }}</a></p>@endif
                 @if($item->working_hours)<p class="branch-card-hours"><x-clinic-icon name="clock" :size="17" /><span>{{ $item->working_hours }}</span></p>@endif
                 <div class="branch-card-actions">
                     <button type="button" class="button" data-clinic="{{ $item->name }}"><x-clinic-icon name="calendar" :size="18" /><span>طلب موعد</span></button>

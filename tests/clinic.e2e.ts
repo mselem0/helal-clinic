@@ -153,7 +153,7 @@ test('booking validates, hands off to WhatsApp and resets the wizard', async ({ 
   const reset=await browser.evaluate(()=>({clinic:(document.querySelector('#clinic') as HTMLSelectElement).value,service:(document.querySelector('#service') as HTMLSelectElement).value,patient:(document.querySelector('#patient') as HTMLInputElement).value,phone:(document.querySelector('#appointment-phone') as HTMLInputElement).value,date:(document.querySelector('#date') as HTMLInputElement).value,stepOne:!(document.querySelector('[data-step="1"]') as HTMLElement).hidden}));
   expect(reset).toEqual({clinic:'',service:'',patient:'',phone:'',date:'',stepOne:true});
   const popup=await browser.evaluate(()=>({url:(window as any).__bookingPopup.location.href,opener:(window as any).__bookingPopup.opener}));
-  expect(popup.url).toContain('https://wa.me/201017900354');expect(popup.opener).toBe(null);
+  expect(popup.url).toContain('https://wa.me/201509011313');expect(popup.opener).toBe(null);
   const state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());
   expect(state.bookings.length).toBe(state.full ? 1 : 0);
   if(state.full)expect(state.bookings[0].status).toBe('new');

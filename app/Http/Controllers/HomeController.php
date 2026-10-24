@@ -74,7 +74,7 @@ class HomeController extends Controller
 
         return response(\App\Support\DisplayNumbers::html(view($page->page_key === 'home' ? 'helal.home' : 'helal.page', array_merge([
             'page' => $page, 'pageKey' => $page->page_key,
-            'contact' => SiteSettingHelper::group('contact'), 'whatsappNumber' => SiteSettingHelper::get('wa_number', '201017900354'),
+            'contact' => SiteSettingHelper::group('contact'), 'whatsappNumber' => SiteSettingHelper::formatWhatsappNumber(SiteSettingHelper::get('wa_number', '201509011313')),
             'pageSections' => $pageSections, 'sections' => $sections, 'theme' => $theme, 'style' => $style,
             'videos' => $page->page_key === 'home' ? $videoLibrary->take(3) : $videoLibrary,
             'videoLibrary' => $videoLibrary,
@@ -102,6 +102,8 @@ class HomeController extends Controller
         if (! $availability['available']) {
             throw \Illuminate\Validation\ValidationException::withMessages(['booking_date' => 'الفرع غير متاح في اليوم المختار. اختاري يومًا آخر.']);
         }
+        $number = SiteSettingHelper::formatWhatsappNumber(trim($branch->phone ?? '') ?: SiteSettingHelper::get('wa_number', HeroSetting::first()?->whatsapp_number ?? ''));
+        abort_if($number === '', 503, 'رقم التواصل غير مُعدّ.');
         $stored = false;
         if (ClinicFeatures::enabled('Booking')) {
             abort_unless(class_exists(Booking::class), 503);
@@ -111,9 +113,8 @@ class HomeController extends Controller
             });
             $stored = true;
         }
-        $number = preg_replace('/[^0-9]/', '', SiteSettingHelper::get('wa_number', HeroSetting::first()?->whatsapp_number ?? ''));
-        abort_if($number === '', 503, 'رقم التواصل غير مُعدّ.');
-        $hours = $availability['from'] && $availability['to'] ? ' مواعيد العيادة من '.$availability['from'].' إلى '.$availability['to'].' بتوقيت القاهرة.' : '';
+        $closingTime = $availability['to'] === '00:00' ? '12 منتصف الليل' : $availability['to'];
+        $hours = $availability['from'] && $availability['to'] ? ' مواعيد العيادة من '.$availability['from'].' إلى '.$closingTime.' بتوقيت القاهرة.' : '';
         $message = "مرحبًا د. محمد هلال، أرغب في طلب موعد باسم {$data['patient_name']}، رقم {$data['patient_phone']}، يوم {$data['booking_date']}، فرع {$branch->name}، خدمة {$service->name}. الموعد قيد التأكيد.".$hours;
 
         return response()->json([

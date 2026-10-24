@@ -1,0 +1,108 @@
+{
+    "wa_number": "201509011313",
+    "doctor_phone": "01017900354",
+    "branches": [
+        {
+            "name": "السادس من أكتوبر",
+            "phone": "01509011313",
+            "working_hours": "الأحد والثلاثاء والخميس من 9 إلى 11 مساءً.",
+            "weekly_schedule": {
+                "0": {
+                    "open": true,
+                    "from": "21:00",
+                    "to": "23:00"
+                },
+                "1": {
+                    "open": false
+                },
+                "2": {
+                    "open": true,
+                    "from": "21:00",
+                    "to": "23:00"
+                },
+                "3": {
+                    "open": false
+                },
+                "4": {
+                    "open": true,
+                    "from": "21:00",
+                    "to": "23:00"
+                },
+                "5": {
+                    "open": false
+                },
+                "6": {
+                    "open": false
+                }
+            }
+        },
+        {
+            "name": "منشأة القناطر",
+            "phone": "01093239964",
+            "working_hours": "السبت والاثنين والأربعاء من 4 عصرًا إلى 12 منتصف الليل.",
+            "weekly_schedule": {
+                "0": {
+                    "open": false
+                },
+                "1": {
+                    "open": true,
+                    "from": "16:00",
+                    "to": "00:00"
+                },
+                "2": {
+                    "open": false
+                },
+                "3": {
+                    "open": true,
+                    "from": "16:00",
+                    "to": "00:00"
+                },
+                "4": {
+                    "open": false
+                },
+                "5": {
+                    "open": false
+                },
+                "6": {
+                    "open": true,
+                    "from": "16:00",
+                    "to": "00:00"
+                }
+            }
+        },
+        {
+            "name": "المنصورية",
+            "phone": "01017598675",
+            "working_hours": "الأحد والثلاثاء والخميس من 11 صباحًا إلى 7 مساءً.",
+            "weekly_schedule": {
+                "0": {
+                    "open": true,
+                    "from": "11:00",
+                    "to": "19:00"
+                },
+                "1": {
+                    "open": false
+                },
+                "2": {
+                    "open": true,
+                    "from": "11:00",
+                    "to": "19:00"
+                },
+                "3": {
+                    "open": false
+                },
+                "4": {
+                    "open": true,
+                    "from": "11:00",
+                    "to": "19:00"
+                },
+                "5": {
+                    "open": false
+                },
+                "6": {
+                    "open": false
+                }
+            }
+        }
+    ]
+}

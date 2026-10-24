@@ -52,7 +52,7 @@ class BranchSchedule
     /** @return array{available: bool, from: ?string, to: ?string} */
     private static function window(mixed $from, mixed $to): array
     {
-        if (! self::validTime($from) || ! self::validTime($to) || $from >= $to) {
+        if (! self::validTime($from) || ! self::validTime($to) || ($from >= $to && ! ($to === '00:00' && $from > '00:00'))) {
             return self::unavailable();
         }
 

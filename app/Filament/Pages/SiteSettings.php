@@ -51,11 +51,12 @@ class SiteSettings extends Page implements HasForms
                         Tabs\Tab::make('التواصل')
                             ->schema([
                                 TextInput::make('email')->label('البريد الإلكتروني')->email(),
+                                TextInput::make('doctor_phone')->label('رقم التواصل مع الطبيب')->tel()->regex('/^01[0125][0-9]{8}$/')->helperText('رقم الطبيب المباشر، منفصل عن أرقام حجز الفروع.'),
                                 TextInput::make('footer_copyright')->label('نص حقوق النشر (الفوتر)'),
                             ]),
                         Tabs\Tab::make('واتساب')
                             ->schema([
-                                TextInput::make('wa_number')->label('رقم واتساب')->required()->regex('/^[0-9]{10,15}$/')->helperText('بالصيغة الدولية دون +، مثال 201017900354'),
+                                TextInput::make('wa_number')->label('واتساب التواصل العام')->required()->regex('/^[0-9]{10,15}$/')->helperText('بالصيغة الدولية دون +، مثال 201509011313'),
                                 TextInput::make('wa_team_name')->label('اسم فريق خدمة العملاء'),
                                 Textarea::make('wa_welcome_message')->label('رسالة الترحيب'),
                             ]),
@@ -93,7 +94,7 @@ class SiteSettings extends Page implements HasForms
         if (in_array($key, ['primary_color', 'secondary_color', 'font_family'])) {
             return 'appearance';
         }
-        if (in_array($key, ['email', 'footer_copyright'])) {
+        if (in_array($key, ['email', 'footer_copyright', 'doctor_phone'])) {
             return 'contact';
         }
         if (in_array($key, ['wa_number', 'wa_team_name', 'wa_welcome_message'])) {

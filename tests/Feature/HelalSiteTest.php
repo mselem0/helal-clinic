@@ -37,7 +37,7 @@ class HelalSiteTest extends TestCase
 
     public function test_basic_booking_prepares_whatsapp_without_claiming_storage(): void
     {
-        $this->postJson('/bookings', $this->booking())->assertOk()->assertJson(['stored' => ClinicFeatures::enabled('Booking'), 'status' => 'pending'])->assertJsonPath('whatsapp_url', fn ($url) => str_starts_with($url, 'https://wa.me/201017900354?text='));
+        $this->postJson('/bookings', $this->booking())->assertOk()->assertJson(['stored' => ClinicFeatures::enabled('Booking'), 'status' => 'pending'])->assertJsonPath('whatsapp_url', fn ($url) => str_starts_with($url, 'https://wa.me/201509011313?text='));
         $this->assertDatabaseCount('bookings', ClinicFeatures::enabled('Booking') ? 1 : 0);
     }
 
@@ -87,6 +87,6 @@ class HelalSiteTest extends TestCase
 
     private function booking(): array
     {
-        return ['patient_name' => 'اسم للاختبار', 'patient_phone' => '01012345678', 'booking_date' => now()->addDay()->format('Y-m-d'), 'service_id' => Service::first()->id, 'clinic_branch_id' => ClinicBranch::first()->id];
+        return ['patient_name' => 'اسم للاختبار', 'patient_phone' => '01012345678', 'booking_date' => now('Africa/Cairo')->next('Sunday')->format('Y-m-d'), 'service_id' => Service::first()->id, 'clinic_branch_id' => ClinicBranch::first()->id];
     }
 }
