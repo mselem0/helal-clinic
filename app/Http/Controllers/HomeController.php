@@ -19,6 +19,7 @@ use App\Support\ClinicFeatures;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 use Modules\Booking\Models\Booking;
 use Modules\PatientCore\Models\Patient;
@@ -97,6 +98,14 @@ class HomeController extends Controller
             'clinic_branch_id' => ['required', 'integer', 'exists:clinic_branches,id'],
         ]);
         $service = Service::where('is_active', true)->findOrFail($data['service_id']);
+        // Fertility intake answers are transient and are only added to the WhatsApp handoff.
+        $fertilityAnswers = [];
+        if ($service->slug === 'service-2') {
+            $fertilityAnswers = Validator::make($request->only(['previous_pregnancy', 'pregnancy_related_surgery']), [
+                'previous_pregnancy' => ['nullable', 'in:yes,no'],
+                'pregnancy_related_surgery' => ['nullable', 'in:yes,no'],
+            ])->validate();
+        }
         $branch = ClinicBranch::where('is_active', true)->findOrFail($data['clinic_branch_id']);
         $availability = \App\Support\BranchSchedule::forDate($branch, $data['booking_date']);
         if (! $availability['available']) {
@@ -116,6 +125,12 @@ class HomeController extends Controller
         $closingTime = $availability['to'] === '00:00' ? '12 منتصف الليل' : $availability['to'];
         $hours = $availability['from'] && $availability['to'] ? ' مواعيد العيادة من '.$availability['from'].' إلى '.$closingTime.' بتوقيت القاهرة.' : '';
         $message = "مرحبًا د. محمد هلال، أرغب في طلب موعد باسم {$data['patient_name']}، رقم {$data['patient_phone']}، يوم {$data['booking_date']}، فرع {$branch->name}، خدمة {$service->name}. الموعد قيد التأكيد.".$hours;
+        $answerLabels = ['previous_pregnancy' => 'حمل سابق', 'pregnancy_related_surgery' => 'عملية مرتبطة بالحمل'];
+        foreach ($answerLabels as $field => $label) {
+            if (filled($fertilityAnswers[$field] ?? null)) {
+                $message .= ' '.$label.': '.($fertilityAnswers[$field] === 'yes' ? 'نعم.' : 'لا.');
+            }
+        }
 
         return response()->json([
             'stored' => $stored, 'status' => 'pending',

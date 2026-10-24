@@ -59,7 +59,7 @@ class HeroCopyRefreshTest extends TestCase
 
         $this->assertSame('رعاية متخصصة واهتمام بكل التفاصيل', $updatedFields['field_1']['value']);
         $this->assertSame('رعاية لصحتكِ في كل مرحلة، من متابعة الحمل والولادة إلى تأخر الإنجاب والمناظير الجراحية.', $updatedFields['field_7']['value']);
-        $this->assertSame('اطلبي موعدًا', $updatedFields['field_8']['value']);
+        $this->assertSame('احجزي ميعادك الآن', $updatedFields['field_8']['value']);
         $this->assertSame('تعرّفي على خدمات العيادة', $updatedFields['field_9']['value']);
         $this->assertSame('معلومات تساعدكِ على فهم الخيارات ومناقشتها مع الطبيب.', $updatedFields['field_21']['value']);
         $this->assertSame('تسمية محفوظة field_1', $updatedFields['field_1']['label']);
@@ -123,7 +123,7 @@ class HeroCopyRefreshTest extends TestCase
 
         $this->assertSame('نص مخصص من العيادة لا يجب تغييره', $fields['field_1']['value']);
         $this->assertSame('عنوان فرعي مخصص', $fields['field_1']['label']);
-        $this->assertSame('اطلبي موعدًا', $fields['field_8']['value']);
+        $this->assertSame('احجزي ميعادك الآن', $fields['field_8']['value']);
         $this->assertSame('تسمية زر الحجز', $fields['field_8']['label']);
         $this->assertSame('د. محمد هلال — تعديل خاص', $fields['field_2']['value']);
         $this->assertSame(['keep' => true], $freshBody['custom_meta']);

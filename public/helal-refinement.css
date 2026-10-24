@@ -1182,3 +1182,21 @@ main .section-shell .visit-steps-section { padding-block:32px; }
 .clinic-grid .branch-card a:focus-visible { outline:2px solid var(--teal); outline-offset:3px; }
 .clinics>.branch-visit-note { font-size:12px; line-height:1.9; }
 .home-page>[data-section=clinics]>.section-more { padding-bottom:28px; }
+
+/* Optional visit preparation and branch directions stay compact. */
+.booking-branch-contact { display:grid; grid-template-columns:minmax(0,1fr) 42px; gap:8px; align-items:stretch; }
+.booking-contact-map { display:grid; place-items:center; border:1px solid var(--section-line); border-radius:11px; background:var(--surface); min-height:48px; }
+.booking-contact-map:hover { background:var(--surface-soft); border-color:var(--teal); }
+.booking-contact-map:focus-visible { outline:2px solid var(--teal); outline-offset:3px; }
+.booking-branch-contact .booking-contact-number { min-width:0; gap:8px; padding-inline:8px; }
+.booking-branch-contact .booking-contact-label { min-width:0; }
+.booking-branch-contact .booking-contact-action { display:none; }
+.fertility-questions { margin:22px 0; padding:16px; border:1px solid var(--section-line); border-radius:12px; background:var(--surface-soft); min-width:0; }
+.fertility-questions[hidden] { display:none; }
+.fertility-questions>legend { font-size:15px; color:var(--teal); padding-inline:6px; }
+.fertility-questions>.fine { margin:0 0 16px; }
+.fertility-question { padding:0; margin:0 0 18px; border:0; min-width:0; display:flex; flex-wrap:wrap; gap:10px 16px; }
+.fertility-question:last-child { margin-bottom:0; }
+.fertility-question>legend { padding:0 0 8px; font-size:14px; line-height:1.8; color:var(--ink); }
+.appointment .fertility-question label { display:inline-flex; align-items:center; gap:7px; margin:0; font-size:13px; color:var(--muted); }
+.appointment .fertility-question input[type=radio] { width:17px; height:17px; min-height:0; margin:0; padding:0; flex:none; accent-color:var(--teal); }

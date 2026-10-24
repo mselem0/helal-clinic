@@ -337,3 +337,26 @@ test('FAQ questions can be added and published from the editor',async({app,brows
  await screen.getByRole('button','نشر الموقع',{exact:true}).click();await expect(browser.locator('[data-testid="revision-select"] option')).toHaveCount(2);
  await app.open('/frequently-asked-questions');await expect(screen.getByText('سؤال جديد للاختبار؟',{exact:true})).toBeVisible();
 });
+
+
+test('fertility questions are optional, service-scoped and reset after WhatsApp handoff', async ({app,browser})=>{
+ await app.open('/appointment');await expect(browser.locator('#fertility-questions')).not.toBeVisible();
+ await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-1').click();
+ await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-2').click();
+ await expect(browser.locator('#fertility-questions')).toBeVisible();
+ await browser.locator('input[name="previous_pregnancy"][value="yes"]').click();await browser.locator('input[name="pregnancy_related_surgery"][value="no"]').click();
+ await browser.locator('#booking-next').click();await browser.locator('#booking-back').click();
+ expect(await browser.evaluate(()=>(document.querySelector('input[name="previous_pregnancy"][value="yes"]') as HTMLInputElement).checked)).toBe(true);
+ await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-1').click();
+ await expect(browser.locator('#fertility-questions')).not.toBeVisible();expect(await browser.locator('#fertility-questions input:checked').count()).toBe(0);
+ await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-2').click();
+ await browser.locator('input[name="previous_pregnancy"][value="yes"]').click();await browser.locator('input[name="pregnancy_related_surgery"][value="no"]').click();
+ await browser.locator('#booking-next').click();await browser.locator('#calendar-days button:not([disabled])').first().click();await browser.locator('#booking-next').click();
+ await expect(browser.locator('#appointment-summary')).toContainText('حمل سابق: نعم');
+ await browser.locator('#patient').fill('اختبار');await browser.locator('#appointment-phone').fill('01012345678');
+ await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{href:''},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
+ await browser.locator('#booking-confirm').click();await expect(browser.locator('#clinic-choice')).toBeVisible();
+ const message=await browser.evaluate(()=>decodeURIComponent((window as any).__bookingPopup.location.href));
+ expect(message).toContain('حمل سابق: نعم.');expect(message).toContain('عملية مرتبطة بالحمل: لا.');
+ await expect(browser.locator('#fertility-questions')).not.toBeVisible();expect(await browser.locator('#fertility-questions input:checked').count()).toBe(0);
+});

@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Article;
+use App\Models\Service;
+use App\Support\ReviewedArticleLinks;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -12,8 +14,10 @@ class ReviewedArticlesSeeder extends Seeder
     {
         $articles = json_decode(file_get_contents(database_path('content/reviewed-articles.json')), true, flags: JSON_THROW_ON_ERROR);
         $defaults = json_decode(file_get_contents(database_path('content/collections.json')), true, flags: JSON_THROW_ON_ERROR)['articles'];
+        $serviceLinks = ReviewedArticleLinks::services();
+        $serviceIds = Service::whereIn('slug', collect($serviceLinks)->pluck(1))->pluck('id', 'slug');
 
-        DB::transaction(function () use ($articles, $defaults): void {
+        DB::transaction(function () use ($articles, $defaults, $serviceLinks, $serviceIds): void {
             foreach ($articles as $index => $data) {
                 // Existing bundled URLs remain stable. Never overwrite editorial changes.
                 $slug = $index < 3 ? 'article-'.($index + 1) : $data['slug'];
@@ -24,6 +28,12 @@ class ReviewedArticlesSeeder extends Seeder
                 }
 
                 $data['slug'] = $slug;
+                if (isset($serviceLinks[$slug]) && $data['title'] === $serviceLinks[$slug][0]) {
+                    $serviceId = $serviceIds->get($serviceLinks[$slug][1]);
+                    if ($serviceId) {
+                        $data['service_ids'] = [(int) $serviceId];
+                    }
+                }
                 $data['is_published'] = true;
                 $data['published_at'] = now();
                 // Source verification is not a named clinician's medical review.
