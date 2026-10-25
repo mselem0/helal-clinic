@@ -18,13 +18,16 @@ class GoogleTagManagerTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee("'GTM-5HD4L3FH'", false)
+            ->assertSee("'GTM-55WW7HJQ'", false)
             ->assertSee('www.googletagmanager.com/gtm.js', false);
-        $this->assertSame(1, substr_count($this->get('/')->getContent(), 'GTM-5HD4L3FH'));
+        foreach (['GTM-5HD4L3FH', 'GTM-55WW7HJQ'] as $container) {
+            $this->assertSame(1, substr_count($this->get('/')->getContent(), $container));
+        }
 
         $preview = URL::temporarySignedRoute('home', now()->addMinutes(5), ['preview' => 1]);
-        $this->get($preview)->assertOk()->assertDontSee('GTM-5HD4L3FH', false);
+        $this->get($preview)->assertOk()->assertDontSee('GTM-5HD4L3FH', false)->assertDontSee('GTM-55WW7HJQ', false);
 
         app()->detectEnvironment(fn () => 'local');
-        $this->get('/')->assertOk()->assertDontSee('GTM-5HD4L3FH', false);
+        $this->get('/')->assertOk()->assertDontSee('GTM-5HD4L3FH', false)->assertDontSee('GTM-55WW7HJQ', false);
     }
 }
