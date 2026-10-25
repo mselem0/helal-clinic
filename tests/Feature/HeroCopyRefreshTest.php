@@ -61,7 +61,7 @@ class HeroCopyRefreshTest extends TestCase
         $this->assertSame('رعاية لصحتكِ في كل مرحلة، من متابعة الحمل والولادة إلى تأخر الإنجاب والمناظير الجراحية.', $updatedFields['field_7']['value']);
         $this->assertSame('احجزي ميعادك الآن', $updatedFields['field_8']['value']);
         $this->assertSame('تعرّفي على خدمات العيادة', $updatedFields['field_9']['value']);
-        $this->assertSame('لحظات من متابعة الحمل مع د. محمد هلال.', $updatedFields['field_21']['value']);
+        $this->assertSame('الحقن المجهري وعلاج تأخر الإنجاب مع د. محمد هلال.', $updatedFields['field_21']['value']);
         $this->assertSame('تسمية محفوظة field_1', $updatedFields['field_1']['label']);
 
         $snapshotAfterFirstApply = $home->fresh()->body;
@@ -140,8 +140,8 @@ class HeroCopyRefreshTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('alt="د. محمد هلال"', false)
-            ->assertSee('data-title="متابعة الحمل بالسونار"', false)
-            ->assertSee('aria-label="شاهدي د. محمد هلال: متابعة الحمل بالسونار"', false)
+            ->assertSee('data-title="الحقن المجهري وعلاج العقم"', false)
+            ->assertSee('aria-label="شاهدي د. محمد هلال: الحقن المجهري وعلاج العقم"', false)
             ->assertDontSee('الدكتور محمد هلال — فيديو عن سكر الحمل وطريقة الولادة', false);
 
         $home = PageSection::where('section_key', 'home')->firstOrFail();
