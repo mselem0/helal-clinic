@@ -18,3 +18,4 @@
 /public/css
 
 /.phpunit.result.cache
+/outputs
