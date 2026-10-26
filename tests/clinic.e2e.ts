@@ -162,6 +162,8 @@ test('booking validates, hands off to WhatsApp and opens the follow-up page', as
   await app.screenshot('booking-confirmation-mobile');
   const state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());
   expect(state.bookings.length).toBe(state.full ? 1 : 0);
+ expect(state.website_booking_requests.length).toBe(1);
+ expect(state.website_booking_requests[0].status).toBe('new');
   if(state.full)expect(state.bookings[0].status).toBe('new');
   await app.open('/appointment');await expect(browser.locator('#clinic-choice')).toBeVisible();
 });
@@ -358,4 +360,30 @@ test('removed service is unavailable and ordinary booking still works', async ({
  await browser.locator('#booking-confirm').click();await expect(browser).toHaveURL(/\/booking-confirmation$/);
  expect(await browser.evaluate(()=>decodeURIComponent(JSON.parse(sessionStorage.getItem('__testBookingPopup')!).url))).toContain('مرحبًا د. محمد هلال');
 
+});
+
+test('website request inbox follows up public submissions separately from clinic bookings', async ({app,browser,screen})=>{
+ await app.open('/appointment');
+ await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-1').click();
+ await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-1').click();await browser.locator('#booking-next').click();
+ await browser.locator('#calendar-days button:not([disabled])').first().click();
+ const result=await browser.evaluate(async()=>{
+  const payload={patient_name:'طلب متابعة الموقع',patient_phone:'01012345678',booking_date:(document.querySelector('#date') as HTMLInputElement).value,service_id:(document.querySelector('#service') as HTMLSelectElement).options[1].value,clinic_branch_id:(document.querySelector('#clinic') as HTMLSelectElement).options[1].value,request_key:crypto.randomUUID()};
+  const response=await fetch('/bookings',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]')!.getAttribute('content')!},body:JSON.stringify(payload)});
+  return {status:response.status,data:await response.json()};
+ });
+ expect(result.status).toBe(200);expect(result.data.stored).toBe(true);
+ await login(app,screen,browser);await app.open('/codeAiAdminDash/website-booking-requests');
+ await expect(browser.locator('main')).toContainText('طلب متابعة الموقع');
+ await expect(screen.getByRole('button','تصدير Excel',{exact:true})).toBeVisible();
+ await expect(browser.locator('main')).toBeVisible();
+ const state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());
+ await app.open('/codeAiAdminDash/website-booking-requests/'+state.website_booking_requests[0].id+'/edit');
+ await expect(browser.locator('[id="data.patient_name"]')).toBeDisabled();
+ await browser.locator('[id="data.admin_notes"]').fill('تم التواصل من صفحة طلبات الموقع');
+ await screen.getByRole('button','حفظ التغييرات',{exact:true}).click();
+ await expect(screen.getByText('تم الحفظ',{exact:true})).toBeVisible();
+ const updated=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());
+ expect(updated.website_booking_requests[0].admin_notes).toBe('تم التواصل من صفحة طلبات الموقع');
+ await browser.setViewport({width:390,height:844});await expect(browser.locator('[id="data.admin_notes"]')).toBeVisible();
 });
