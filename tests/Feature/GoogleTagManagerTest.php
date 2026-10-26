@@ -18,9 +18,9 @@ class GoogleTagManagerTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee("'GTM-5HD4L3FH'", false)
-            ->assertSee("'GTM-55WW7HJQ'", false)
+            ->assertDontSee("'GTM-55WW7HJQ'", false)
             ->assertSee('www.googletagmanager.com/gtm.js', false);
-        foreach (['GTM-5HD4L3FH', 'GTM-55WW7HJQ'] as $container) {
+        foreach (['GTM-5HD4L3FH'] as $container) {
             $this->assertSame(1, substr_count($this->get('/')->getContent(), $container));
         }
 
