@@ -19,7 +19,13 @@ flock -n 9 || { echo "Another deployment is active." >&2; exit 1; }
 printf '%s  %s\n' "$digest" "$archive" | sha256sum -c -
 [[ ! -e "$release" ]] || { echo "This revision already exists; use a new commit." >&2; exit 1; }
 mkdir -p "$release" "$shared/backups"
-tar -xzf "$archive" -C "$release"
+tar --exclude=vendor -xzf "$archive" -C "$release"
+# Reuse immutable dependency files when the lock is identical; never modify them in place.
+if [[ -f "$base/current/composer.lock" ]] && cmp -s "$release/composer.lock" "$base/current/composer.lock"; then
+    cp -al "$base/current/vendor" "$release/vendor"
+else
+    tar -xzf "$archive" -C "$release" vendor
+fi
 [[ -f "$release/artisan" && -f "$release/vendor/autoload.php" && -f "$release/public/build/manifest.json" ]] || exit 1
 mkdir -p "$shared/storage/app/public" "$shared/storage/framework/cache/data" "$shared/storage/framework/sessions" "$shared/storage/framework/views" "$shared/storage/logs"
 chmod 755 "$release" "$base" "$base/releases"
