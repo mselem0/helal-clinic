@@ -97,7 +97,7 @@ class HomeController extends Controller
         $stored = $request->session()->pull('booking_confirmation_stored') === true;
         $page = new SitePage([
             'page_key' => 'booking-confirmation', 'slug' => 'booking-confirmation',
-            'title' => 'طلبكِ جاهز للإرسال', 'sections' => [], 'robots' => 'noindex_nofollow',
+            'title' => 'طلب موعدكِ جاهز', 'sections' => [], 'robots' => 'noindex_nofollow',
         ]);
 
         return $this->renderSite($request, $drafts, $page, [

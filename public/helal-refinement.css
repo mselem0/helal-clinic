@@ -1201,7 +1201,7 @@ main .section-shell .visit-steps-section { padding-block:32px; }
 .appointment .fertility-question label { display:inline-flex; align-items:center; gap:7px; margin:0; font-size:13px; color:var(--muted); }
 .appointment .fertility-question input[type=radio] { width:17px; height:17px; min-height:0; margin:0; padding:0; flex:none; accent-color:var(--teal); }
 
-main .booking-confirmation { display:block; margin-block:48px; padding:48px 32px; max-width:820px; text-align:center; background:linear-gradient(160deg,#f3f9f6,#fff); border:1px solid #dce9e2; border-radius:28px; box-shadow:0 16px 48px #143f4208; }
+main .booking-confirmation { display:block; margin-block:64px; padding:48px 32px; max-width:820px; text-align:center; background:linear-gradient(160deg,#f3f9f6,#fff); border:1px solid #dce9e2; border-radius:28px; box-shadow:0 16px 48px #143f4208; }
 .booking-confirmation-content { max-width:620px; margin-inline:auto; }
 .booking-confirmation-check { display:grid; place-items:center; width:112px; height:112px; margin:0 auto 24px; border-radius:50%; background:#e1f2e8; color:#258052; box-shadow:0 0 0 10px #edf7f1; }
 .booking-confirmation-check svg { width:68px; height:68px; }
@@ -1210,4 +1210,6 @@ main .booking-confirmation p { max-width:580px; margin-inline:auto; }
 main .booking-confirmation p+p { margin-top:12px; }
 .booking-confirmation-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:12px; margin-top:28px; }
 .booking-confirmation-actions .button { min-width:172px; }
-@media(max-width:600px) { main .booking-confirmation { margin-block:28px; padding:36px 22px; border-radius:22px; } .booking-confirmation-check { width:96px; height:96px; margin-bottom:24px; } .booking-confirmation-check svg { width:60px; height:60px; } .booking-confirmation-actions { flex-direction:column; align-items:stretch; } }
+@media(max-width:600px) { main .booking-confirmation { margin-block:36px; padding:36px 22px; border-radius:22px; } .booking-confirmation-check { width:96px; height:96px; margin-bottom:24px; } .booking-confirmation-check svg { width:60px; height:60px; } .booking-confirmation-actions { flex-direction:column; align-items:stretch; } }
+
+main:has(>.booking-confirmation) { display:flow-root; padding-block:1px; }

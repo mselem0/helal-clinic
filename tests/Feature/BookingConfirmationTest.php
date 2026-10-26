@@ -38,19 +38,20 @@ class BookingConfirmationTest extends TestCase
         $page = $this->get($response->json('confirmation_url'))->assertOk()
             ->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
             ->assertSee('name="robots" content="noindex,nofollow"', false)
-            ->assertSee('طلبكِ جاهز للإرسال')->assertSee('فتح واتساب وحده لا يرسل الرسالة تلقائيًا')
+            ->assertSee('طلب موعدكِ جاهز')->assertSee('جارٍ تأكيد موعدكِ من فريق العيادة.')
             ->assertDontSee('01012345678')->assertDontSee('مريضة اختبار');
         $this->assertStringContainsString('no-store', $page->headers->get('Cache-Control'));
         $this->assertNull(session('booking_confirmation_stored'));
         $this->get('/booking-confirmation')->assertRedirect('/appointment');
     }
 
-    public function test_handoff_only_copy_does_not_claim_request_was_stored(): void
+    public function test_confirmation_copy_is_concise_for_both_booking_modes(): void
     {
-        $this->withSession(['booking_confirmation_stored' => false])->get('/booking-confirmation')
-            ->assertOk()->assertSee('لم يُسجل طلب موعد على الموقع')->assertDontSee('تم تسجيل طلبكِ للمراجعة');
-        $this->withSession(['booking_confirmation_stored' => true])->get('/booking-confirmation')
-            ->assertOk()->assertSee('تم تسجيل طلبكِ للمراجعة')->assertSee('الموعد ما زال قيد التأكيد');
+        foreach ([false, true] as $stored) {
+            $this->withSession(['booking_confirmation_stored' => $stored])->get('/booking-confirmation')
+                ->assertOk()->assertSee('طلب موعدكِ جاهز')->assertSee('جارٍ تأكيد موعدكِ من فريق العيادة.')
+                ->assertDontSee('فتح واتساب وحده')->assertDontSee('تم تأكيد موعدكِ');
+        }
     }
 
     public function test_validation_failure_does_not_unlock_confirmation_page(): void

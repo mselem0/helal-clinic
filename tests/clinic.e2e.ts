@@ -150,8 +150,8 @@ test('booking validates, hands off to WhatsApp and opens the follow-up page', as
   await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{set href(url:string){sessionStorage.setItem('__testBookingPopup',JSON.stringify({url,opener:null}));}},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
   await browser.locator('#booking-confirm').click();
   await expect(browser).toHaveURL(/\/booking-confirmation$/);
-  await expect(browser.locator('h1')).toContainText('طلبكِ جاهز للإرسال');
-  await expect(browser.locator('main')).toContainText('فتح واتساب وحده لا يرسل الرسالة تلقائيًا');
+  await expect(browser.locator('h1')).toContainText('طلب موعدكِ جاهز');
+  await expect(browser.locator('main')).toContainText('جارٍ تأكيد موعدكِ من فريق العيادة.');
   const popup=await browser.evaluate(()=>JSON.parse(sessionStorage.getItem('__testBookingPopup')!));
   expect(popup.url).toContain('https://wa.me/201509011313');expect(popup.opener).toBe(null);
   await browser.evaluate(()=>sessionStorage.removeItem('__testBookingPopup'));
