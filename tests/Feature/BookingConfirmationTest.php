@@ -22,7 +22,7 @@ class BookingConfirmationTest extends TestCase
     public function test_direct_visit_redirects_without_claiming_success(): void
     {
         $this->get('/booking-confirmation')->assertRedirect('/appointment')
-            ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
     }
 
     public function test_success_returns_private_confirmation_url_and_consumes_boolean_flash(): void
@@ -36,7 +36,7 @@ class BookingConfirmationTest extends TestCase
         ])->assertOk()->assertJsonPath('confirmation_url', url('/booking-confirmation'));
         $this->assertIsBool(session('booking_confirmation_stored'));
         $page = $this->get($response->json('confirmation_url'))->assertOk()
-            ->assertHeader('X-Robots-Tag', 'noindex, nofollow')
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')
             ->assertSee('name="robots" content="noindex,nofollow"', false)
             ->assertSee('طلبكِ جاهز للإرسال')->assertSee('فتح واتساب وحده لا يرسل الرسالة تلقائيًا')
             ->assertDontSee('01012345678')->assertDontSee('مريضة اختبار');
