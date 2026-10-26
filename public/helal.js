@@ -143,15 +143,12 @@ if(form){
    if(!result.whatsapp_url)throw new Error('تعذر تجهيز رابط واتساب. حاولي مجددًا.');
    const whatsappUrl=new URL(result.whatsapp_url);
    if(whatsappUrl.protocol!=='https:'||whatsappUrl.hostname!=='wa.me')throw new Error('تعذر تجهيز رابط واتساب. حاولي مجددًا.');
+   const confirmationUrl=new URL(result.confirmation_url,location.origin);
+   if(confirmationUrl.origin!==location.origin||confirmationUrl.pathname!=='/booking-confirmation'||confirmationUrl.search||confirmationUrl.hash)throw new Error('تعذر تجهيز صفحة متابعة الطلب. حاولي مجددًا.');
+   if(handoff.closed)throw new Error('تم إغلاق تبويب واتساب. حاولي مجددًا لإكمال إرسال طلبكِ.');
+   handoff.location.href=whatsappUrl.href;
    requestSucceeded=true;
-   if(!handoff.closed)handoff.location.href=whatsappUrl.href;
-   form.reset();date.value='';selectedTime='';offer='كشف';calendarMonth=new Date(Number(date.min.slice(0,4)),Number(date.min.slice(5,7))-1,1);
-   form.querySelectorAll('[data-offer]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.offer===offer)));
-   form.querySelectorAll('[data-time]').forEach(button=>button.setAttribute('aria-pressed','false'));
-   document.querySelector('#appointment-summary').textContent='';showBookingStep(1);renderCalendar();
-   // Leave the wizard ready for a new request when the visitor returns.
-   if(location.search)history.replaceState(history.state,'',location.pathname+location.hash);
-   if(handoff.closed){const link=document.createElement('a');link.href=whatsappUrl.href;link.target='_blank';link.rel='noopener';link.textContent='افتحي واتساب لإكمال إرسال طلبكِ';errorBox.replaceChildren(link);}
+   location.assign(confirmationUrl.href);
   } catch(error){if(!requestSucceeded&&!handoff.closed)handoff.close();errorBox.textContent=error.message || 'تعذر الاتصال. حاولي مجددًا.';} finally {submit.disabled=false;}
  });
  showBookingStep(1);renderCalendar();

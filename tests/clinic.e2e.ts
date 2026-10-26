@@ -141,23 +141,29 @@ test('branch schedules show daily hours and disable closed dates on mobile and d
  }
 });
 
-test('booking validates, hands off to WhatsApp and resets the wizard', async ({ app, browser }) => {
+test('booking validates, hands off to WhatsApp and opens the follow-up page', async ({ app, browser }) => {
   await browser.route(/^https:\/\/wa\.me\//, route => route.fulfill({status:200,contentType:'text/html',body:'<p>WhatsApp handoff intercepted for testing.</p>'}));
   await app.open('/appointment');await browser.locator('#booking-next').click();await expect(browser.locator('#booking-error')).toContainText('اختاري');
   await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-1').click();await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-1').click();await browser.locator('#booking-next').click();
   await browser.locator('#calendar-days button:not([disabled])').first().click();await browser.locator('#booking-next').click();
   await browser.locator('#patient').fill('مريضة اختبار');await browser.locator('#appointment-phone').fill('01012345678');
-  await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{href:''},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
-  await browser.locator('#booking-confirm').click();await expect(browser.locator('#clinic-choice')).toBeVisible();
-  await expect(browser).toHaveURL(/\/appointment$/);
-  const reset=await browser.evaluate(()=>({clinic:(document.querySelector('#clinic') as HTMLSelectElement).value,service:(document.querySelector('#service') as HTMLSelectElement).value,patient:(document.querySelector('#patient') as HTMLInputElement).value,phone:(document.querySelector('#appointment-phone') as HTMLInputElement).value,date:(document.querySelector('#date') as HTMLInputElement).value,stepOne:!(document.querySelector('[data-step="1"]') as HTMLElement).hidden}));
-  expect(reset).toEqual({clinic:'',service:'',patient:'',phone:'',date:'',stepOne:true});
-  const popup=await browser.evaluate(()=>({url:(window as any).__bookingPopup.location.href,opener:(window as any).__bookingPopup.opener}));
+  await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{set href(url:string){sessionStorage.setItem('__testBookingPopup',JSON.stringify({url,opener:null}));}},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
+  await browser.locator('#booking-confirm').click();
+  await expect(browser).toHaveURL(/\/booking-confirmation$/);
+  await expect(browser.locator('h1')).toContainText('طلبكِ جاهز للإرسال');
+  await expect(browser.locator('main')).toContainText('فتح واتساب وحده لا يرسل الرسالة تلقائيًا');
+  const popup=await browser.evaluate(()=>JSON.parse(sessionStorage.getItem('__testBookingPopup')!));
   expect(popup.url).toContain('https://wa.me/201509011313');expect(popup.opener).toBe(null);
+  await browser.evaluate(()=>sessionStorage.removeItem('__testBookingPopup'));
+  expect(await browser.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await app.screenshot('booking-confirmation-desktop');
+  await browser.setViewport({width:390,height:1000});
+  expect(await browser.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await app.screenshot('booking-confirmation-mobile');
   const state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());
   expect(state.bookings.length).toBe(state.full ? 1 : 0);
   if(state.full)expect(state.bookings[0].status).toBe('new');
-  await expect(browser.locator('#clinic-choice')).toBeVisible();
+  await app.open('/appointment');await expect(browser.locator('#clinic-choice')).toBeVisible();
 });
 
 test('booking preserves details when the browser blocks the new tab or request fails',async({app,browser})=>{
@@ -348,7 +354,8 @@ test('removed service is unavailable and ordinary booking still works', async ({
  await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-1').click();await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-1').click();await browser.locator('#booking-next').click();
  await browser.locator('#calendar-days button:not([disabled])').first().click();await browser.locator('#booking-next').click();
  await browser.locator('#patient').fill('اختبار');await browser.locator('#appointment-phone').fill('01012345678');
- await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{href:''},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
- await browser.locator('#booking-confirm').click();await expect(browser.locator('#clinic-choice')).toBeVisible();
- expect(await browser.evaluate(()=>decodeURIComponent((window as any).__bookingPopup.location.href))).toContain('مرحبًا د. محمد هلال');
+ await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{set href(url:string){sessionStorage.setItem('__testBookingPopup',JSON.stringify({url,opener:null}));}},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
+ await browser.locator('#booking-confirm').click();await expect(browser).toHaveURL(/\/booking-confirmation$/);
+ expect(await browser.evaluate(()=>decodeURIComponent(JSON.parse(sessionStorage.getItem('__testBookingPopup')!).url))).toContain('مرحبًا د. محمد هلال');
+
 });

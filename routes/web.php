@@ -14,6 +14,7 @@ Route::get('/gallery', [PageController::class, 'page'])->defaults('slug', 'galle
 Route::get('/contact-us', [PageController::class, 'page'])->defaults('slug', 'contact-us')->name('contact');
 Route::get('/blog', [PageController::class, 'blogIndex'])->name('blog.index');
 Route::get('/blog/{slug}', [PageController::class, 'blogShow'])->name('blog.show');
+Route::get('/booking-confirmation', [HomeController::class, 'bookingConfirmation'])->name('bookings.confirmation');
 Route::post('/bookings', [HomeController::class, 'storeBooking'])->middleware('throttle:10,1')->name('bookings.store');
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 Route::get('/sitemap-{part}.xml', [SitemapController::class, 'index'])->whereNumber('part');

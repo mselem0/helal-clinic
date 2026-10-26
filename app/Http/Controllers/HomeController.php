@@ -74,7 +74,7 @@ class HomeController extends Controller
 
         $videoLibrary = AdsContent::query(Video::where('is_active', true))->orderBy('order')->get();
 
-        return response(\App\Support\DisplayNumbers::html(view($page->page_key === 'home' ? 'helal.home' : 'helal.page', array_merge([
+        return response(\App\Support\DisplayNumbers::html(view($extra['siteView'] ?? ($page->page_key === 'home' ? 'helal.home' : 'helal.page'), array_merge([
             'page' => $page, 'pageKey' => $page->page_key,
             'contact' => AdsContent::clean(SiteSettingHelper::group('contact')), 'whatsappNumber' => SiteSettingHelper::formatWhatsappNumber(SiteSettingHelper::get('wa_number', '201509011313')),
             'pageSections' => $pageSections, 'sections' => $sections, 'theme' => $theme, 'style' => $style,
@@ -87,6 +87,22 @@ class HomeController extends Controller
             'journey' => json_decode($sections->firstWhere('section_key', 'your-journey')?->body ?? '{}', true)['stages'] ?? [],
             'bookingEnabled' => ClinicFeatures::enabled('Booking'), 'preview' => $preview,
         ], $extra))->render()))->header('Cache-Control', $preview ? 'private, no-store' : 'no-cache')->header('X-Robots-Tag', str_replace(',', ', ', $seo['robots']));
+    }
+
+    public function bookingConfirmation(Request $request, ThemeDraftService $drafts)
+    {
+        if (! $request->session()->has('booking_confirmation_stored')) {
+            return redirect('/appointment')->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', 'noindex, nofollow');
+        }
+        $stored = $request->session()->pull('booking_confirmation_stored') === true;
+        $page = new SitePage([
+            'page_key' => 'booking-confirmation', 'slug' => 'booking-confirmation',
+            'title' => 'طلبكِ جاهز للإرسال', 'sections' => [], 'robots' => 'noindex_nofollow',
+        ]);
+
+        return $this->renderSite($request, $drafts, $page, [
+            'siteView' => 'helal.booking-confirmation', 'bookingStored' => $stored,
+        ])->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
     public function storeBooking(Request $request): JsonResponse
@@ -133,7 +149,10 @@ class HomeController extends Controller
             }
         }
 
+        $request->session()->flash('booking_confirmation_stored', $stored);
+
         return response()->json([
+            'confirmation_url' => route('bookings.confirmation'),
             'stored' => $stored, 'status' => 'pending',
             'message' => $stored ? 'تم تسجيل طلبكِ للمراجعة. الموعد غير مؤكد بعد.' : 'طلبكِ جاهز للإرسال عبر واتساب. لم يُسجل موعد على الموقع.',
             'whatsapp_url' => 'https://wa.me/'.$number.'?text='.rawurlencode($message),
