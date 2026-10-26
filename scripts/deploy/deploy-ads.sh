@@ -33,11 +33,10 @@ cd "$release"
 old=$(readlink "$base/current" || true)
 ln -s "$release" "$base/.next-$revision"
 mv -Tf "$base/.next-$revision" "$base/current"
-if ! curl --fail --silent --show-error --max-time 30 https://ads.drmohamedhelal.com/ -o "$base/incoming/check-$revision.html" || ! grep -q 'GTM-5BFT64CX' "$base/incoming/check-$revision.html"; then
+if ! curl --fail --silent --show-error --max-time 30 https://ads.drmohamedhelal.com/ -o "$base/incoming/check-$revision.html" || ! grep -q 'GTM-5BFT64CX' "$base/incoming/check-$revision.html" || ! curl --fail --silent --show-error --max-time 30 -I https://ads.drmohamedhelal.com/ | grep -qi 'x-robots-tag:.*noindex'; then
     if [[ -n "$old" ]]; then ln -s "$old" "$base/.rollback-$revision"; mv -Tf "$base/.rollback-$revision" "$base/current"; fi
     exit 1
 fi
-curl --fail --silent --show-error --max-time 30 -I https://ads.drmohamedhelal.com/ | grep -qi 'x-robots-tag:.*noindex'
 printf '%s\n' "$revision" > "$base/deployed-revision"
 rm -f "$archive" "$base/incoming/check-$revision.html"
 echo "Ads release deployed and verified."
