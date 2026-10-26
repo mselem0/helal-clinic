@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # Excluded media must not remain reachable after copying old public uploads.
+    RewriteRule ^(?:storage/)?assets/(?:hero-pregnancy-ultrasound\.mp4|service-fertility[^/]*)$ - [R=404,L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -22,6 +25,11 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# Apply even when Apache serves a static asset or its own error/redirect response.
+<IfModule mod_headers.c>
+    Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex"
 </IfModule>
 
 <IfModule mod_expires.c>

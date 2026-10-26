@@ -25,8 +25,8 @@ class PageSeo
             ? ($item->meta_description ?: ($item instanceof Article ? $item->content : $item->description) ?: ($item instanceof ClinicBranch ? 'عيادة د. محمد هلال — '.$item->name.'. العنوان: '.$item->address : null))
             : ($legacy?->meta_description ?: $page->meta_description ?: $page->intro);
         $description = str(strip_tags($description ?? ''))->squish()->limit(170, '')->toString();
-        $canonical = $item ? url($item->publicPath()) : ($legacy?->canonical_url ?: $page->canonical_url ?: SiteView::pageUrl($page));
-        $canonical = explode('#', $canonical, 2)[0];
+        // Copied production canonicals must never send ads visitors back to the main host.
+        $canonical = $item ? url($item->publicPath()) : SiteView::pageUrl($page);
         if (! $item && $page->page_key === 'articles' && request()->integer('page', 1) > 1) {
             [$base, $query] = array_pad(explode('?', $canonical, 2), 2, '');
             parse_str($query, $parameters);
@@ -48,10 +48,7 @@ class PageSeo
         if (! str_starts_with($image, 'http')) {
             $image = url($image);
         }
-        $robots = SiteView::preview() ? 'noindex,nofollow' : str_replace('_', ',', $legacy?->robots ?: $page->robots ?: 'index_follow');
-        if (! str_contains($robots, 'noindex')) {
-            $robots .= ',max-image-preview:large';
-        }
+        $robots = 'noindex,nofollow';
         $schema = [['@type' => 'WebSite', '@id' => url('/').'#website', 'name' => trim((string) \App\Helpers\SeoHelper::getSetting('site_name')) ?: 'د. محمد هلال', 'alternateName' => ['د. محمد هلال', 'Helal Clinic'], 'url' => url('/'), 'inLanguage' => 'ar-EG']];
         if (in_array($page->page_key, ['home', 'about'], true)) {
             $about = SiteView::draft(SitePage::where('page_key', 'about')->where('is_published', true)->first());
@@ -134,7 +131,7 @@ class PageSeo
         }
         $videoSections = collect($page->sections ?? [])->map(fn ($section) => is_array($section) ? ($section['key'] ?? '') : $section);
         if ($page->page_key === 'videos' && $videoSections->contains('videos') && SiteView::draft(PageSection::where('section_key', 'videos')->first())?->is_active) {
-            foreach (Video::where('is_active', true)->get() as $video) {
+            foreach (\App\Support\AdsContent::query(Video::where('is_active', true))->get() as $video) {
                 $thumb = ContentUrl::resolve($video->getFirstMediaUrl('video-thumbnail') ?: $video->image_path);
                 if ($thumb && ! str_starts_with($thumb, 'http')) {
                     $thumb = url($thumb);
@@ -167,6 +164,6 @@ class PageSeo
             $schema[] = ['@type' => 'BreadcrumbList', 'itemListElement' => $crumbs];
         }
 
-        return ['meta_title' => $title, 'meta_description' => $description, 'canonical_url' => $canonical, 'robots' => $robots, 'og_title' => $item ? $title : ($legacy?->og_title ?: $title), 'og_description' => $item ? $description : ($legacy?->og_description ?: $description), 'og_image' => $image, 'og_type' => $item instanceof Article ? 'article' : 'website', 'schema' => ['@context' => 'https://schema.org', '@graph' => $schema]];
+        return \App\Support\AdsContent::clean(['meta_title' => $title, 'meta_description' => $description, 'canonical_url' => $canonical, 'robots' => $robots, 'og_title' => $item ? $title : ($legacy?->og_title ?: $title), 'og_description' => $item ? $description : ($legacy?->og_description ?: $description), 'og_image' => $image, 'og_type' => $item instanceof Article ? 'article' : 'website', 'schema' => ['@context' => 'https://schema.org', '@graph' => $schema]]);
     }
 }

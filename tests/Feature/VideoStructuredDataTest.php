@@ -112,7 +112,7 @@ class VideoStructuredDataTest extends TestCase
         $this->assertIsArray($journey);
         $this->assertStringEndsWith('/local-video/2129128044360416.mp4', $journey['planning']['source']);
         $this->assertStringEndsWith('/local-video/1122351437148430.mp4', $journey['pregnant']['source']);
-        $this->assertSame('', $journey['waiting']['source']);
+        $this->assertArrayNotHasKey('waiting', $journey);
     }
 
     public function test_incomplete_future_or_inactive_videos_are_omitted(): void

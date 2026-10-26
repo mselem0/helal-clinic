@@ -46,7 +46,7 @@ class MultipageSiteTest extends TestCase
         foreach (['helal_classic', 'helal_modern'] as $theme) {
             foreach (SitePage::all() as $page) {
                 $url = URL::temporarySignedRoute('site.preview', now()->addMinutes(10), ['page' => $page->id, 'preview' => 1, 'theme' => $theme]);
-                $html = $this->get($url)->assertOk()->assertSee($theme)->assertHeader('X-Robots-Tag', 'noindex, nofollow')->getContent();
+                $html = $this->get($url)->assertOk()->assertSee($theme)->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex')->getContent();
                 $this->assertSame(1, substr_count($html, '<title>'));
                 $this->assertSame(1, substr_count($html, 'rel="canonical"'));
                 $this->assertSame(1, preg_match_all('/<h1(?:\s[^>]*)?>/', $html));
@@ -101,15 +101,16 @@ class MultipageSiteTest extends TestCase
         $this->get('/')->assertSee('رابط مخصص');
     }
 
-    public function test_sitemap_excludes_drafts_noindex_future_and_noncanonical_pages(): void
+    public function test_fertility_urls_and_future_articles_are_not_public_and_sitemap_stays_unavailable(): void
     {
-        SitePage::where('page_key', 'faq')->update(['robots' => 'noindex_follow']);
-        SitePage::where('page_key', 'journey')->update(['canonical_url' => url('/about-us')]);
         SitePage::create(['page_key' => 'private', 'slug' => 'private-content', 'title' => 'خاص', 'is_published' => false]);
         Article::create(['title' => 'مقال مستقبلي', 'slug' => 'future-article', 'is_published' => true, 'published_at' => now()->addDays(3)]);
-        $this->get('/sitemap.xml')->assertOk()->assertSee('/about-us')->assertSee('/branches/'.ClinicBranch::first()->slug)->assertSee('lastmod')->assertDontSee('/private-content')->assertDontSee('/future-article')->assertDontSee('/frequently-asked-questions')->assertDontSee('/patient-journey');
+        $this->get('/services/service-2')->assertNotFound();
+        $this->get('/blog/article-2')->assertNotFound();
         $this->get('/blog/future-article')->assertNotFound();
-        $this->get('/robots.txt')->assertOk()->assertSee('Disallow: /site-preview/')->assertSee('Sitemap:');
+        $this->get('/sitemap.xml')->assertNotFound();
+        $this->get('/sitemap-1.xml')->assertNotFound();
+        $this->get('/robots.txt')->assertOk()->assertSee('Disallow: /site-preview/')->assertDontSee('Sitemap:');
     }
 
     public function test_slug_changes_redirect_and_reversing_them_does_not_loop(): void
@@ -162,6 +163,7 @@ class MultipageSiteTest extends TestCase
     {
         $seo = SeoPage::where('page_key', 'home')->first();
         $old = $seo->meta_title;
+        preg_match('~<title>(.*?)</title>~', $this->get('/')->assertOk()->getContent(), $originalTitle);
         $seo->update(['draft_data' => ['meta_title' => 'عنوان بحث مسودة']]);
         $this->get('/')->assertDontSee('عنوان بحث مسودة');
         $this->get(URL::temporarySignedRoute('home', now()->addMinutes(10), ['preview' => 1]))->assertSee('عنوان بحث مسودة');
@@ -169,7 +171,10 @@ class MultipageSiteTest extends TestCase
         $drafts->publish();
         $this->get('/')->assertSee('عنوان بحث مسودة');
         $drafts->restoreRevision(ThemeRevision::first()->id);
-        $this->get('/')->assertSee($old)->assertDontSee('عنوان بحث مسودة');
+        $restored = $this->get('/')->assertDontSee('عنوان بحث مسودة')->getContent();
+        preg_match('~<title>(.*?)</title>~', $restored, $restoredTitle);
+        $this->assertSame($old, $seo->fresh()->meta_title);
+        $this->assertSame($originalTitle[1] ?? null, $restoredTitle[1] ?? null);
     }
 
     public function test_admin_permissions_and_404_are_enforced(): void

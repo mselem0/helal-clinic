@@ -30,7 +30,7 @@ class HelalSiteTest extends TestCase
             ->assertSee('اختاري اليوم المناسب')
             ->assertSee('حددي يومًا مفضلًا، ويؤكد فريق العيادة الوقت معكِ.');
         foreach (['helal_classic', 'helal_modern'] as $theme) {
-            $this->get(URL::temporarySignedRoute('home', now()->addMinutes(5), ['preview' => 1, 'theme' => $theme]))->assertOk()->assertSee($theme)->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+            $this->get(URL::temporarySignedRoute('home', now()->addMinutes(5), ['preview' => 1, 'theme' => $theme]))->assertOk()->assertSee($theme)->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
         }
         $this->get('/?preview=1&theme=helal_modern')->assertForbidden();
     }
@@ -77,12 +77,13 @@ class HelalSiteTest extends TestCase
         $this->assertSame('{"fields":[]}', $section->fresh()->body);
     }
 
-    public function test_seo_settings_drive_metadata_and_sitemap_excludes_drafts(): void
+    public function test_seo_settings_drive_metadata_while_sitemap_routes_stay_disabled(): void
     {
         SeoPage::where('page_key', 'home')->update(['meta_title' => 'عنوان SEO خاص بهلال']);
         SeoHelper::clearCache();
         $this->get('/')->assertOk()->assertSee('<title>عنوان SEO خاص بهلال</title>', false);
-        $this->get('/sitemap.xml')->assertOk()->assertSee('/services/service-1')->assertDontSee('/blog/article-1');
+        $this->get('/sitemap.xml')->assertNotFound();
+        $this->get('/sitemap-1.xml')->assertNotFound();
     }
 
     private function booking(): array

@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleSeoRedirects;
 use App\Http\Middleware\InjectSeoMeta;
+use App\Http\Middleware\PreventAdsIndexing;
 use App\Http\Middleware\Track404Middleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +16,7 @@ $application = Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
+        $middleware->prepend(PreventAdsIndexing::class);
         $middleware->append(HandleSeoRedirects::class);
         $middleware->append(Track404Middleware::class);
 
@@ -23,7 +25,12 @@ $application = Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Exception responses are rendered outside the middleware pipeline.
+        $exceptions->respond(function ($response) {
+            $response->headers->set('X-Robots-Tag', PreventAdsIndexing::HEADER);
+
+            return $response;
+        });
     })->create();
 
 if (getenv('CLINIC_E2E') === '1' && getenv('APP_ENV') === 'testing') {

@@ -16,6 +16,7 @@ use App\Services\PageSeo;
 use App\Services\SiteView;
 use App\Services\ThemeDraftService;
 use App\Support\ClinicFeatures;
+use App\Support\AdsContent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,7 @@ class HomeController extends Controller
     {
         abort_if($request->has('preview') && ! $request->hasValidSignature(), 403);
         $preview = $request->has('preview');
-        $sections = $drafts->applyDrafts(PageSection::orderBy('order')->get())->filter->is_active->sortBy('order');
+        $sections = $drafts->applyDrafts(PageSection::orderBy('order')->get())->map(fn ($section) => AdsContent::model($section))->filter->is_active->sortBy('order');
         $theme = SiteSetting::where('key', 'active_theme')->value('value') ?? 'helal_classic';
         if ($preview) {
             $theme = $request->query('theme', $theme);
@@ -71,18 +72,18 @@ class HomeController extends Controller
             $pageSections = $sections->whereNotIn('section_key', ['header', 'footer']);
         }
 
-        $videoLibrary = Video::where('is_active', true)->orderBy('order')->get();
+        $videoLibrary = AdsContent::query(Video::where('is_active', true))->orderBy('order')->get();
 
         return response(\App\Support\DisplayNumbers::html(view($page->page_key === 'home' ? 'helal.home' : 'helal.page', array_merge([
             'page' => $page, 'pageKey' => $page->page_key,
-            'contact' => SiteSettingHelper::group('contact'), 'whatsappNumber' => SiteSettingHelper::formatWhatsappNumber(SiteSettingHelper::get('wa_number', '201509011313')),
+            'contact' => AdsContent::clean(SiteSettingHelper::group('contact')), 'whatsappNumber' => SiteSettingHelper::formatWhatsappNumber(SiteSettingHelper::get('wa_number', '201509011313')),
             'pageSections' => $pageSections, 'sections' => $sections, 'theme' => $theme, 'style' => $style,
             'videos' => $page->page_key === 'home' ? $videoLibrary->take(3) : $videoLibrary,
             'videoLibrary' => $videoLibrary,
-            'testimonials' => Testimonial::where('is_active', true)->orderBy('order')->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
-            'articles' => Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()))->latest()->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
-            'services' => Service::where('is_active', true)->orderBy('order')->get(),
-            'branches' => ClinicBranch::where('is_active', true)->orderBy('order')->get(),
+            'testimonials' => AdsContent::query(Testimonial::where('is_active', true))->orderBy('order')->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
+            'articles' => AdsContent::query(Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now())))->latest()->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
+            'services' => AdsContent::query(Service::where('is_active', true))->orderBy('order')->get(),
+            'branches' => AdsContent::query(ClinicBranch::where('is_active', true))->orderBy('order')->get(),
             'journey' => json_decode($sections->firstWhere('section_key', 'your-journey')?->body ?? '{}', true)['stages'] ?? [],
             'bookingEnabled' => ClinicFeatures::enabled('Booking'), 'preview' => $preview,
         ], $extra))->render()))->header('Cache-Control', $preview ? 'private, no-store' : 'no-cache')->header('X-Robots-Tag', str_replace(',', ', ', $seo['robots']));
@@ -97,7 +98,7 @@ class HomeController extends Controller
             'service_id' => ['required', 'integer', 'exists:services,id'],
             'clinic_branch_id' => ['required', 'integer', 'exists:clinic_branches,id'],
         ]);
-        $service = Service::where('is_active', true)->findOrFail($data['service_id']);
+        $service = AdsContent::query(Service::where('is_active', true))->findOrFail($data['service_id']);
         // Fertility intake answers are transient and are only added to the WhatsApp handoff.
         $fertilityAnswers = [];
         if ($service->slug === 'service-2') {

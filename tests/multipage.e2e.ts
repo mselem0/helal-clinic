@@ -18,6 +18,7 @@ for(const width of [320,390,768,1024,1440]) {
     await app.open(url);await expect(browser.locator('h1')).toBeVisible();
     const state=await browser.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,h1:document.querySelectorAll('h1').length,title:document.querySelectorAll('title').length,canonical:document.querySelectorAll('link[rel=canonical]').length,theme:document.documentElement.dataset.theme,broken:[...document.images].filter(i=>i.complete&&i.naturalWidth===0&&i.getAttribute('src')).map(i=>i.src)}));
     expect(state.overflow).toBe(false);expect(state.h1).toBe(1);expect(state.title).toBe(1);expect(state.canonical).toBe(1);expect(state.theme).toBe(theme);expect(state.broken).toEqual([]);
+    await expect(browser.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex,nofollow/);
    }
   }
  });
@@ -38,13 +39,14 @@ test('page and menu drafts publish together, rename redirects and revision resto
  await app.open('/codeAiAdminDash/theme-editor');await browser.locator('[data-testid="revision-select"]').selectOption({value:'2'});await screen.getByRole('button','استعادة',{exact:true}).click();await expect(browser.locator('[data-testid="revision-select"] option')).toHaveCount(4);
  await app.open('/e2e-custom-page');await expect(browser).toHaveURL(/e2e-custom-page$/);await expect(browser.locator('#main-menu')).not.toContainText('رئيسية الاختبار');
 });
-test('public structured metadata, sitemap, related links and draft protection work',async({app,browser})=>{
+test('public metadata, permanent noindex, related links and draft protection work',async({app,browser})=>{
  await app.open('/blog/article-1');
- const metadata=await browser.evaluate(()=>({title:document.title,canonical:document.querySelector('link[rel=canonical]')?.getAttribute('href'),schemas:JSON.parse(document.querySelector('script[type="application/ld+json"]')!.textContent!)['@graph']}));
+ const metadata=await browser.evaluate(async()=>({title:document.title,canonical:document.querySelector('link[rel=canonical]')?.getAttribute('href'),robots:document.querySelector('meta[name="robots"]')?.getAttribute('content'),robotsHeader:(await fetch(location.pathname)).headers.get('X-Robots-Tag'),schemas:JSON.parse(document.querySelector('script[type="application/ld+json"]')!.textContent!)['@graph']}));
  expect(metadata.canonical).toContain('/blog/article-1');expect(metadata.schemas.some((s:any)=>s['@type']==='Article')).toBe(true);
+ expect(metadata.robots).toMatch(/noindex,nofollow/);expect(metadata.robotsHeader).toBe('noindex, nofollow, noarchive, nosnippet, noimageindex');
  await expect(browser.locator('.article-meta')).toContainText('مراجع اختبار');
- const responses=await browser.evaluate(async()=>({sitemap:await(await fetch('/sitemap.xml')).text(),robots:await(await fetch('/robots.txt')).text(),unsigned:(await fetch('/site-preview/1?preview=1')).status,missing:(await fetch('/not-a-real-page')).status}));
- expect(responses.sitemap).toContain('/branches/');expect(responses.sitemap).toContain('lastmod');expect(responses.robots).toContain('Disallow: /site-preview/');expect(responses.unsigned).toBe(403);expect(responses.missing).toBe(404);
+ const responses=await browser.evaluate(async()=>{const sitemap=await fetch('/sitemap.xml');const robots=await fetch('/robots.txt');return {sitemap:sitemap.status,robots:await robots.text(),robotsHeader:robots.headers.get('X-Robots-Tag'),unsigned:(await fetch('/site-preview/1?preview=1')).status,missing:(await fetch('/not-a-real-page')).status}});
+ expect(responses.sitemap).toBe(404);expect(responses.robots).toContain('Disallow: /site-preview/');expect(responses.robots).not.toContain('Sitemap:');expect(responses.robots).not.toContain('Disallow: /\n');expect(responses.robotsHeader).toBe('noindex, nofollow, noarchive, nosnippet, noimageindex');expect(responses.unsigned).toBe(403);expect(responses.missing).toBe(404);
  await app.open('/services/service-1');await expect(browser.locator('.related-panel')).toContainText('السادس من أكتوبر');
 });
 
@@ -53,28 +55,26 @@ test('doctor qualifications and specialties render clearly in both themes',async
   const url=await browser.evaluate(async theme=>(await(await fetch('/__e2e/preview?page=about&theme='+theme)).json()).url,theme);
   await app.open(url);
   await expect(browser.locator('.doctor-profile')).toContainText('دكتوراه أمراض النساء والتوليد');
-  await expect(browser.locator('.profile-memberships')).toContainText('الجمعية الأوروبية للخصوبة والعقم');
-  expect(await browser.locator('.profile-specialties li').count()).toBe(12);
+  await expect(browser.locator('.doctor-profile')).not.toContainText('الجمعية الأوروبية للخصوبة والعقم');
+  expect(await browser.locator('.profile-specialties li').count()).toBe(10);
   expect(await browser.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  }
 });
 
-test('SEO settings saved in the admin control public robots and sitemap',async({app,browser,screen})=>{
+test('SEO settings cannot remove the public noindex protections',async({app,browser,screen})=>{
  await login(app,browser,screen);
  await app.open('/codeAiAdminDash/seo-management?tab=settings');
  await screen.getByRole('tab','أدوات المشرفين و Robots.txt',{exact:true}).click();
  await browser.locator('[id="data.robots_extra"]').fill('Disallow: /e2e-private/');
  await screen.getByRole('button','حفظ الإعدادات',{exact:true}).click();
  await expect(screen.getByText('تم حفظ إعدادات SEO بنجاح',{exact:true})).toBeVisible();
- expect(await browser.evaluate(async()=>await(await fetch('/robots.txt')).text())).toContain('Disallow: /e2e-private/');
+ const robots=await browser.evaluate(async()=>await(await fetch('/robots.txt')).text());expect(robots).not.toContain('Disallow: /e2e-private/');expect(robots).not.toContain('Sitemap:');
  await screen.getByRole('tab','Sitemap',{exact:true}).click();
  await browser.locator('[id="data.include_services"]').click();
  await browser.locator('[id="data.posts_per_sitemap"]').fill('1000');
  await screen.getByRole('button','حفظ الإعدادات',{exact:true}).click();
  await expect(screen.getByText('تم حفظ إعدادات SEO بنجاح',{exact:true}).first()).toBeVisible();
- const state=await browser.evaluate(async()=>await(await fetch('/sitemap.xml')).text());
- expect(state).not.toContain('/services');
- expect(state).toContain('/branches');
+ expect(await browser.evaluate(async()=>(await fetch('/sitemap.xml')).status)).toBe(404);
  await app.open('/codeAiAdminDash/seo-management?tab=settings');
  await screen.getByRole('tab','Sitemap',{exact:true}).click();
  expect(await browser.locator('[id="data.include_services"]').getAttribute('aria-checked')).toBe('false');

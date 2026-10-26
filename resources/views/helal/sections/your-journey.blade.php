@@ -17,7 +17,7 @@
         @endif
         <div id="journey-preparation-panel">
             <div class="journey-choices" role="group" aria-label="اختاري مرحلتكِ">
-                @foreach(['planning' => ['field_6', 'compass'], 'waiting' => ['field_7', 'help'], 'pregnant' => ['field_8', 'calendar'], 'postpartum' => ['field_9', 'clinic'], 'health' => ['field_10', 'badge']] as $stageKey => [$field, $icon])
+                @foreach(['planning' => ['field_6', 'compass'], 'pregnant' => ['field_8', 'calendar'], 'postpartum' => ['field_9', 'clinic'], 'health' => ['field_10', 'badge']] as $stageKey => [$field, $icon])
                     <button type="button" data-stage="{{ $stageKey }}" aria-pressed="false" @disabled(empty($journey[$stageKey] ?? null))><x-clinic-icon :name="$icon" :size="20" /><span>{{ $content[$field] ?? '' }}</span></button>
                 @endforeach
             </div>

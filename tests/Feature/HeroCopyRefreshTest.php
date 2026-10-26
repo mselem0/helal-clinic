@@ -135,14 +135,16 @@ class HeroCopyRefreshTest extends TestCase
         $this->assertSame($headerOriginalBody, $header->fresh()->body);
     }
 
-    public function test_home_hero_portrait_alt_and_video_trigger_titles_follow_field_20_with_featured_item_fallback(): void
+    public function test_ads_hero_uses_its_pinned_video_and_title_without_mutating_cms_copy(): void
     {
         $this->get('/')
             ->assertOk()
             ->assertSee('alt="د. محمد هلال"', false)
-            ->assertSee('data-title="الحقن المجهري وعلاج العقم"', false)
-            ->assertSee('aria-label="شاهدي د. محمد هلال: الحقن المجهري وعلاج العقم"', false)
-            ->assertDontSee('الدكتور محمد هلال — فيديو عن سكر الحمل وطريقة الولادة', false);
+            ->assertSee('data-reel="1122351437148430"', false)
+            ->assertSee('data-src="'.e(url('assets/reel-1122351437148430.mp4')).'"', false)
+            ->assertSee('data-title="سكر الحمل: طبيعي ولا قيصري؟"', false)
+            ->assertSee('aria-label="شاهدي د. محمد هلال: سكر الحمل: طبيعي ولا قيصري؟"', false)
+            ->assertDontSee('الحقن المجهري وعلاج العقم', false);
 
         $home = PageSection::where('section_key', 'home')->firstOrFail();
         $body = json_decode($home->body, true, flags: JSON_THROW_ON_ERROR);
@@ -158,11 +160,17 @@ class HeroCopyRefreshTest extends TestCase
         unset($field);
 
         $home->update(['body' => json_encode($body, JSON_UNESCAPED_UNICODE)]);
-        Video::where('reel', '1122351437148430')->update(['title' => 'عنوان الفيديو الاحتياطي']);
+        Video::where('reel', '1122351437148430')->update(['title' => 'عنوان فيديو مخصص']);
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('data-title="عنوان الفيديو الاحتياطي"', false)
-            ->assertSee('aria-label="شاهدي د. محمد هلال: عنوان الفيديو الاحتياطي"', false);
+            ->assertSee('data-reel="1122351437148430"', false)
+            ->assertSee('data-src="'.e(url('assets/reel-1122351437148430.mp4')).'"', false)
+            ->assertSee('data-title="سكر الحمل: طبيعي ولا قيصري؟"', false)
+            ->assertSee('aria-label="شاهدي د. محمد هلال: سكر الحمل: طبيعي ولا قيصري؟"', false);
+        $storedFields = collect(json_decode($home->fresh()->body, true, flags: JSON_THROW_ON_ERROR)['fields'])->keyBy('key');
+        $this->assertSame('1122351437148430', $storedFields['field_14']['value']);
+        $this->assertSame('   ', $storedFields['field_20']['value']);
+        $this->assertSame('عنوان فيديو مخصص', Video::where('reel', '1122351437148430')->value('title'));
     }
 }

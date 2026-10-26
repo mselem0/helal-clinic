@@ -20,7 +20,7 @@ class SiteView
             $model->forceFill($model->draft_data ?? []);
         }
 
-        return $model;
+        return \App\Support\AdsContent::model($model);
     }
 
     public static function pageUrl(SitePage $page): string
@@ -35,13 +35,17 @@ class SiteView
         $menu = static::draft(SiteNavigation::where('location', $location)->first());
 
         return collect($menu?->items ?? [])->map(function ($item) {
-            $page = static::draft(SitePage::where('page_key', $item['page_key'] ?? '')->first());
-            if (! $page?->is_published) {
+            $page = SitePage::where('page_key', $item['page_key'] ?? '')->first();
+            if ($page && ! \App\Support\AdsContent::allowed($page)) {
+                return null;
+            }
+            $page = static::draft($page);
+            if (! $page?->is_published || ! \App\Support\AdsContent::allowed($page)) {
                 return null;
             }
             $url = static::preview() ? URL::temporarySignedRoute('site.preview', now()->addMinutes(30), ['page' => $page->id, 'preview' => 1, 'theme' => request('theme', 'helal_classic')]) : static::pageUrl($page);
 
-            return ['label' => $item['label'], 'url' => $url, 'key' => $page->page_key];
+            return ['label' => \App\Support\AdsContent::clean($item['label']), 'url' => $url, 'key' => $page->page_key];
         })->filter()->values()->all();
     }
 }

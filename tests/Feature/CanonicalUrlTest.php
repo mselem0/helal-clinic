@@ -46,7 +46,7 @@ class CanonicalUrlTest extends TestCase
         }
         SeoPage::where('page_key', 'articles')->delete();
         SitePage::where('page_key', 'articles')->update(['canonical_url' => url('/blog').'?source=clinic&page=1#section']);
-        $this->assertSame(url('/blog').'?source=clinic&page=2', $this->canonical('/blog?page=2'));
+        $this->assertSame(url('/blog').'?page=2', $this->canonical('/blog?page=2'));
     }
 
     public function test_default_paginated_canonical_stays_separate_from_first_page(): void
@@ -61,7 +61,7 @@ class CanonicalUrlTest extends TestCase
     public function test_gone_pages_return_410_without_a_redirect_location(): void
     {
         SeoRedirect::create(['source_url' => '/retired-content', 'target_url' => '/about-us', 'redirect_type' => 410, 'match_type' => 'exact', 'is_active' => true]);
-        $this->get('/retired-content')->assertStatus(410)->assertHeaderMissing('Location')->assertHeader('X-Robots-Tag', 'noindex');
+        $this->get('/retired-content')->assertStatus(410)->assertHeaderMissing('Location')->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
         $this->head('/retired-content')->assertStatus(410)->assertHeaderMissing('Location');
     }
 }

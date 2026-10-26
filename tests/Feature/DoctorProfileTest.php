@@ -18,7 +18,7 @@ class DoctorProfileTest extends TestCase
         $this->seed();
         $page = SitePage::where('page_key', 'about')->firstOrFail();
         $original = $page->doctor_profile;
-        $this->get('/about-us')->assertOk()->assertSee('المؤهلات العلمية')->assertSee('الجمعية المصرية للخصوبة والعقم');
+        $this->get('/about-us')->assertOk()->assertSee('المؤهلات العلمية')->assertDontSee('الجمعية المصرية للخصوبة والعقم')->assertDontSee('أطفال الأنابيب');
         $draft = $original;
         $draft['memberships'][] = ['title' => 'عضوية اختبار غير منشورة'];
         $page->update(['draft_data' => ['doctor_profile' => $draft]]);
@@ -30,5 +30,6 @@ class DoctorProfileTest extends TestCase
         app(ThemeDraftService::class)->restoreRevision(ThemeRevision::firstOrFail()->id);
         $this->get('/about-us')->assertDontSee('عضوية اختبار غير منشورة');
         $this->assertSame($original, $page->fresh()->doctor_profile);
+        $this->assertContains(['title' => 'الجمعية المصرية للخصوبة والعقم'], $page->fresh()->doctor_profile['memberships']);
     }
 }

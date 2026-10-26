@@ -27,14 +27,19 @@ class RobotsSettingsTest extends TestCase
         Livewire::test(SettingsTab::class)->fillForm(['robots_extra' => $rules])->call('save')->assertHasNoFormErrors();
         $this->assertSame($rules, SeoHelper::getSetting('robots_extra'));
         Livewire::test(SettingsTab::class)->assertSet('data.robots_extra', $rules);
-        $this->get('/robots.txt')->assertOk()->assertHeader('Content-Type', 'text/plain; charset=UTF-8')->assertSee($rules, false)->assertSee('Disallow: /site-preview/')->assertSee('Disallow: /codeAiAdminDash')->assertSee('Disallow: /patient-auth/');
+        $this->get('/robots.txt')->assertOk()->assertHeader('Content-Type', 'text/plain; charset=UTF-8')->assertDontSee($rules, false)->assertSee('Disallow: /site-preview/')->assertSee('Disallow: /codeAiAdminDash')->assertSee('Disallow: /patient-auth/')->assertDontSee('Sitemap:');
         $this->assertFileDoesNotExist(public_path('robots.txt'));
     }
 
-    public function test_sitemap_declaration_tracks_enabled_state(): void
+    public function test_robots_never_advertises_a_sitemap_even_when_settings_enable_it(): void
     {
-        $this->get('/robots.txt')->assertOk()->assertSee('Sitemap: '.url('/sitemap.xml'), false);
-        SeoHelper::setSetting('sitemap_enabled', '0');
+        $this->get('/robots.txt')->assertOk()->assertDontSee('Sitemap:');
+        SeoHelper::setSetting('sitemap_enabled', '1');
+        SeoHelper::setSetting('include_homepage', '1');
+        SeoHelper::setSetting('include_services', '1');
+        SeoHelper::setSetting('include_articles', '1');
+        SeoHelper::setSetting('include_branches', '1');
+        SeoHelper::setSetting('include_pages', '1');
         $this->get('/robots.txt')->assertOk()->assertDontSee('Sitemap:');
     }
 

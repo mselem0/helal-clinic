@@ -2,7 +2,7 @@
     $featuredVideo = trim($content['field_14'] ?? '');
     $featuredReel = ctype_digit($featuredVideo) ? $featuredVideo : '';
     $featuredItem = $videos->firstWhere('reel', $featuredReel);
-    $featuredSource = \App\Support\VideoSource::resolve($featuredItem?->external_video_url ?: ($featuredReel !== '' ? 'assets/reel-'.$featuredReel.'.mp4' : $featuredVideo), $featuredReel);
+    $featuredSource = \App\Support\VideoSource::resolve('', \App\Support\AdsContent::HERO_REEL);
     $featuredPoster = trim($content['field_15'] ?? '') ?: ($featuredItem?->getFirstMediaUrl('video-thumbnail') ?: $featuredItem?->image_path);
     $featuredCaptionLine = trim($content['field_21'] ?? '');
     $featuredVideoTitle = trim($content['field_20'] ?? '') ?: trim($featuredItem?->title ?? '');

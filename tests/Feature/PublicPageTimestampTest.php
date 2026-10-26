@@ -44,39 +44,40 @@ class PublicPageTimestampTest extends TestCase
         $this->travelBack();
     }
 
-    public function test_legacy_seo_drafts_do_not_change_sitemap_but_publishing_them_does(): void
+    public function test_legacy_seo_drafts_do_not_change_public_timestamp_but_publishing_them_does(): void
     {
         $this->seed();
         $seo = SeoPage::create(['page_key' => 'about', 'page_label' => 'عن الطبيب', 'meta_title' => 'عنوان منشور']);
-        $before = $this->get('/sitemap.xml')->assertOk()->getContent();
+        $before = $seo->public_updated_at->toIso8601String();
+        $this->get('/sitemap.xml')->assertNotFound();
         $this->travel(1)->days();
         $seo->update(['draft_data' => ['meta_title' => 'عنوان بحث منشور جديد']]);
-        $this->assertSame($before, $this->get('/sitemap.xml')->getContent());
+        $this->assertSame($before, $seo->fresh()->public_updated_at->toIso8601String());
         app(ThemeDraftService::class)->publish();
-        $xml = simplexml_load_string($this->get('/sitemap.xml')->assertOk()->getContent());
-        foreach ($xml->children() as $node) {
-            if ((string) $node->loc === url('/about-us')) {
-                $this->assertSame(now()->startOfSecond()->toAtomString(), (string) $node->lastmod);
-            }
-        }
+        $this->assertTrue($seo->fresh()->public_updated_at->equalTo(now()->startOfSecond()));
+        $this->get('/sitemap.xml')->assertNotFound();
         $this->travelBack();
     }
 
     public function test_shared_section_and_menu_drafts_do_not_change_public_dates_until_publish(): void
     {
         $this->seed();
-        $before = $this->get('/sitemap.xml')->getContent();
-        $this->travel(1)->days();
-        PageSection::where('section_key', 'header')->firstOrFail()->update(['draft_data' => ['title' => 'عنوان رأس جديد']]);
+        $section = PageSection::where('section_key', 'header')->firstOrFail();
+        $beforeSection = $section->public_updated_at->toIso8601String();
         $menu = SiteNavigation::firstOrFail();
+        $beforeMenu = $menu->public_updated_at->toIso8601String();
+        $this->get('/sitemap.xml')->assertNotFound();
+        $this->travel(1)->days();
+        $section->update(['draft_data' => ['title' => 'عنوان رأس جديد']]);
         $items = $menu->items;
         $items[0]['label'] = 'قائمة جديدة';
         $menu->update(['draft_data' => ['items' => $items]]);
-        $this->assertSame($before, $this->get('/sitemap.xml')->getContent());
+        $this->assertSame($beforeSection, $section->fresh()->public_updated_at->toIso8601String());
+        $this->assertSame($beforeMenu, $menu->fresh()->public_updated_at->toIso8601String());
         app(ThemeDraftService::class)->publish();
-        $after = $this->get('/sitemap.xml')->getContent();
-        $this->assertNotSame($before, $after);
-        $this->assertStringContainsString(now()->startOfSecond()->toAtomString(), $after);
+        $this->assertTrue($section->fresh()->public_updated_at->equalTo(now()->startOfSecond()));
+        $this->assertTrue($menu->fresh()->public_updated_at->equalTo(now()->startOfSecond()));
+        $this->get('/sitemap.xml')->assertNotFound();
         $this->travelBack();
     }
 }

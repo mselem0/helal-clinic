@@ -7,6 +7,7 @@ use App\Models\ClinicBranch;
 use App\Models\Service;
 use App\Models\SitePage;
 use App\Services\SiteView;
+use App\Support\AdsContent;
 use App\Services\ThemeDraftService;
 use Illuminate\Http\Request;
 
@@ -15,8 +16,9 @@ class PageController extends Controller
     private function render(Request $request, SitePage $page, array $extra = [])
     {
         abort_if($request->has('preview') && ! $request->hasValidSignature(), 403);
+        abort_unless(AdsContent::allowed($page), 404);
         $page = SiteView::draft($page);
-        abort_unless($page->is_published || SiteView::preview(), 404);
+        abort_unless(($page->is_published || SiteView::preview()) && AdsContent::allowed($page), 404);
         request()->attributes->set('site_page', $page);
 
         return app(HomeController::class)->renderSite($request, app(ThemeDraftService::class), $page, $extra);
@@ -44,7 +46,7 @@ class PageController extends Controller
     public function blogIndex(Request $request)
     {
         abort_if($request->has('page') && (! ctype_digit((string) $request->query('page')) || (int) $request->query('page') < 1), 404);
-        $articles = Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()))->latest('published_at')->paginate(12);
+        $articles = AdsContent::query(Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now())))->latest('published_at')->paginate(12);
         abort_if($articles->currentPage() > $articles->lastPage(), 404);
 
         return $this->render($request, SitePage::where('page_key', 'articles')->firstOrFail(), ['articles' => $articles]);
@@ -66,16 +68,16 @@ class PageController extends Controller
 
     public function serviceShow(Request $request, string $slug)
     {
-        return $this->detail($request, Service::where('is_active', true)->where('slug', $slug)->firstOrFail(), 'service');
+        return $this->detail($request, AdsContent::query(Service::where('is_active', true)->where('slug', $slug))->firstOrFail(), 'service');
     }
 
     public function blogShow(Request $request, string $slug)
     {
-        return $this->detail($request, Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()))->where('slug', $slug)->firstOrFail(), 'article');
+        return $this->detail($request, AdsContent::query(Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()))->where('slug', $slug))->firstOrFail(), 'article');
     }
 
     public function branchShow(Request $request, string $slug)
     {
-        return $this->detail($request, ClinicBranch::where('is_active', true)->where('slug', $slug)->firstOrFail(), 'branch');
+        return $this->detail($request, AdsContent::query(ClinicBranch::where('is_active', true)->where('slug', $slug))->firstOrFail(), 'branch');
     }
 }
