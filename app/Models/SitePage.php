@@ -10,7 +10,7 @@ class SitePage extends Model
 {
     use TracksPublicSlug;
 
-    public const RESERVED_SLUGS = ['services', 'blog', 'branches', 'bookings', 'site-preview', 'sitemap', 'robots', 'up', 'codeaiadmindash', 'livewire', 'storage', 'assets', 'patient', 'patient-auth', 'api', 'login', 'logout', 'register', 'password', 'email', 'admin'];
+    public const RESERVED_SLUGS = ['booking-confirmation', 'services', 'blog', 'branches', 'bookings', 'site-preview', 'sitemap', 'robots', 'up', 'codeaiadmindash', 'livewire', 'storage', 'assets', 'patient', 'patient-auth', 'api', 'login', 'logout', 'register', 'password', 'email', 'admin'];
 
     use TracksPublishedUpdate;
 

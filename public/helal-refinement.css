@@ -1200,3 +1200,9 @@ main .section-shell .visit-steps-section { padding-block:32px; }
 .fertility-question>legend { padding:0 0 8px; font-size:14px; line-height:1.8; color:var(--ink); }
 .appointment .fertility-question label { display:inline-flex; align-items:center; gap:7px; margin:0; font-size:13px; color:var(--muted); }
 .appointment .fertility-question input[type=radio] { width:17px; height:17px; min-height:0; margin:0; padding:0; flex:none; accent-color:var(--teal); }
+
+main .booking-confirmation { margin-block:40px; max-width:860px; }
+.booking-confirmation h1 { color:var(--ink); font-size:clamp(1.8rem,4vw,2.6rem); line-height:1.5; margin:8px 0 20px; }
+main .booking-confirmation p+p { margin-top:12px; }
+.booking-confirmation-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+@media(max-width:600px) { main .booking-confirmation { margin-block:24px; } .booking-confirmation-actions { flex-direction:column; align-items:stretch; } }
