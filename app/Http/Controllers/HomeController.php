@@ -12,15 +12,21 @@ use App\Models\SitePage;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
 use App\Models\Video;
+use App\Models\WebsiteBookingRequest;
 use App\Services\PageSeo;
 use App\Services\SiteView;
 use App\Services\ThemeDraftService;
+use App\Support\BranchSchedule;
 use App\Support\ClinicFeatures;
+use App\Support\DisplayNumbers;
+use Illuminate\Database\UniqueConstraintViolationException;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
+use Illuminate\Validation\ValidationException;
 use Modules\Booking\Models\Booking;
 use Modules\PatientCore\Models\Patient;
 
@@ -73,7 +79,7 @@ class HomeController extends Controller
 
         $videoLibrary = Video::where('is_active', true)->orderBy('order')->get();
 
-        return response(\App\Support\DisplayNumbers::html(view($extra['siteView'] ?? ($page->page_key === 'home' ? 'helal.home' : 'helal.page'), array_merge([
+        return response(DisplayNumbers::html(view($extra['siteView'] ?? ($page->page_key === 'home' ? 'helal.home' : 'helal.page'), array_merge([
             'page' => $page, 'pageKey' => $page->page_key,
             'contact' => SiteSettingHelper::group('contact'), 'whatsappNumber' => SiteSettingHelper::formatWhatsappNumber(SiteSettingHelper::get('wa_number', '201509011313')),
             'pageSections' => $pageSections, 'sections' => $sections, 'theme' => $theme, 'style' => $style,
@@ -107,6 +113,7 @@ class HomeController extends Controller
     public function storeBooking(Request $request): JsonResponse
     {
         $data = $request->validate([
+            'request_key' => ['nullable', 'uuid'],
             'patient_name' => ['required', 'string', 'max:70'],
             'patient_phone' => ['required', 'regex:/^01[0125][0-9]{8}$/'],
             'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:'.now('Africa/Cairo')->toDateString()],
@@ -123,21 +130,45 @@ class HomeController extends Controller
             ])->validate();
         }
         $branch = ClinicBranch::where('is_active', true)->findOrFail($data['clinic_branch_id']);
-        $availability = \App\Support\BranchSchedule::forDate($branch, $data['booking_date']);
+        $availability = BranchSchedule::forDate($branch, $data['booking_date']);
         if (! $availability['available']) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['booking_date' => 'الفرع غير متاح في اليوم المختار. اختاري يومًا آخر.']);
+            throw ValidationException::withMessages(['booking_date' => 'الفرع غير متاح في اليوم المختار. اختاري يومًا آخر.']);
         }
         $number = SiteSettingHelper::formatWhatsappNumber(trim($branch->phone ?? '') ?: SiteSettingHelper::get('wa_number', HeroSetting::first()?->whatsapp_number ?? ''));
         abort_if($number === '', 503, 'رقم التواصل غير مُعدّ.');
-        $stored = false;
-        if (ClinicFeatures::enabled('Booking')) {
-            abort_unless(class_exists(Booking::class), 503);
-            DB::transaction(function () use ($data): void {
+        // Both records commit together: a failed write must never produce a WhatsApp success.
+        $persistRequest = function () use ($data, $service, $branch, $request): void {
+            $fields = collect($data)->except('request_key')->all();
+            $existing = isset($data['request_key']) ? WebsiteBookingRequest::where('request_key', $data['request_key'])->first() : null;
+            if ($existing) {
+                foreach ($fields as $field => $value) {
+                    $actual = $field === 'booking_date' ? $existing->booking_date->toDateString() : $existing->$field;
+                    abort_unless((string) $actual === (string) $value, 409, 'تعذر إعادة استخدام هذا الطلب. أعيدي فتح نموذج الحجز.');
+                }
+
+                return;
+            }
+            WebsiteBookingRequest::create($data + [
+                'service_name' => $service->name, 'branch_name' => $branch->name,
+                'source_host' => in_array($request->getHost(), ['drmohamedhelal.com', 'www.drmohamedhelal.com', 'ads.drmohamedhelal.com'], true) ? $request->getHost() : 'website',
+            ]);
+            if (ClinicFeatures::enabled('Booking')) {
+                abort_unless(class_exists(Booking::class), 503);
                 $patient = Patient::firstOrCreate(['phone' => $data['patient_phone']], ['name' => $data['patient_name'], 'gender' => 'female']);
-                Booking::create($data + ['patient_id' => $patient->id, 'user_id' => auth()->check() && auth()->user()->isPatient() ? auth()->id() : null, 'status' => 'new', 'source' => 'website']);
-            });
-            $stored = true;
+                Booking::create(collect($data)->except('request_key')->all() + ['patient_id' => $patient->id, 'user_id' => auth()->check() && auth()->user()->isPatient() ? auth()->id() : null, 'status' => 'new', 'source' => 'website']);
+            }
+        };
+        try {
+            DB::transaction($persistRequest);
+        } catch (UniqueConstraintViolationException $exception) {
+            // A concurrent retry may have committed the same UUID while we were writing.
+            // Retry only that known key; other uniqueness errors remain storage failures.
+            if (empty($data['request_key']) || ! WebsiteBookingRequest::where('request_key', $data['request_key'])->exists()) {
+                throw $exception;
+            }
+            DB::transaction($persistRequest);
         }
+        $stored = true;
         $closingTime = $availability['to'] === '00:00' ? '12 منتصف الليل' : $availability['to'];
         $hours = $availability['from'] && $availability['to'] ? ' مواعيد العيادة من '.$availability['from'].' إلى '.$closingTime.' بتوقيت القاهرة.' : '';
         $message = "مرحبًا د. محمد هلال، أرغب في طلب موعد باسم {$data['patient_name']}، رقم {$data['patient_phone']}، يوم {$data['booking_date']}، فرع {$branch->name}، خدمة {$service->name}. الموعد قيد التأكيد.".$hours;

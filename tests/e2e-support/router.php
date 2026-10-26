@@ -67,6 +67,7 @@ Route::middleware('web')->group(function (): void {
             'sections' => PageSection::orderBy('order')->get(['id', 'section_key', 'body', 'draft_data', 'is_active', 'order']),
             'revisions' => ThemeRevision::count(),
             'bookings' => DB::table('bookings')->get(),
+            'website_booking_requests' => DB::table('website_booking_requests')->get(),
             'services' => Service::all(), 'articles' => Article::all(),
             'videos' => Video::all(), 'branches' => ClinicBranch::all(),
             'testimonials' => Testimonial::all(),

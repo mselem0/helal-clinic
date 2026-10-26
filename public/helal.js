@@ -101,6 +101,7 @@ let showBookingStep=()=>{};
 if(form){
  const date=document.querySelector('#date'), today=new Date();
  date.min=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit'}).format(today);
+ let submitting=false,requestKey=null,requestPayload=null;
  let bookingStep=1,selectedTime='',offer='كشف',calendarMonth=new Date(Number(date.min.slice(0,4)),Number(date.min.slice(5,7))-1,1);
  const errorBox=document.querySelector('#booking-error'),bookingHeading=form.querySelector('.form-head'),fertilityQuestions=document.querySelector('#fertility-questions'),serviceSelect=document.querySelector('#service');
  const isFertility=()=>serviceSelect.selectedOptions[0]?.dataset.serviceSlug==='service-2';
@@ -132,17 +133,21 @@ if(form){
  document.querySelector('#booking-next').addEventListener('click',()=>{if(bookingStep===1&&(!document.querySelector('#clinic').value||!document.querySelector('#service').value)){errorBox.textContent='اختاري العيادة والخدمة أولًا.';return;}if(bookingStep===2&&(!date.value||!availability(date.value).available)){errorBox.textContent='اختاري اليوم المفضل أولًا.';return;}showBookingStep(bookingStep+1,true);});
  document.querySelector('#booking-back').addEventListener('click',()=>showBookingStep(bookingStep-1,true));
  form.addEventListener('submit',async event=>{
-  event.preventDefault();if(bookingStep!==3 || !form.reportValidity())return;
+  event.preventDefault();if(submitting)return;if(bookingStep!==3 || !form.reportValidity())return;
   if(!document.querySelector('#patient').value.trim()){errorBox.textContent='اكتبي الاسم أولًا.';return;}
   const submit=document.querySelector('#booking-confirm');
   // Reserve the new tab during the click so async validation does not trigger popup blocking.
   const handoff=window.open('about:blank','_blank');
   if(!handoff){errorBox.textContent='اسمحي بفتح تاب جديدة في المتصفح، وبعدها حاولي الإرسال مرة تانية.';return;}
   handoff.opener=null;
-  submit.disabled=true;errorBox.textContent='';
+  submitting=true;submit.disabled=true;errorBox.textContent='';
+  const payload={patient_name:document.querySelector('#patient').value.trim(),patient_phone:document.querySelector('#appointment-phone').value,booking_date:date.value,service_id:document.querySelector('#service').value,clinic_branch_id:document.querySelector('#clinic').value};
+  if(isFertility())Object.assign(payload,{previous_pregnancy:form.querySelector('input[name="previous_pregnancy"]:checked')?.value||null,pregnancy_related_surgery:form.querySelector('input[name="pregnancy_related_surgery"]:checked')?.value||null});
+  const signature=JSON.stringify(payload);if(signature!==requestPayload){requestPayload=signature;requestKey=crypto.randomUUID();}payload.request_key=requestKey;
   let requestSucceeded=false;
   try {
-   const response=await fetch(window.helalBooking.url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({patient_name:document.querySelector('#patient').value.trim(),patient_phone:document.querySelector('#appointment-phone').value,booking_date:date.value,service_id:document.querySelector('#service').value,clinic_branch_id:document.querySelector('#clinic').value,...(isFertility()?{previous_pregnancy:form.querySelector('input[name="previous_pregnancy"]:checked')?.value||null,pregnancy_related_surgery:form.querySelector('input[name="pregnancy_related_surgery"]:checked')?.value||null}:{})})});
+   const response=await fetch(window.helalBooking.url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify(payload)});
+
    const result=await response.json();if(!response.ok)throw new Error(Object.values(result.errors || {}).flat()[0] || result.message || 'تعذر إرسال الطلب. حاولي مجددًا.');
    if(!result.whatsapp_url)throw new Error('تعذر تجهيز رابط واتساب. حاولي مجددًا.');
    const whatsappUrl=new URL(result.whatsapp_url);
@@ -153,7 +158,7 @@ if(form){
    handoff.location.href=whatsappUrl.href;
    requestSucceeded=true;
    location.assign(confirmationUrl.href);
-  } catch(error){if(!requestSucceeded&&!handoff.closed)handoff.close();errorBox.textContent=error.message || 'تعذر الاتصال. حاولي مجددًا.';} finally {submit.disabled=false;}
+  } catch(error){if(!requestSucceeded&&!handoff.closed)handoff.close();errorBox.textContent=error.message || 'تعذر الاتصال. حاولي مجددًا.';} finally {submitting=false;submit.disabled=false;}
  });
  showBookingStep(1);renderCalendar();
 }

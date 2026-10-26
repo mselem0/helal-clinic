@@ -37,7 +37,7 @@ class HelalSiteTest extends TestCase
 
     public function test_basic_booking_prepares_whatsapp_without_claiming_storage(): void
     {
-        $this->postJson('/bookings', $this->booking())->assertOk()->assertJson(['stored' => ClinicFeatures::enabled('Booking'), 'status' => 'pending'])->assertJsonPath('whatsapp_url', fn ($url) => str_starts_with($url, 'https://wa.me/201509011313?text='));
+        $this->postJson('/bookings', $this->booking())->assertOk()->assertJson(['stored' => true, 'status' => 'pending'])->assertJsonPath('whatsapp_url', fn ($url) => str_starts_with($url, 'https://wa.me/201509011313?text='));
         $this->assertDatabaseCount('bookings', ClinicFeatures::enabled('Booking') ? 1 : 0);
     }
 
