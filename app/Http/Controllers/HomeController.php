@@ -117,14 +117,17 @@ class HomeController extends Controller
             $phone = strtr($phone, array_combine(preg_split('//u', '٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹', -1, PREG_SPLIT_NO_EMPTY), str_split('01234567890123456789')));
             $phone = preg_replace('/[\s()\-]/u', '', $phone);
             if (str_starts_with($phone, '00')) {
-                $phone = '+'.substr($phone, 2);
+                $phone = substr($phone, 2);
+            }
+            if (str_starts_with($phone, '+')) {
+                $phone = substr($phone, 1);
             }
             $request->merge(['patient_phone' => $phone]);
         }
         $data = $request->validate([
             'request_key' => ['nullable', 'uuid'],
             'patient_name' => ['required', 'string', 'max:70'],
-            'patient_phone' => ['required', 'string', 'regex:/^\+?[0-9]{7,15}$/'],
+            'patient_phone' => ['required', 'string', 'regex:/^[0-9]{7,15}$/'],
             'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:'.now('Africa/Cairo')->toDateString()],
             'service_id' => ['required', 'integer', 'exists:services,id'],
             'clinic_branch_id' => ['required', 'integer', 'exists:clinic_branches,id'],
