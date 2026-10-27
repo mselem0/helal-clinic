@@ -67,7 +67,7 @@ class ArticleResource extends Resource
                     Forms\Components\Select::make('service_ids')->label('الخدمات المرتبطة')->multiple()->options(fn () => Service::pluck('name', 'id')),
                     Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
                 ]),
-                Forms\Components\Section::make('SEO')
+                Forms\Components\Section::make('SEO')->hidden()
                     ->schema([
                         Forms\Components\TextInput::make('meta_title')
                             ->label('Meta Title')

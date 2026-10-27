@@ -6,7 +6,6 @@ use App\Models\PageSection;
 use App\Models\SitePage;
 use App\Models\SiteSetting;
 use App\Models\ThemeRevision;
-use App\Services\ContentReadiness;
 use App\Services\ThemeDraftService;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
@@ -28,13 +27,13 @@ class ThemeEditor extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-paint-brush';
+    protected static ?string $navigationIcon = 'heroicon-o-pencil-square';
 
-    protected static ?string $navigationGroup = 'المظهر والثيمات';
+    protected static ?string $navigationGroup = null;
 
-    protected static ?string $navigationLabel = 'المحتوى والثيمات';
+    protected static ?string $navigationLabel = 'التحكم في المحتوى';
 
-    protected static ?string $title = 'استوديو موقع هلال';
+    protected static ?string $title = 'محتوى الموقع';
 
     protected static ?int $navigationSort = 1;
 
@@ -103,10 +102,9 @@ class ThemeEditor extends Page implements HasForms
     public function form(Form $form): Form
     {
         return $form->schema([
-            Section::make('محتوى القسم')->description('التعديلات مسودة حتى الضغط على نشر. راجعي بيانات العيادة قبل النشر.')->schema([
+            Section::make('محتوى القسم')->description('احفظ التعديلات، ثم عاينها وانشرها عندما تكون جاهزة.')->schema([
                 Toggle::make('is_active')->label('إظهار القسم'),
                 TextInput::make('order')->label('الترتيب الافتراضي للقسم')->helperText('ترتيب الأقسام داخل الصفحة يُدار من صفحات الموقع.')->integer()->required(),
-                ColorPicker::make('background_color')->label('خلفية القسم')->hex(),
                 Repeater::make('fields')->label('النصوص والروابط والوسائط')->schema([
                     Hidden::make('key'), Hidden::make('type'), Hidden::make('label'),
                     Textarea::make('value')->label(fn ($get) => $get('label') ?: 'المحتوى')->rows(2)->maxLength(5000)->visible(fn ($get) => $get('type') === 'text'),
@@ -131,7 +129,8 @@ class ThemeEditor extends Page implements HasForms
                     TextInput::make('video')->label('عنوان الفيديو'), Textarea::make('note')->label('ملاحظة الفيديو'),
                 ])->addable(false)->deletable(false)->itemLabel(fn (array $state) => $state['tag'] ?? 'مرحلة')->collapsible(),
             ]),
-            Section::make('مظهر الثيم المحدد')->schema([
+            Section::make('ألوان الموقع')->collapsible()->collapsed()->schema([
+                ColorPicker::make('background_color')->label('خلفية القسم')->hex(),
                 ColorPicker::make('primary')->label('اللون الأساسي')->required()->hex(),
                 ColorPicker::make('accent')->label('لون التمييز')->required()->hex(),
             ])->columns(2),
@@ -199,7 +198,7 @@ class ThemeEditor extends Page implements HasForms
         abort_unless(isset(ThemeDraftService::THEMES[$this->editingTheme]), 422);
         SiteSetting::where('key', 'active_theme')->update(['draft_data' => ['value' => $this->editingTheme]]);
         app(ThemeDraftService::class)->publish();
-        Notification::make()->title('تم نشر الموقع والثيم المحدد')->success()->send();
+        Notification::make()->title('تم نشر الموقع')->success()->send();
     }
 
     public function discardDrafts(): void
@@ -233,6 +232,39 @@ class ThemeEditor extends Page implements HasForms
         $page = SitePage::where('page_key', $this->selectedPageKey)->firstOrFail();
         $keys = collect($page->draft_data['sections'] ?? $page->sections ?? [])->map(fn ($v) => is_array($v) ? $v['key'] : $v);
 
-        return ['sitePages' => SitePage::all(), 'warnings' => app(ContentReadiness::class)->warnings(), 'sections' => PageSection::when($page->page_key !== 'home', fn ($q) => $q->whereIn('section_key', $keys))->orderBy('order')->get(), 'themes' => ThemeDraftService::THEMES, 'revisions' => ThemeRevision::latest()->limit(20)->get(), 'contentRoutes' => ['services' => 'filament.admin.resources.services.index', 'clinics' => 'filament.admin.resources.clinic-branches.index', 'videos' => 'filament.admin.resources.videos.index', 'reviews' => 'filament.admin.resources.testimonials.index', 'articles' => 'filament.admin.resources.articles.index'], 'selectedKey' => PageSection::find($this->selectedSectionId)?->section_key, 'publishedTheme' => SiteSetting::where('key', 'active_theme')->value('value')];
+        $resources = [
+            'services' => [\App\Filament\Resources\ServiceResource::class, 'الخدمات الطبية', 'أسماء الخدمات وصورها وتفاصيلها.'],
+            'clinics' => [\App\Filament\Resources\ClinicBranchResource::class, 'الفروع ومواعيد العمل', 'العناوين وأرقام الحجز ومواعيد كل فرع.'],
+            'videos' => [\App\Filament\Resources\VideoResource::class, 'فيديوهات الدكتور', 'الفيديوهات وعناوينها وترتيب ظهورها.'],
+            'reviews' => [\App\Filament\Resources\TestimonialResource::class, 'آراء المريضات', 'التقييمات والآراء المعروضة بالموقع.'],
+            'articles' => [\App\Filament\Resources\ArticleResource::class, 'المقالات', 'كتابة المقالات وتعديلها ونشرها.'],
+        ];
+        $contentLinks = [];
+        foreach ($resources as $key => [$resource, $label, $description]) {
+            if ($resource::canViewAny()) {
+                $contentLinks[$key] = ['url' => $resource::getUrl(), 'label' => $label, 'description' => $description];
+            }
+        }
+        $pageLinks = [];
+        if (\App\Filament\Resources\SitePageResource::canViewAny()) {
+            $pageLinks[] = ['url' => \App\Filament\Resources\SitePageResource::getUrl(), 'label' => 'الصفحات والقوائم', 'description' => 'محتوى الصفحات، بيانات الدكتور، قائمة التصفح وترتيب الأقسام.'];
+        }
+        if (\App\Filament\Resources\SiteNavigationResource::canViewAny()) {
+            $pageLinks[] = ['url' => \App\Filament\Resources\SiteNavigationResource::getUrl(), 'label' => 'قوائم التصفح', 'description' => 'روابط القائمة العلوية والفوتر وترتيبها.'];
+        }
+        if (SiteSettings::canAccess()) {
+            $pageLinks[] = ['url' => SiteSettings::getUrl(), 'label' => 'التواصل وواتساب', 'description' => 'أرقام التواصل ورسالة الترحيب وحقوق النشر.'];
+        }
+
+        return [
+            'sitePages' => SitePage::all(),
+            'sections' => PageSection::when($page->page_key !== 'home', fn ($q) => $q->whereIn('section_key', $keys))->orderBy('order')->get(),
+            'themes' => ThemeDraftService::THEMES,
+            'revisions' => ThemeRevision::latest()->limit(20)->get(),
+            'pageLinks' => $pageLinks,
+            'contentLinks' => $contentLinks,
+            'selectedKey' => PageSection::find($this->selectedSectionId)?->section_key,
+            'publishedTheme' => SiteSetting::where('key', 'active_theme')->value('value'),
+        ];
     }
 }

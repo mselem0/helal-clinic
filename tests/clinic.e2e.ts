@@ -11,7 +11,7 @@ async function login(app: any, screen: any, browser: any, name = 'admin') {
   await browser.locator('input[id="data.email"]').fill(credentials.user(name).username);
   await browser.locator('input[id="data.password"]').fill(credentials.user(name).password);
   await screen.getByRole('button', 'تسجيل الدخول', { exact: true }).click();
-  if(name === 'admin') await expect(browser).toHaveURL(/codeAiAdminDash$/);
+  if(name === 'admin') await expect(browser).toHaveURL(/codeAiAdminDash\/theme-editor$/);
 }
 
 for (const width of [320, 390, 768, 1024, 1440]) {
@@ -206,7 +206,7 @@ test('unsigned previews and disabled modules cannot be reached directly', async 
 });
 
 test('real admin login opens dashboard and all registered content screens', async ({ app, browser, screen }) => {
-  await login(app,screen,browser);await expect(browser).toHaveURL(/codeAiAdminDash$/);
+  await login(app,screen,browser);await expect(browser).toHaveURL(/codeAiAdminDash\/theme-editor$/);
   for(const path of ['site-pages','site-navigations','theme-editor','services','clinic-branches','videos','testimonials','articles','seo-management']){
     await app.open('/codeAiAdminDash/'+path);
     expect(await browser.evaluate(()=>document.body.innerText.includes('Server Error'))).toBe(false);
@@ -386,4 +386,16 @@ test('website request inbox follows up public submissions separately from clinic
  const updated=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());
  expect(updated.website_booking_requests[0].admin_notes).toBe('تم التواصل من صفحة طلبات الموقع');
  await browser.setViewport({width:390,height:844});await expect(browser.locator('[id="data.admin_notes"]')).toBeVisible();
+});
+
+
+test('doctor navigation contains only content and website requests',async({app,browser,screen})=>{
+ await login(app,screen,browser);
+ const sidebar=browser.locator('nav.fi-sidebar-nav');
+ await expect(browser.locator('nav.fi-sidebar-nav a')).toHaveCount(2);
+ await expect(sidebar).toContainText('محتوى الموقع');await expect(sidebar).toContainText('طلبات الحجوزات');
+ await expect(browser.locator('main')).toContainText('إدارة محتوى الموقع');
+ await expect(browser.locator('main')).not.toContainText('إعدادات الربط والتتبع');
+ await browser.setViewport({width:390,height:844});
+ expect(await browser.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
