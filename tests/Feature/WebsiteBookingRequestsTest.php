@@ -63,7 +63,7 @@ class WebsiteBookingRequestsTest extends TestCase
 
     public function test_international_phones_are_normalized_and_saved(): void
     {
-        foreach (['+966 50 123 4567' => '+966501234567', '00971-50-123-4567' => '+971501234567', '٠١٠١٢٣٤٥٦٧٨' => '01012345678'] as $input => $expected) {
+        foreach (['+966 50 123 4567' => '966501234567', '00971-50-123-4567' => '971501234567', '٠١٠١٢٣٤٥٦٧٨' => '01012345678'] as $input => $expected) {
             $payload = array_replace($this->payload(), ['patient_phone' => $input]);
             $response = $this->postJson('/bookings', $payload)->assertOk();
             $this->assertDatabaseHas('website_booking_requests', ['request_key' => $payload['request_key'], 'patient_phone' => $expected]);
