@@ -18,7 +18,19 @@ exec 9>"$base/deploy.lock"
 flock -n 9 || { echo "Another deployment is active." >&2; exit 1; }
 printf '%s  %s\n' "$digest" "$archive" | sha256sum -c -
 [[ ! -e "$release" ]] || { echo "This revision already exists; use a new commit." >&2; exit 1; }
-mkdir -p "$release" "$shared/backups"
+release_owned=false
+cleanup_partial_release() {
+    result=$?
+    trap - EXIT
+    if [[ $result -ne 0 && "$release_owned" == true && "$(readlink -f "$base/current" || true)" != "$release" ]]; then
+        rm -rf -- "$release"
+    fi
+    exit "$result"
+}
+trap cleanup_partial_release EXIT
+mkdir "$release"
+release_owned=true
+mkdir -p "$shared/backups"
 tar -xzf "$archive" -C "$release"
 [[ -f "$release/artisan" && -f "$release/vendor/autoload.php" && -f "$release/public/build/manifest.json" ]] || exit 1
 mkdir -p "$shared/storage/app/public" "$shared/storage/framework/cache/data" "$shared/storage/framework/sessions" "$shared/storage/framework/views" "$shared/storage/logs"

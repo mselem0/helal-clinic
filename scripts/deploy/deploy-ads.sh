@@ -12,7 +12,19 @@ exec 9>"$base/ads-deploy.lock"
 flock -n 9 || exit 1
 printf '%s  %s\n' "$digest" "$archive" | sha256sum -c -
 test -f "$base/.env" && test -d "$base/storage" && test ! -e "$release"
-mkdir -p "$release"
+release_owned=false
+activated=false
+cleanup_partial_release() {
+    result=$?
+    trap - EXIT
+    if [[ $result -ne 0 && "$release_owned" == true && "$activated" == false && "$(readlink -f "$base/current" || true)" != "$release" ]]; then
+        rm -rf -- "$release"
+    fi
+    exit "$result"
+}
+trap cleanup_partial_release EXIT
+mkdir "$release"
+release_owned=true
 tar --exclude=vendor -xzf "$archive" -C "$release"
 # Reuse immutable dependencies only when the lock file is identical; never edit shared inodes.
 if cmp -s "$release/composer.lock" "$base/composer.lock"; then
@@ -33,6 +45,7 @@ cd "$release"
 old=$(readlink "$base/current" || true)
 ln -s "$release" "$base/.next-$revision"
 mv -Tf "$base/.next-$revision" "$base/current"
+activated=true
 if ! curl --fail --silent --show-error --max-time 30 https://ads.drmohamedhelal.com/ -o "$base/incoming/check-$revision.html" || ! grep -q 'GTM-5BFT64CX' "$base/incoming/check-$revision.html" || ! curl --fail --silent --show-error --max-time 30 -I https://ads.drmohamedhelal.com/ | grep -qi 'x-robots-tag:.*noindex'; then
     if [[ -n "$old" ]]; then ln -s "$old" "$base/.rollback-$revision"; mv -Tf "$base/.rollback-$revision" "$base/current"; fi
     exit 1
