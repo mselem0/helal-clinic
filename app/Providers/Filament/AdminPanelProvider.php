@@ -52,7 +52,6 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('عيادات هلال | لوحة الإدارة')
             ->favicon(asset('assets/logo.png'))
             ->darkMode(false)
-            ->sidebarCollapsibleOnDesktop()
             ->viteTheme('resources/css/app.css')
             ->icons([
                 'panels::sidebar.collapse-button' => 'heroicon-m-chevron-double-left',
