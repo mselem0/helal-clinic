@@ -1,25 +1,24 @@
 {{-- resources/views/filament/pages/auth/login.blade.php --}}
-<div class="flex min-h-screen w-full overflow-hidden bg-white" dir="rtl">
+<div class="clinic-login flex min-h-screen w-full bg-white" dir="rtl">
     <!-- Branding Panel (Appears on the Right in RTL) -->
-    <div class="hidden lg:flex lg:w-1/2 relative items-center justify-center overflow-hidden bg-[#002855]">
+    <div class="clinic-login__brand hidden lg:flex lg:w-1/2 relative items-center justify-center overflow-hidden bg-[#002855]">
         <!-- Decorative Background -->
         <div class="absolute inset-0 z-0">
             <div class="absolute inset-0 bg-gradient-to-br from-[#002855]/95 via-[#002855]/90 to-[#001a35]/95 z-10"></div>
             <img src="{{ asset('assets/doctor.jpg') }}" class="w-full h-full object-cover opacity-60" alt="Background">
             
             <!-- Animated decorative circles -->
-            <div class="absolute top-0 left-0 w-96 h-96 bg-[#00B4D8]/10 rounded-full filter blur-3xl -ml-48 -mt-48"></div>
-            <div class="absolute bottom-0 right-0 w-96 h-96 bg-[#00B4D8]/5 rounded-full filter blur-3xl -mr-48 -mb-48"></div>
+            <div class="absolute top-0 left-0 w-96 h-96 bg-[#5B969B]/10 rounded-full filter blur-3xl -ml-48 -mt-48"></div>
+            <div class="absolute bottom-0 right-0 w-96 h-96 bg-[#5B969B]/5 rounded-full filter blur-3xl -mr-48 -mb-48"></div>
         </div>
 
         <div class="relative z-20 text-center px-12 max-w-2xl">
-            <div class="inline-flex rounded-3xl shadow-2xl">
-                <img src="{{ asset('logo Background Removed.png') }}" class="h-60 w-auto" alt="Logo">
+            <div class="clinic-login__logo inline-flex items-center justify-center rounded-[2rem] shadow-2xl">
+                <img src="{{ asset('assets/logo.png') }}" alt="عيادات هلال">
             </div>
             
-            <h2 class="text-4xl font-extrabold text-white mb-6 tracking-tight leading-tight">
-                لوحة التحكم الذكية <br/>
-                <span class="text-[#00B4D8]">للدكتور محمد هلال</span>
+            <h2 class="mt-8 text-3xl font-extrabold text-white tracking-tight leading-tight">
+                لوحة إدارة عيادات هلال
             </h2>
             
             <!-- <p class="text-slate-300 text-lg leading-relaxed mb-12">
@@ -48,10 +47,10 @@
     </div>
 
     <!-- Login Form Panel (Appears on the Left in RTL) -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white relative">
+    <div class="clinic-login__form-panel w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white">
         <!-- Mobile Logo (shows only when branding panel is hidden) -->
-        <div class="absolute top-8 right-8 lg:hidden z-30">
-            <img src="{{ asset('logo Background Removed.png') }}" class="h-8 w-auto" alt="Logo">
+        <div class="clinic-login__mobile-logo lg:hidden" aria-hidden="true">
+            <img src="{{ asset('assets/logo.png') }}" alt="عيادات هلال">
         </div>
 
         <div class="w-full max-w-[440px] animate-fade-in">
@@ -61,9 +60,9 @@
                     تسجيل الدخول
                 </h1>
                 <div class="flex items-center gap-2">
-                    <span class="h-px w-4 bg-[#00B4D8]/40"></span>
+                    <span class="h-px w-4 bg-[#5B969B]/40"></span>
                     <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">لوحة تحكم الإدارة الذكية</p>
-                    <span class="h-px w-4 bg-[#00B4D8]/40"></span>
+                    <span class="h-px w-4 bg-[#5B969B]/40"></span>
                 </div>
             </div>
 
@@ -94,7 +93,7 @@
                     <div class="mt-8">
                         <button
                             type="submit"
-                            class="relative z-50 w-full flex justify-center items-center px-6 py-3.5 border border-transparent text-base font-bold rounded-2xl text-white bg-[#002855] hover:bg-[#00B4D8] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00B4D8] transition-all duration-300 shadow-xl"
+                            class="relative z-50 w-full flex justify-center items-center px-6 py-3.5 border border-transparent text-base font-bold rounded-2xl text-white bg-[#002855] hover:bg-[#5B969B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5B969B] transition-all duration-300 shadow-xl"
                             style="display: flex !important; visibility: visible !important; opacity: 1 !important;"
                         >
                             <span>تسجيل الدخول</span>
@@ -108,7 +107,7 @@
             <!-- Footer Links -->
             <div class="mt-10 flex flex-col items-center gap-6">
                 <div class="flex items-center gap-6 text-[11px] font-bold text-gray-400">
-                    <a href="https://wa.me/201065082026" target="_blank" class="hover:text-[#00B4D8] transition-colors uppercase tracking-wider">المساعدة والدعم الفني</a>
+                    <a href="https://wa.me/201065082026" target="_blank" class="hover:text-[#5B969B] transition-colors uppercase tracking-wider">المساعدة والدعم الفني</a>
                 </div>
                 
                 <p class="text-[10px] text-gray-400">
@@ -117,7 +116,7 @@
 
                 <div class="mt-4 flex items-center justify-center gap-1 text-[10px] text-gray-400">
                     <span>تم عمل السيستم بكل ❤️ بواسطة تيم</span>
-                    <a href="https://lighthearted-alfajores-8da3c9.netlify.app" target="_blank" class="text-[#00B4D8] hover:underline font-bold">CodeAi</a>
+                    <a href="https://lighthearted-alfajores-8da3c9.netlify.app" target="_blank" class="text-[#5B969B] hover:underline font-bold">CodeAi</a>
                 </div>
             </div>
         </div>
@@ -128,6 +127,42 @@
     @endif
 
     <style>
+        .clinic-login { min-height: 100vh; }
+        .clinic-login__brand { background-color: #123c64; }
+        .clinic-login__logo {
+            width: 176px;
+            height: 176px;
+            padding: 14px;
+            background: #fff;
+            border: 1px solid rgba(255, 255, 255, .55);
+        }
+        .clinic-login__logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+        .clinic-login__form-panel { flex-direction: column; }
+        .clinic-login__mobile-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin: 0 0 1.5rem;
+        }
+        .clinic-login__mobile-logo img {
+            display: block;
+            width: 84px;
+            height: 84px;
+            padding: 7px;
+            object-fit: contain;
+            background: #fff;
+            border: 1px solid #e5edf3;
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 24px rgba(18, 60, 100, .08);
+        }
+        @media (min-width: 1024px) {
+            .clinic-login__mobile-logo { display: none; }
+        }
+        @media (max-width: 1023px) {
+            .clinic-login { min-height: 100vh; overflow-y: auto; }
+            .clinic-login__form-panel { min-height: 100vh; padding: 2rem 1.25rem; }
+        }
         @keyframes fade-in {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
