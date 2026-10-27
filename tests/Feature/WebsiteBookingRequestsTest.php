@@ -61,6 +61,19 @@ class WebsiteBookingRequestsTest extends TestCase
         $this->assertDatabaseCount('website_booking_requests', 1);
     }
 
+    public function test_international_phones_are_normalized_and_saved(): void
+    {
+        foreach (['+966 50 123 4567' => '+966501234567', '00971-50-123-4567' => '+971501234567', '٠١٠١٢٣٤٥٦٧٨' => '01012345678'] as $input => $expected) {
+            $payload = array_replace($this->payload(), ['patient_phone' => $input]);
+            $response = $this->postJson('/bookings', $payload)->assertOk();
+            $this->assertDatabaseHas('website_booking_requests', ['request_key' => $payload['request_key'], 'patient_phone' => $expected]);
+            $this->assertStringContainsString($expected, rawurldecode($response->json('whatsapp_url')));
+        }
+        foreach (['123', '+1234567890123456', 'phone1234567', '++966501234567'] as $invalid) {
+            $this->postJson('/bookings', array_replace($this->payload(), ['patient_phone' => $invalid]))->assertUnprocessable()->assertJsonValidationErrors('patient_phone');
+        }
+    }
+
     public function test_storage_failure_does_not_flash_success_or_return_a_handoff(): void
     {
         WebsiteBookingRequest::creating(fn () => throw new \RuntimeException('storage unavailable'));
