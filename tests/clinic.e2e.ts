@@ -225,15 +225,15 @@ test('patient cannot enter the admin panel with valid credentials', async ({ app
 });
 
 test('editing a theme is separate from publishing and revisions restore the previous theme', async ({ app, browser, screen }) => {
-  await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');
+  await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');await screen.getByText('خيارات إضافية: المظهر والإصدارات',{exact:true}).click();
   await browser.onDialog('accept');
   await browser.locator('[data-theme-choice="helal_modern"]').click();
   let state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());expect(state.theme).toBe('helal_classic');
   await screen.getByRole('button','نشر الموقع',{exact:true}).click();
-  await expect(browser.locator('[data-theme-status="helal_modern"]')).toContainText('الثيم المنشور حاليًا');
+  await expect(browser.locator('[data-theme-status="helal_modern"]')).toContainText('التصميم المنشور حاليًا');
   state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());expect(state.theme).toBe('helal_modern');expect(state.revisions).toBe(1);
   await browser.locator('[data-testid="revision-select"]').selectOption({value:'1'});
-  await screen.getByRole('button','استعادة',{exact:true}).click();await expect(browser.locator('[data-theme-status="helal_classic"]')).toContainText('الثيم المنشور حاليًا');
+  await screen.getByRole('button','استعادة',{exact:true}).click();await expect(browser.locator('[data-theme-status="helal_classic"]')).toContainText('التصميم المنشور حاليًا');
   state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());expect(state.theme).toBe('helal_classic');expect(state.revisions).toBe(2);
 });
 
@@ -259,7 +259,7 @@ test('service create, edit, upload and delete update the actual public site', as
 });
 
 test('content drafts stay private, preview shows them and discard keeps published content', async ({ app, browser, screen }) => {
-  await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');await browser.onDialog('accept');
+  await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');await screen.getByText('خيارات إضافية: المظهر والإصدارات',{exact:true}).click();await browser.onDialog('accept');
   await browser.locator('[data-section-choice="faq"]').click();
   await screen.getByRole('button','توسيع الكل',{exact:true}).click();
   await browser.locator('textarea').first().fill('عنوان FAQ للمراجعة');
@@ -268,7 +268,7 @@ test('content drafts stay private, preview shows them and discard keeps publishe
   await app.open('/');await expect(screen.getByText('عنوان FAQ للمراجعة',{exact:true})).not.toBeVisible();
   const url=await browser.evaluate(async()=> (await(await fetch('/__e2e/preview?page=faq')).json()).url);await app.open(url);
   await expect(screen.getByText('عنوان FAQ للمراجعة',{exact:true})).toBeVisible();
-  await app.open('/codeAiAdminDash/theme-editor');await screen.getByRole('button','إلغاء المسودات',{exact:true}).click();
+  await app.open('/codeAiAdminDash/theme-editor');await screen.getByText('خيارات إضافية: المظهر والإصدارات',{exact:true}).click();await screen.getByRole('button','إلغاء المسودات',{exact:true}).click();
   await expect(browser.locator('[data-section-choice="faq"]')).not.toContainText('مسودة');
   await app.open('/');await expect(screen.getByText('عنوان FAQ للمراجعة',{exact:true})).not.toBeVisible();
 });
@@ -299,7 +299,7 @@ for(const scenario of [
 }
 
 test('admin pages fit mobile viewport and content remains operable',async({app,browser,screen})=>{
- await browser.setViewport({width:390,height:844});await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');
+ await browser.setViewport({width:390,height:844});await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');await screen.getByText('خيارات إضافية: المظهر والإصدارات',{exact:true}).click();
  await expect(browser.locator('[data-section-choice="faq"]')).toBeVisible();
  expect(await browser.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1)).toBe(true);
  await browser.locator('[data-section-choice="faq"]').click();await screen.getByRole('button','حفظ المسودة',{exact:true}).click();
@@ -339,7 +339,7 @@ test('full system patient can be created and a clinical visit can be saved from 
 
 
 test('FAQ questions can be added and published from the editor',async({app,browser,screen})=>{
- await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');await browser.onDialog('accept');
+ await login(app,screen,browser);await app.open('/codeAiAdminDash/theme-editor');await screen.getByText('خيارات إضافية: المظهر والإصدارات',{exact:true}).click();await browser.onDialog('accept');
  await browser.locator('[data-section-choice="faq"]').click();await screen.getByRole('button','إضافة سؤال',{exact:true}).click();await expect(browser.locator('input[id$=".question"]')).toHaveCount(4);
  await browser.locator('input[id$=".question"]').last().fill('سؤال جديد للاختبار؟');await browser.locator('textarea[id$=".answer"]').last().fill('إجابة جديدة للاختبار.');
  await screen.getByRole('button','نشر الموقع',{exact:true}).click();await expect(browser.locator('[data-testid="revision-select"] option')).toHaveCount(2);
