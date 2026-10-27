@@ -62,7 +62,7 @@ class ServiceResource extends Resource
                         Forms\Components\Hidden::make('order')
                             ->default(0),
                     ])->columns(2),
-                Forms\Components\Section::make('SEO')
+                Forms\Components\Section::make('SEO')->hidden()
                     ->schema([
                         Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
                         Forms\Components\TextInput::make('meta_title')
