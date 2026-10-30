@@ -27,7 +27,7 @@ class BookingTimePickerTest extends TestCase
     {
         $branch = ClinicBranch::first();
         $branch->update(['booking_schedule_enabled' => true, 'booking_time_enabled' => true, 'weekly_schedule' => array_fill(0, 7, ['open' => true, 'from' => '21:00', 'to' => '23:00'])]);
-        return ['patient_name' => 'Synthetic', 'patient_phone' => '01012345678', 'booking_date' => $date, 'booking_time' => $time, 'service_id' => Service::first()->id, 'clinic_branch_id' => $branch->id, 'request_key' => (string) Str::uuid(), 'visit_type' => 'first_visit', 'visit_window' => BookingVisitDetails::window($branch->fresh(), BranchSchedule::forDate($branch->fresh(), $date)), 'visit_window_acknowledged' => true];
+        return ['patient_name' => 'Synthetic', 'patient_phone' => '01012345678', 'booking_date' => $date, 'booking_time' => $time, 'service_id' => Service::first()->id, 'clinic_branch_id' => $branch->id, 'request_key' => (string) Str::uuid(), 'visit_type' => 'first_visit', 'visit_window' => BookingVisitDetails::window($branch->fresh(), BranchSchedule::forDate($branch->fresh(), $date))];
     }
 
     public function test_half_hour_slots_are_offered_and_can_be_shared_by_multiple_patients(): void

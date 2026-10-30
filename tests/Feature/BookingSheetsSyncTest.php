@@ -484,36 +484,54 @@ class BookingSheetsSyncTest extends TestCase
         $this->sync->syncNow();
         $this->assertSame('متابعة / استشارة', $this->gateway->data[1][13]);
         $this->assertSame('من 5 إلى 9', $this->gateway->data[1][14]);
-        $this->assertNotEmpty($this->gateway->data[1][15]);
-        $this->assertSame('17:13', $this->gateway->data[1][16]);
+        $this->assertSame('17:13', $this->gateway->data[1][15]);
         $this->gateway->data[0] = BookingSheetsSync::LEGACY_HEADERS;
         $this->gateway->data[1] = array_slice($this->gateway->data[1], 0, 13);
         $this->sync->syncNow();
-        $this->assertSame(BookingSheetsSync::HEADERS, $this->gateway->data[0]);
+        $this->assertSame(BookingSheetsSync::HEADERS, array_slice($this->gateway->data[0], 0, 16));
         $this->assertSame('متابعة / استشارة', $this->gateway->data[1][13]);
         $this->assertSame('Keep note', $this->gateway->data[1][8]);
-        $this->assertSame('17:13', $this->gateway->data[1][16]);
+        $this->assertSame('17:13', $this->gateway->data[1][15]);
     }
 
-    public function test_english_header_row_upgrades_to_arabic_without_touching_data_rows(): void
+    public function test_retired_acknowledgement_column_is_migrated_in_place_without_touching_other_cells(): void
     {
-        $b = $this->booking(['booking_time' => '17:30', 'visit_type' => 'follow_up', 'visit_window' => 'من 5 إلى 9', 'visit_window_acknowledged_at' => now(), 'admin_notes' => 'Keep note']);
+        $this->booking(['booking_time' => '17:30', 'visit_type' => 'follow_up', 'visit_window' => 'من 5 إلى 9', 'visit_window_acknowledged_at' => now(), 'admin_notes' => 'Keep note']);
         $this->sync->connect('https://docs.google.com/spreadsheets/d/abcdefghijklmnopqrstuvw/edit');
         $this->sync->syncNow();
-        $dataRow = $this->gateway->data[1];
-        $this->gateway->data[0] = BookingSheetsSync::ENGLISH_HEADERS;
+        // Recreate the live pre-migration layout: Arabic 17 headers + data with the ack timestamp at P.
+        $this->gateway->data[0] = BookingSheetsSync::ARABIC_ACK_HEADERS;
+        $this->gateway->data[1] = array_replace($this->gateway->data[1], [14 => 'من 5 إلى 9', 15 => '2026-10-30 13:00:00', 16 => '17:30']);
         $result = $this->sync->syncNow();
         $this->assertSame(0, $result['failed']);
-        $this->assertSame(BookingSheetsSync::HEADERS, $this->gateway->data[0]);
+        $this->assertSame(BookingSheetsSync::HEADERS, array_slice($this->gateway->data[0], 0, 16));
+        $this->assertSame('', $this->gateway->data[0][16]);
         $this->assertSame('متابعة / استشارة', $this->gateway->data[1][13]);
         $this->assertSame('من 5 إلى 9', $this->gateway->data[1][14]);
-        $this->assertSame('17:30', $this->gateway->data[1][16]);
+        $this->assertSame('17:30', $this->gateway->data[1][15]);
+        $this->assertSame('', $this->gateway->data[1][16]);
         $this->assertSame('Keep note', $this->gateway->data[1][8]);
-        $this->assertSame($dataRow, $this->gateway->data[1]);
-        // Reconnecting a sheet already carrying Arabic headers keeps them unchanged.
+        // Reconnecting the migrated sheet keeps it unchanged.
+        $row = $this->gateway->data[1];
         $this->sync->connect('https://docs.google.com/spreadsheets/d/abcdefghijklmnopqrstuvw/edit');
-        $this->assertSame(BookingSheetsSync::HEADERS, $this->gateway->data[0]);
-        $this->assertSame($dataRow, $this->gateway->data[1]);
+        $this->assertSame(BookingSheetsSync::HEADERS, array_slice($this->gateway->data[0], 0, 16));
+        $this->assertSame($row, $this->gateway->data[1]);
+    }
+
+    public function test_migration_handles_sheets_that_return_dates_as_serial_numbers(): void
+    {
+        $this->booking(['booking_time' => '17:30', 'visit_type' => 'follow_up', 'visit_window' => 'من 5 إلى 9', 'visit_window_acknowledged_at' => now(), 'admin_notes' => 'Keep note']);
+        $this->sync->connect('https://docs.google.com/spreadsheets/d/abcdefghijklmnopqrstuvw/edit');
+        $this->sync->syncNow();
+        $serial = (int) ((new \DateTimeImmutable('2026-10-30'))->diff(new \DateTimeImmutable('1899-12-30'))->days);
+        $this->gateway->data[0] = BookingSheetsSync::ARABIC_ACK_HEADERS;
+        $this->gateway->data[1][3] = $serial;  // Sheets UNFORMATTED_VALUE returns stored dates this way
+        $result = $this->sync->syncNow();
+        $this->assertSame(0, $result['failed']);
+        $this->assertSame(BookingSheetsSync::HEADERS, array_slice($this->gateway->data[0], 0, 16));
+        $this->assertSame('2026-10-30', $this->gateway->data[1][3]);
+        $this->assertSame('17:30', $this->gateway->data[1][15]);
+        $this->assertSame('Keep note', $this->gateway->data[1][8]);
     }
 
     public function test_legacy_sheet_with_occupied_extension_columns_is_not_overwritten(): void

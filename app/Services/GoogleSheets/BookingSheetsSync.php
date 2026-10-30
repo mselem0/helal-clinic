@@ -17,8 +17,10 @@ class BookingSheetsSync
 
     public const ENGLISH_HEADERS = [...self::LEGACY_HEADERS, 'visit_type', 'visit_window', 'visit_window_acknowledged_at', 'booking_time'];
 
+    public const ARABIC_ACK_HEADERS = ['مفتاح الطلب', 'الاسم', 'الهاتف', 'تاريخ الزيارة', 'الخدمة', 'الفرع', 'المصدر', 'الحالة', 'ملاحظات الإدارة', 'وقت الطلب', 'آخر تحديث', 'المعرف المحلي', 'إصدار المزامنة', 'نوع الزيارة', 'فترة الزيارة المعروضة', 'وقت تأكيد قراءة الموعد', 'الساعة المختارة (القاهرة)'];
+
     /** Arabic column titles for clinic staff; layout fingerprints above keep the upgrade chain verifiable. */
-    public const HEADERS = ['مفتاح الطلب', 'الاسم', 'الهاتف', 'تاريخ الزيارة', 'الخدمة', 'الفرع', 'المصدر', 'الحالة', 'ملاحظات الإدارة', 'وقت الطلب', 'آخر تحديث', 'المعرف المحلي', 'إصدار المزامنة', 'نوع الزيارة', 'فترة الزيارة المعروضة', 'وقت تأكيد قراءة الموعد', 'الساعة المختارة (القاهرة)'];
+    public const HEADERS = ['مفتاح الطلب', 'الاسم', 'الهاتف', 'تاريخ الزيارة', 'الخدمة', 'الفرع', 'المصدر', 'الحالة', 'ملاحظات الإدارة', 'وقت الطلب', 'آخر تحديث', 'المعرف المحلي', 'إصدار المزامنة', 'نوع الزيارة', 'فترة الزيارة المعروضة', 'الساعة المختارة (القاهرة)'];
 
     public function __construct(private SheetsGateway $gateway) {}
 
@@ -70,10 +72,15 @@ class BookingSheetsSync
                 if ($oldId === $id && $c->worksheet_id !== null) {
                     $existingRows = $this->gateway->rows($id, $tab['worksheet_title']);
                     $header = array_slice($existingRows[0] ?? [], 0, count(self::HEADERS));
-                    if ($header !== self::HEADERS && $header !== self::ENGLISH_HEADERS) {
-                        if (array_slice($existingRows[0] ?? [], 0, 13) !== self::LEGACY_HEADERS) throw new \RuntimeException('Sheet headers changed.');
-                        foreach ($existingRows as $row) {
-                            if (count(array_filter(array_slice($row, 13), fn ($v) => (string) $v !== '')) > 0) throw new \RuntimeException('Sheet extension columns are occupied.');
+                    if ($header !== self::HEADERS) {
+                        if ($header === array_slice(self::ARABIC_ACK_HEADERS, 0, count(self::HEADERS)) || $header === array_slice(self::ENGLISH_HEADERS, 0, count(self::HEADERS))) {
+                            $existingRows = $this->migrateAckColumn($id, $tab['worksheet_title'], $existingRows);
+                        } elseif (array_slice($existingRows[0] ?? [], 0, 13) !== self::LEGACY_HEADERS) {
+                            throw new \RuntimeException('Sheet headers changed.');
+                        } else {
+                            foreach ($existingRows as $row) {
+                                if (count(array_filter(array_slice($row, 13), fn ($v) => (string) $v !== '')) > 0) throw new \RuntimeException('Sheet extension columns are occupied.');
+                            }
                         }
                     }
                 }
@@ -139,9 +146,8 @@ class BookingSheetsSync
         $rows = $this->gateway->rows($c->spreadsheet_id, $c->worksheet_title);
         $header = array_slice($rows[0] ?? [], 0, count(self::HEADERS));
         if ($header !== self::HEADERS) {
-            if ($header === self::ENGLISH_HEADERS) {
-                $this->gateway->write($c->spreadsheet_id, $c->worksheet_title, 1, self::HEADERS);
-                $rows = $this->gateway->rows($c->spreadsheet_id, $c->worksheet_title);
+            if (array_slice($rows[0] ?? [], 0, 17) === self::ARABIC_ACK_HEADERS || array_slice($rows[0] ?? [], 0, 17) === self::ENGLISH_HEADERS) {
+                $rows = $this->migrateAckColumn($c->spreadsheet_id, $c->worksheet_title, $rows);
             } elseif (array_slice($rows[0] ?? [], 0, 13) === self::LEGACY_HEADERS && count(array_filter(array_slice($rows[0], 13), fn ($v) => (string) $v !== '')) === 0) {
                 foreach (array_slice($rows, 1) as $row) {
                     if (count(array_filter(array_slice($row, 13), fn ($v) => (string) $v !== '')) > 0) {
@@ -178,9 +184,9 @@ class BookingSheetsSync
                     $this->complete($booking, $state, $snapshot, []);
                 } else {
                     [$booking,$snapshot,$conflicts,$patch] = DB::transaction(fn () => $this->merge($booking, $state, $remote));
-                    // These two columns are a read-only snapshot of the original public booking.
+                    // These three columns are a read-only snapshot of the original public booking.
                     $details = $this->values($booking);
-                    foreach ([13, 14, 15, 16] as $column) {
+                    foreach ([13, 14, 15] as $column) {
                         if ((string) ($remote[$column] ?? '') !== $details[$column]) $patch[$column] = $details[$column];
                     }
                     if ($patch) {
@@ -227,6 +233,29 @@ class BookingSheetsSync
         $c->update(['last_synced_at' => now(), 'last_error' => $result['failed'] ? 'تعذرت مزامنة بعض الطلبات. راجع حالة كل طلب.' : null]);
 
         return $result;
+    }
+
+    /** Retire the acknowledgement column in place: shift P:Q data left and clear the vacated Q cell. */
+    private function migrateAckColumn(string $spreadsheetId, string $title, array $rows): array
+    {
+        if (count($rows) > 401) throw new \RuntimeException('Sheet has too many rows for automatic column migration.');
+        foreach ($rows as $row) {
+            if (count(array_filter(array_slice($row, 17), fn ($v) => (string) $v !== '')) > 0) throw new \RuntimeException('Owner columns beyond Q block the column migration.');
+        }
+        foreach (array_slice($rows, 1, null, true) as $i => $row) {
+            // Sheets returns stored dates as serial numbers; restore the textual form the writer validates.
+            foreach ($row as $column => $value) {
+                if ($column === 3 && is_numeric($value) && (float) $value >= 1 && (float) $value <= 2958465) {
+                    $row[$column] = (new \DateTimeImmutable('1899-12-30'))->modify('+'.(int) $value.' days')->format('Y-m-d');
+                } else {
+                    $row[$column] = (string) ($value ?? '');
+                }
+            }
+            array_splice($row, 15, 1);
+            $this->gateway->write($spreadsheetId, $title, $i + 1, array_pad($row, 17, ''));
+        }
+        $this->gateway->write($spreadsheetId, $title, 1, array_pad(self::HEADERS, 17, ''));
+        return $this->gateway->rows($spreadsheetId, $title);
     }
 
     private function index(array $rows): array
@@ -421,7 +450,7 @@ class BookingSheetsSync
 
     private function values(WebsiteBookingRequest $b): array
     {
-        return array_map(fn ($v) => (string) ($v ?? ''), [$b->request_key, $b->patient_name, $b->patient_phone, $b->booking_date?->format('Y-m-d'), $b->service_name, $b->branch_name, $b->source_host, WebsiteBookingRequest::STATUSES[$b->status] ?? $b->status, $b->admin_notes, $b->created_at?->toIso8601String(), $b->updated_at?->toIso8601String(), $b->id, '1', WebsiteBookingRequest::VISIT_TYPES[$b->visit_type] ?? '', $b->visit_window, $b->visit_window_acknowledged_at?->timezone('Africa/Cairo')->format('Y-m-d H:i:s'), $b->booking_time]);
+        return array_map(fn ($v) => (string) ($v ?? ''), [$b->request_key, $b->patient_name, $b->patient_phone, $b->booking_date?->format('Y-m-d'), $b->service_name, $b->branch_name, $b->source_host, WebsiteBookingRequest::STATUSES[$b->status] ?? $b->status, $b->admin_notes, $b->created_at?->toIso8601String(), $b->updated_at?->toIso8601String(), $b->id, '1', WebsiteBookingRequest::VISIT_TYPES[$b->visit_type] ?? '', $b->visit_window, $b->booking_time]);
     }
 
     private function error(\Throwable $e): string

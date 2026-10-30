@@ -135,7 +135,6 @@ class HomeController extends Controller
             'booking_time' => ['nullable', 'date_format:H:i'],
             'visit_type' => ['nullable', 'in:first_visit,follow_up'],
             'visit_window' => ['required_with:visit_type', 'nullable', 'string', 'max:255'],
-            'visit_window_acknowledged' => $request->filled('visit_type') ? ['required', 'accepted'] : ['sometimes', 'accepted'],
             'patient_name' => ['required', 'string', 'max:70'],
             'patient_phone' => ['required', 'string', 'regex:/^[0-9]{7,15}$/'],
             'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:'.now('Africa/Cairo')->toDateString()],
@@ -169,13 +168,10 @@ class HomeController extends Controller
         if (isset($data['visit_type']) && ($data['visit_window'] ?? '') !== ($retry?->visit_window ?? $expectedWindow)) {
             throw ValidationException::withMessages(['visit_window' => 'تغيرت مواعيد الفرع. حدّثي الصفحة وراجعي الموعد قبل تأكيد الحجز.']);
         }
-        $acknowledged = filter_var($data['visit_window_acknowledged'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        unset($data['visit_window_acknowledged']);
         $data['visit_window'] = $retry?->visit_window ?? $expectedWindow;
-        $data['visit_window_acknowledged_at'] = $retry?->visit_window_acknowledged_at ?? ($acknowledged ? now() : null);
         $number = SiteSettingHelper::formatWhatsappNumber(trim($branch->phone ?? ''));
         $persistRequest = function () use ($data, $service, $branch, $request, $answerNotes): void {
-            $fields = collect($data)->except(['request_key', 'visit_window', 'visit_window_acknowledged_at'])->all();
+            $fields = collect($data)->except(['request_key', 'visit_window'])->all();
             $existing = isset($data['request_key']) ? WebsiteBookingRequest::where('request_key', $data['request_key'])->first() : null;
             if ($existing) {
                 foreach ($fields as $field => $value) {
@@ -232,7 +228,6 @@ class HomeController extends Controller
         $timeLabel = $savedBooking?->booking_time ?? ($data['booking_time'] ?? null);
         $whenLabel = $timeLabel ? 'الساعة المختارة: '.$timeLabel.' بتوقيت القاهرة.' : 'مواعيد الزيارة المعروضة: '.$visitWindow.'.';
         $message = "مرحبًا د. محمد هلال، أرغب في طلب موعد باسم {$data['patient_name']}، رقم {$data['patient_phone']}، يوم {$data['booking_date']}، فرع {$branch->name}، خدمة {$service->name}. نوع الزيارة: {$typeLabel}. {$whenLabel} الموعد قيد التأكيد.";
-        if ($acknowledged) $message .= ' أؤكد أنني قرأت موعد الزيارة، والموعد قيد تأكيد العيادة.';
         if ($answerParts) {
             $message .= ' '.implode('، ', $answerParts).'.';
         }

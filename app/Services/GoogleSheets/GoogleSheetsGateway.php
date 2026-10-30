@@ -174,7 +174,7 @@ class GoogleSheetsGateway implements SheetsGateway
         $ranges = [];
         foreach ($cells as $column => $value) {
             // Internal IDs, source and timestamps must never be patched.
-            if (! in_array($column, [1, 2, 3, 4, 5, 7, 8, 13, 14, 15, 16], true)) {
+            if (! in_array($column, [1, 2, 3, 4, 5, 7, 8, 13, 14, 15], true)) {
                 throw new \InvalidArgumentException('This column is not editable.');
             }
             $ranges[] = ['range' => $this->range($title).'!'.chr(65 + $column).$row, 'values' => [[$this->exportCell($column, $value)]]];
@@ -192,7 +192,7 @@ class GoogleSheetsGateway implements SheetsGateway
         $api = $this->api();
         $body = new ValueRange(['values' => [array_map(fn ($v, $column) => $this->exportCell($column, $v, $row === 1), $values, array_keys($values))]]);
         if ($row !== null) {
-            $api->spreadsheets_values->update($spreadsheetId, $this->range($title).'!A'.$row.':Q'.$row, $body, ['valueInputOption' => 'RAW']);
+            $api->spreadsheets_values->update($spreadsheetId, $this->range($title).'!A'.$row.':'.chr(65 + count($values) - 1).$row, $body, ['valueInputOption' => 'RAW']);
         } else {
             $api->spreadsheets_values->append($spreadsheetId, $this->range($title).'!A:Q', $body, ['valueInputOption' => 'RAW', 'insertDataOption' => 'INSERT_ROWS']);
         }

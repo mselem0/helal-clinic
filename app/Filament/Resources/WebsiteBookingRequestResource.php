@@ -60,7 +60,7 @@ class WebsiteBookingRequestResource extends Resource
         return $form->schema([
             Forms\Components\Section::make('تفاصيل الطلب')->schema([
                 Forms\Components\TextInput::make('visit_type')->label('نوع الزيارة')->formatStateUsing(fn ($state) => WebsiteBookingRequest::VISIT_TYPES[$state] ?? 'غير محدد')->disabled()->dehydrated(false),
-                ...collect(['patient_name' => 'الاسم', 'patient_phone' => 'الهاتف', 'booking_date' => 'تاريخ الزيارة', 'booking_time' => 'الساعة المختارة (القاهرة)', 'visit_window' => 'فترة الزيارة المعروضة', 'visit_window_acknowledged_at' => 'وقت تأكيد قراءة الموعد', 'service_name' => 'الخدمة', 'branch_name' => 'الفرع', 'source_host' => 'المصدر', 'created_at' => 'وقت الطلب'])->map(fn ($label, $field) => Forms\Components\TextInput::make($field)->label($label)->disabled()->dehydrated(false))->values()->all(),
+                ...collect(['patient_name' => 'الاسم', 'patient_phone' => 'الهاتف', 'booking_date' => 'تاريخ الزيارة', 'booking_time' => 'الساعة المختارة (القاهرة)', 'visit_window' => 'فترة الزيارة المعروضة', 'service_name' => 'الخدمة', 'branch_name' => 'الفرع', 'source_host' => 'المصدر', 'created_at' => 'وقت الطلب'])->map(fn ($label, $field) => Forms\Components\TextInput::make($field)->label($label)->disabled()->dehydrated(false))->values()->all(),
             ])->columns(2),
             Forms\Components\Section::make('ربط Tibbino')->schema([
                 Forms\Components\TextInput::make('remote_request_id')->label('رقم الطلب في Tibbino')->disabled()->dehydrated(false),
@@ -82,7 +82,6 @@ class WebsiteBookingRequestResource extends Resource
             Tables\Columns\TextColumn::make('booking_time')->label('الساعة المختارة')->placeholder('غير محددة'),
             Tables\Columns\TextColumn::make('visit_type')->label('نوع الزيارة')->formatStateUsing(fn ($state) => WebsiteBookingRequest::VISIT_TYPES[$state] ?? 'غير محدد'),
             Tables\Columns\TextColumn::make('visit_window')->label('فترة الزيارة المعروضة')->wrap(),
-            Tables\Columns\TextColumn::make('visit_window_acknowledged_at')->label('تأكيد قراءة الموعد')->dateTime('Y-m-d H:i')->placeholder('لم يُسجل تأكيد'),
             Tables\Columns\TextColumn::make('service_name')->label('الخدمة'),
             Tables\Columns\TextColumn::make('branch_name')->label('الفرع'),
             Tables\Columns\SelectColumn::make('status')->label('الحالة')->options(WebsiteBookingRequest::STATUSES)->disabled(fn () => ! static::canViewAny())->beforeStateUpdated(fn () => abort_unless(static::canViewAny(), 403))->rules(['required', 'in:'.implode(',', array_keys(WebsiteBookingRequest::STATUSES))]),
