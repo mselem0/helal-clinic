@@ -20,8 +20,11 @@ class BookingScheduleValidationTest extends TestCase
         $this->actingAs($user);
         $branch = ClinicBranch::first();
         $component = \Livewire\Livewire::test(\App\Filament\Resources\ClinicBranchResource\Pages\EditClinicBranch::class, ['record' => $branch->id]);
-        $component->fillForm(['booking_schedule_enabled' => true, 'weekly_schedule' => ['0' => ['open' => true, 'from' => '17:00', 'to' => '21:00']]])->call('save')->assertHasNoFormErrors();
+        $component->fillForm(['booking_schedule_enabled' => true, 'booking_time_enabled' => false, 'weekly_schedule' => ['0' => ['open' => true, 'from' => '17:00', 'to' => '21:00']]])->call('save')->assertHasNoFormErrors();
         $this->assertTrue($branch->fresh()->booking_schedule_enabled);
+        $this->assertFalse($branch->fresh()->booking_time_enabled);
+        $component->fillForm(['booking_time_enabled' => true])->call('save')->assertHasNoFormErrors();
+        $this->assertTrue($branch->fresh()->booking_time_enabled);
         $this->assertSame('17:00', $branch->fresh()->weekly_schedule[0]['from']);
         $component->fillForm(['schedule_exceptions' => [['date' => '2026-12-25', 'closed' => true]]])->call('save')->assertHasNoFormErrors();
         $this->assertTrue(array_values($branch->fresh()->schedule_exceptions)[0]['closed']);
@@ -41,8 +44,10 @@ class BookingScheduleValidationTest extends TestCase
         $this->postJson('/bookings', $payload)->assertUnprocessable()->assertJsonValidationErrors(['booking_date']);
         $this->assertDatabaseCount('bookings', 0);
         $branch->update(['schedule_exceptions' => [['date' => $day, 'closed' => false, 'from' => '17:00', 'to' => '21:00']]]);
+        $payload['booking_time'] = '18:30';
         $result = $this->postJson('/bookings', $payload)->assertOk()->assertJsonPath('status', 'pending')->json();
-        $this->assertStringContainsString('من 17:00 إلى 21:00', rawurldecode($result['whatsapp_url']));
-        $this->assertStringContainsString('بتوقيت القاهرة', rawurldecode($result['whatsapp_url']));
+        $whatsapp = rawurldecode(session('booking_confirmation_branch_whatsapp'));
+        $this->assertStringContainsString('الساعة المختارة: 18:30 بتوقيت القاهرة', $whatsapp);
+        $this->assertStringNotContainsString('مواعيد الزيارة المعروضة', $whatsapp);
     }
 }

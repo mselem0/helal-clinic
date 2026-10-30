@@ -8,6 +8,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +21,7 @@ class WebsiteBookingRequestResource extends Resource
 
     protected static ?string $modelLabel = 'طلب موقع';
 
-    protected static ?string $pluralModelLabel = 'طلبات الموقع';
+    protected static ?string $pluralModelLabel = 'الحجوزات';
 
     protected static ?string $navigationGroup = 'متابعة الطلبات';
 
@@ -58,9 +59,16 @@ class WebsiteBookingRequestResource extends Resource
     {
         return $form->schema([
             Forms\Components\Section::make('تفاصيل الطلب')->schema([
-                ...collect(['patient_name' => 'الاسم', 'patient_phone' => 'الهاتف', 'booking_date' => 'تاريخ الزيارة', 'service_name' => 'الخدمة', 'branch_name' => 'الفرع', 'source_host' => 'المصدر', 'created_at' => 'وقت الطلب'])->map(fn ($label, $field) => Forms\Components\TextInput::make($field)->label($label)->disabled()->dehydrated(false))->values()->all(),
+                Forms\Components\TextInput::make('visit_type')->label('نوع الزيارة')->formatStateUsing(fn ($state) => WebsiteBookingRequest::VISIT_TYPES[$state] ?? 'غير محدد')->disabled()->dehydrated(false),
+                ...collect(['patient_name' => 'الاسم', 'patient_phone' => 'الهاتف', 'booking_date' => 'تاريخ الزيارة', 'booking_time' => 'الساعة المختارة (القاهرة)', 'visit_window' => 'فترة الزيارة المعروضة', 'visit_window_acknowledged_at' => 'وقت تأكيد قراءة الموعد', 'service_name' => 'الخدمة', 'branch_name' => 'الفرع', 'source_host' => 'المصدر', 'created_at' => 'وقت الطلب'])->map(fn ($label, $field) => Forms\Components\TextInput::make($field)->label($label)->disabled()->dehydrated(false))->values()->all(),
             ])->columns(2),
-            Forms\Components\Select::make('status')->label('الحالة')->options(WebsiteBookingRequest::STATUSES)->required()->in(array_keys(WebsiteBookingRequest::STATUSES)),
+            Forms\Components\Section::make('ربط Tibbino')->schema([
+                Forms\Components\TextInput::make('remote_request_id')->label('رقم الطلب في Tibbino')->disabled()->dehydrated(false),
+                Forms\Components\Select::make('integration_state')->label('حالة الربط')->options(WebsiteBookingRequest::INTEGRATION_STATES)->disabled()->dehydrated(false),
+                Forms\Components\TextInput::make('sync_attempts')->label('محاولات الإرسال')->disabled()->dehydrated(false),
+                Forms\Components\TextInput::make('last_sync_error')->label('نتيجة آخر محاولة')->disabled()->dehydrated(false),
+                Forms\Components\TextInput::make('next_sync_attempt_at')->label('المحاولة التالية')->disabled()->dehydrated(false),
+            ])->columns(3)->visible(fn (?WebsiteBookingRequest $record) => filled($record?->integration_state)),
             Forms\Components\Textarea::make('admin_notes')->label('ملاحظات الإدارة')->maxLength(10000)->columnSpanFull(),
         ]);
     }
@@ -71,21 +79,25 @@ class WebsiteBookingRequestResource extends Resource
             Tables\Columns\TextColumn::make('patient_name')->label('الاسم')->searchable(),
             Tables\Columns\TextColumn::make('patient_phone')->label('الهاتف')->searchable(),
             Tables\Columns\TextColumn::make('booking_date')->label('تاريخ الزيارة')->date()->sortable(),
+            Tables\Columns\TextColumn::make('booking_time')->label('الساعة المختارة')->placeholder('غير محددة'),
+            Tables\Columns\TextColumn::make('visit_type')->label('نوع الزيارة')->formatStateUsing(fn ($state) => WebsiteBookingRequest::VISIT_TYPES[$state] ?? 'غير محدد'),
+            Tables\Columns\TextColumn::make('visit_window')->label('فترة الزيارة المعروضة')->wrap(),
+            Tables\Columns\TextColumn::make('visit_window_acknowledged_at')->label('تأكيد قراءة الموعد')->dateTime('Y-m-d H:i')->placeholder('لم يُسجل تأكيد'),
             Tables\Columns\TextColumn::make('service_name')->label('الخدمة'),
             Tables\Columns\TextColumn::make('branch_name')->label('الفرع'),
-            Tables\Columns\TextColumn::make('status')->label('الحالة')->formatStateUsing(fn ($state) => WebsiteBookingRequest::STATUSES[$state] ?? $state)->badge(),
+            Tables\Columns\SelectColumn::make('status')->label('الحالة')->options(WebsiteBookingRequest::STATUSES)->disabled(fn () => ! static::canViewAny())->beforeStateUpdated(fn () => abort_unless(static::canViewAny(), 403))->rules(['required', 'in:'.implode(',', array_keys(WebsiteBookingRequest::STATUSES))]),
+            Tables\Columns\TextColumn::make('remote_request_id')->label('رقم طلب Tibbino')->placeholder('—')->searchable(),
+            Tables\Columns\TextColumn::make('integration_state')->label('حالة الربط')->formatStateUsing(fn ($state) => WebsiteBookingRequest::INTEGRATION_STATES[$state] ?? $state)->placeholder('طلب موقع مستقل')->badge(),
             Tables\Columns\TextColumn::make('created_at')->label('وقت الطلب')->dateTime()->sortable(),
         ])->defaultSort('created_at', 'desc')->filters([
-            Tables\Filters\SelectFilter::make('status')->label('الحالة')->options(WebsiteBookingRequest::STATUSES),
-            Tables\Filters\SelectFilter::make('clinic_branch_id')->label('الفرع')->options(fn () => WebsiteBookingRequest::query()->whereNotNull('clinic_branch_id')->pluck('branch_name', 'clinic_branch_id')->all()),
-            Tables\Filters\Filter::make('booking_date')->label('تاريخ الزيارة')->form([
+            Tables\Filters\Filter::make('booking_date')->label('تاريخ الزيارة')->columns(2)->columnSpanFull()->form([
                 Forms\Components\DatePicker::make('from')->label('من'), Forms\Components\DatePicker::make('until')->label('إلى'),
             ])->query(fn (Builder $query, array $data): Builder => $query->when($data['from'] ?? null, fn ($q, $date) => $q->whereDate('booking_date', '>=', $date))->when($data['until'] ?? null, fn ($q, $date) => $q->whereDate('booking_date', '<=', $date))),
-        ])->actions([Tables\Actions\EditAction::make()->label('متابعة')])->bulkActions([]);
+        ], layout: FiltersLayout::AboveContent)->actions([Tables\Actions\EditAction::make()->label('التفاصيل والملاحظات')->modalHeading('تفاصيل طلب الحجز')->mutateFormDataUsing(fn (array $data): array => ['admin_notes' => $data['admin_notes'] ?? null])])->bulkActions([]);
     }
 
     public static function getPages(): array
     {
-        return ['index' => Pages\ListWebsiteBookingRequests::route('/'), 'edit' => Pages\EditWebsiteBookingRequest::route('/{record}/edit')];
+        return ['index' => Pages\ListWebsiteBookingRequests::route('/')];
     }
 }

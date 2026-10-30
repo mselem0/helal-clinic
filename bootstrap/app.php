@@ -6,6 +6,7 @@ use App\Http\Middleware\Track404Middleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Livewire\Exceptions\RootTagMissingFromViewException;
 
 $application = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,7 +24,17 @@ $application = Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->reportable(function (RootTagMissingFromViewException $exception): void {
+            $component = rescue(fn () => app('livewire')->current(), null, report: false);
+
+            logger()->warning('Livewire rendered a component without an HTML root tag.', [
+                'route' => request()->route()?->getName(),
+                'method' => request()->method(),
+                'component' => $component ? $component::class : null,
+                'component_name' => $component && method_exists($component, 'getName') ? $component->getName() : null,
+                'view' => $component && is_callable([$component, 'getView']) ? $component->getView() : null,
+            ]);
+        });
     })->create();
 
 if (getenv('CLINIC_E2E') === '1' && getenv('APP_ENV') === 'testing') {

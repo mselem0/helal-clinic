@@ -30,10 +30,11 @@ class ThemeEditorTest extends TestCase
         Livewire::test(ThemeEditor::class)->call('selectSection', $section->id)->assertSet('selectedSectionId', $section->id)->assertHasNoErrors();
     }
 
-    public function test_order_and_visibility_are_staged_until_publish(): void
+    public function test_hidden_order_is_preserved_while_visibility_is_staged_until_publish(): void
     {
         $section = PageSection::where('section_key', 'faq')->first();
-        Livewire::test(ThemeEditor::class)->call('selectSection', $section->id)->fillForm(['order' => 999, 'is_active' => false])->call('save')->assertHasNoErrors();
+        $section->update(['draft_data' => ['order' => 999]]);
+        Livewire::test(ThemeEditor::class)->call('selectSection', $section->id)->fillForm(['is_active' => false])->call('save')->assertHasNoErrors();
         $this->assertTrue($section->fresh()->is_active);
         $this->assertSame(999, $section->fresh()->draft_data['order']);
         app(ThemeDraftService::class)->publish();

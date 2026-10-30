@@ -7,6 +7,7 @@
 @foreach($pageSections as $section)
     @continue($section->section_key === 'articles' && $articles->isEmpty())
     @continue($section->section_key === 'videos' && $videos->isEmpty())
+    @continue($section->section_key === 'tv-interviews' && $tvInterviews->isEmpty())
     @continue($section->section_key === 'reviews' && $testimonials->isEmpty())
     @if($section->section_key === 'your-journey')
         @php($destination = $linkedPages->get('journey'))

@@ -116,7 +116,7 @@
 
                 <div class="mt-4 flex items-center justify-center gap-1 text-[10px] text-gray-400">
                     <span>تم عمل السيستم بكل ❤️ بواسطة تيم</span>
-                    <a href="https://lighthearted-alfajores-8da3c9.netlify.app" target="_blank" class="text-[#5B969B] hover:underline font-bold">CodeAi</a>
+                    <a href="https://mselem0.github.io/company-portfolio/" target="_blank" class="text-[#5B969B] hover:underline font-bold">CodeAi</a>
                 </div>
             </div>
         </div>

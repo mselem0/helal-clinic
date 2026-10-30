@@ -4,6 +4,10 @@
 
 namespace App\Providers;
 
+use App\Models\WebsiteBookingRequest;
+use App\Observers\WebsiteBookingRequestObserver;
+use App\Services\GoogleSheets\GoogleSheetsGateway;
+use App\Services\GoogleSheets\SheetsGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -22,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(SheetsGateway::class, GoogleSheetsGateway::class);
     }
 
     /**
@@ -30,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        WebsiteBookingRequest::observe(WebsiteBookingRequestObserver::class);
         if ($this->app->environment('production')) {
             URL::forceRootUrl(config('app.url'));
             if (str_starts_with(config('app.url'), 'https://')) {

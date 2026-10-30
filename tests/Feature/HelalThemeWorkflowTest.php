@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\ThemeEditor;
+use App\Filament\Resources\SitePageResource\Pages\EditSitePage;
 use App\Models\PageSection;
+use App\Models\SitePage;
 use App\Models\SiteSetting;
 use App\Models\ThemeRevision;
 use App\Models\User;
@@ -94,7 +96,46 @@ class HelalThemeWorkflowTest extends TestCase
     public function test_admin_dashboard_renders_with_optional_modules_absent(): void
     {
         $this->admin();
-        $this->get('/codeAiAdminDash')->assertOk();
+        $this->get('/codeAiAdminDash')->assertRedirect('/codeAiAdminDash/website-booking-requests');
         $this->get(ThemeEditor::getUrl())->assertOk();
+    }
+
+    public function test_simple_editor_preserves_hidden_values_and_existing_draft_data(): void
+    {
+        $this->admin();
+        $section = PageSection::where('section_key', 'home')->firstOrFail();
+        $body = json_decode($section->body, true);
+        $body['custom_payload'] = ['keep' => true];
+        $body['fields'][] = ['key' => 'private_url', 'type' => 'url', 'label' => 'وجهة الزر', 'value' => '/keep-this'];
+        $section->update(['draft_data' => ['body' => json_encode($body), 'order' => 937]]);
+        $style = SiteSetting::where('key', 'theme_helal_classic')->first();
+        $styleBefore = $style->attributesToArray();
+        $component = Livewire::test(ThemeEditor::class)->call('selectSection', $section->id);
+        $data = $component->get('data');
+        $first = array_key_first($data['fields']);
+        $data['fields'][$first]['value'] = 'محتوى مبسط';
+        $component->set('data', $data)->call('save')->assertHasNoErrors();
+        $saved = json_decode($section->fresh()->draft_data['body'], true);
+        $this->assertSame(['keep' => true], $saved['custom_payload']);
+        $this->assertSame('/keep-this', collect($saved['fields'])->firstWhere('key', 'private_url')['value']);
+        $this->assertSame(937, $section->fresh()->draft_data['order']);
+        $this->assertSame($styleBefore, $style->fresh()->attributesToArray());
+        $this->assertStringNotContainsString('محتوى مبسط', $section->fresh()->body);
+    }
+
+    public function test_simple_page_editor_preserves_hidden_metadata_and_section_order(): void
+    {
+        $this->admin();
+        $page = SitePage::where('page_key', 'home')->firstOrFail();
+        $originalSections = $page->sections;
+        $page->update(['draft_data' => ['meta_title' => 'بيانات بحث محفوظة', 'canonical_url' => 'https://example.test/keep']]);
+        Livewire::test(EditSitePage::class, ['record' => $page->id])
+            ->fillForm(['title' => 'الرئيسية المعدلة'])->call('save')->assertHasNoErrors();
+        $draft = $page->fresh()->draft_data;
+        $this->assertSame('بيانات بحث محفوظة', $draft['meta_title']);
+        $this->assertSame('https://example.test/keep', $draft['canonical_url']);
+        $keys = fn ($values) => array_map(fn ($value) => is_array($value) ? $value['key'] : $value, $values);
+        $this->assertSame($keys($originalSections), $keys($draft['sections']));
+        $this->assertNotSame('الرئيسية المعدلة',$page->fresh()->title);
     }
 }

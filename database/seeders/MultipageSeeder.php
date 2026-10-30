@@ -12,7 +12,7 @@ class MultipageSeeder extends Seeder
 {
     public function run(): void
     {
-        $homeSectionOrder = ['home', 'services', 'about', 'your-journey', 'videos', 'reviews', 'section-5', 'clinics', 'articles', 'faq', 'booking'];
+        $homeSectionOrder = ['home', 'services', 'about', 'your-journey', 'videos', 'tv-interviews', 'reviews', 'section-5', 'clinics', 'articles', 'faq', 'booking'];
         $availableHomeSections = PageSection::whereNotIn('section_key', ['header', 'footer'])->orderBy('order')->pluck('section_key')->all();
         $homeSections = array_values(array_merge(
             array_filter($homeSectionOrder, fn ($key) => in_array($key, $availableHomeSections, true)),
@@ -29,6 +29,21 @@ class MultipageSeeder extends Seeder
             $available = $key === 'home' || count($sections) === PageSection::whereIn('section_key', $sections)->count();
             SitePage::firstOrCreate(['page_key' => $key], ['slug' => $slug, 'title' => $title, 'sections' => $sections, 'is_published' => $available, 'published_at' => $available ? now() : null,
                 'meta_title' => $title.' | د. محمد هلال', 'meta_description' => 'تعرّفي على '.$title.' في عيادات د. محمد هلال لأمراض النساء والتوليد، واطلبي موعدًا في الفرع المناسب لكِ.']);
+        }
+        foreach (['home'] as $pageKey) {
+            $page = SitePage::where('page_key', $pageKey)->first();
+            if (! $page) {
+                continue;
+            }
+            $sections = $page->sections ?? [];
+            $keys = collect($sections)->map(fn ($section) => is_array($section) ? ($section['key'] ?? '') : $section)->values();
+            if ($keys->contains('tv-interviews')) {
+                continue;
+            }
+            $at = $keys->search('videos');
+            $newSection = isset($sections[0]) && is_array($sections[0]) ? ['key' => 'tv-interviews'] : 'tv-interviews';
+            array_splice($sections, $at === false ? count($keys) : $at + 1, 0, [$newSection]);
+            $page->update(['sections' => $sections]);
         }
         $aboutPage = SitePage::where('page_key', 'about')->first();
         if ($aboutPage && $aboutPage->doctor_profile === null) {

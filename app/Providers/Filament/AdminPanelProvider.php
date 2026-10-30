@@ -5,19 +5,27 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
-use App\Filament\Pages\ThemeEditor;
-use App\Filament\Resources\WebsiteBookingRequestResource;
-use Filament\Navigation\NavigationBuilder;
-use Filament\Navigation\NavigationItem;
 use App\Filament\Pages\Auth\RequestPasswordReset;
-use App\Filament\Widgets\GreetingHeaderWidget;
-use App\Filament\Widgets\QuickActionsWidget;
+use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\SiteSettings;
+use App\Filament\Pages\ThemeEditor;
+use App\Filament\Resources\ArticleResource;
+use App\Filament\Resources\ClinicBranchResource;
+use App\Filament\Resources\ServiceResource;
+use App\Filament\Resources\SitePageResource;
+use App\Filament\Resources\TestimonialResource;
+use App\Filament\Resources\TvInterviewResource;
+use App\Filament\Resources\VideoResource;
+use App\Filament\Resources\WebsiteBookingRequestResource;
+use App\Models\SitePage;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
+use Filament\Navigation\NavigationBuilder;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -27,7 +35,6 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Nwidart\Modules\Facades\Module;
@@ -72,17 +79,14 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::FOOTER,
                 fn (): string => view('filament.components.footer')->render(),
             )
-            ->homeUrl(fn (): string => ThemeEditor::canAccess() ? ThemeEditor::getUrl() : WebsiteBookingRequestResource::getUrl())
-            ->navigation(fn (NavigationBuilder $builder): NavigationBuilder => $builder->items([
-                NavigationItem::make('محتوى الموقع')->icon('heroicon-o-pencil-square')->url(fn () => ThemeEditor::getUrl())->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.theme-editor'))->visible(fn () => ThemeEditor::canAccess()),
-                NavigationItem::make('طلبات الحجوزات')->icon('heroicon-o-inbox')->url(fn () => WebsiteBookingRequestResource::getUrl())->isActiveWhen(fn () => request()->routeIs('filament.admin.resources.website-booking-requests.*'))->visible(fn () => WebsiteBookingRequestResource::canViewAny()),
-            ]))
+            ->homeUrl(fn (): string => WebsiteBookingRequestResource::canViewAny() ? WebsiteBookingRequestResource::getUrl() : ThemeEditor::getUrl())
+            ->navigation(fn (NavigationBuilder $builder): NavigationBuilder => $this->contentNavigation($builder))
             ->spa()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                \App\Filament\Pages\Dashboard::class,
+                Dashboard::class,
             ])
             ->widgets([])
             ->databaseNotifications()
@@ -107,8 +111,7 @@ class AdminPanelProvider extends PanelProvider
                 BreezyCore::make()
                     ->myProfile(shouldRegisterUserMenu: true)
                     ->enableTwoFactorAuthentication(),
-            ])
-            ;
+            ]);
 
         if (class_exists(Module::class)) {
             foreach (Module::allEnabled() as $module) {
@@ -118,5 +121,45 @@ class AdminPanelProvider extends PanelProvider
         }
 
         return $panel;
+    }
+
+    private function contentNavigation(NavigationBuilder $builder): NavigationBuilder
+    {
+        $items = [NavigationItem::make('الحجوزات')->icon('heroicon-o-inbox')
+            ->url(fn () => WebsiteBookingRequestResource::getUrl())
+            ->isActiveWhen(fn () => request()->routeIs('filament.admin.resources.website-booking-requests.*'))
+            ->visible(fn () => WebsiteBookingRequestResource::canViewAny())];
+        foreach ([
+            [ServiceResource::class, 'الخدمات', 'heroicon-o-heart'],
+            [ArticleResource::class, 'المقالات', 'heroicon-o-document-text'],
+            [ClinicBranchResource::class, 'الفروع', 'heroicon-o-map-pin'],
+            [VideoResource::class, 'الفيديوهات', 'heroicon-o-play-circle'],
+            [TvInterviewResource::class, 'اللقاءات التلفزيونية', 'heroicon-o-tv'],
+            [TestimonialResource::class, 'آراء المريضات', 'heroicon-o-chat-bubble-left-right'],
+        ] as [$resource, $label, $icon]) {
+            if ($resource::canViewAny()) {
+                $items[] = NavigationItem::make($label)->icon($icon)->url($resource::getUrl())
+                    ->isActiveWhen(fn () => request()->routeIs('filament.admin.resources.'.$resource::getSlug().'.*'));
+            }
+        }
+        if (SiteSettings::canAccess()) {
+            $items[] = NavigationItem::make('بيانات التواصل')->icon('heroicon-o-phone')->url(SiteSettings::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.site-settings'));
+        }
+        $builder->items($items);
+        if (SitePageResource::canViewAny()) {
+            $pages = [];
+            foreach (SitePage::orderBy('id')->get() as $page) {
+                $pages[] = NavigationItem::make($page->title)->url(SitePageResource::getUrl('edit', ['record' => $page]))
+                    ->isActiveWhen(fn () => request()->routeIs('filament.admin.resources.site-pages.edit') && (string) request()->route('record') === (string) $page->id);
+            }
+            $pages[] = NavigationItem::make('كل الصفحات')->url(SitePageResource::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.resources.site-pages.index', 'filament.admin.resources.site-pages.create'));
+            $pages[] = NavigationItem::make('نصوص وصور الأقسام')->url(ThemeEditor::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.theme-editor'));
+            $builder->groups([NavigationGroup::make('صفحات الموقع')->collapsible()->collapsed()->items($pages)]);
+        }
+
+        return $builder;
     }
 }

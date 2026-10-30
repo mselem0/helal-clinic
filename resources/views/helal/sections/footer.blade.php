@@ -39,3 +39,9 @@
         <span class="reel-audio"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M9 3v12.2A4 4 0 1 0 11 19V7l8-2v8.2A4 4 0 1 0 21 17V1z"/></svg>د. محمد هلال · Original audio</span>
     </div>
 </dialog>
+<dialog id="tv-interview-dialog" class="tv-interview-dialog" aria-labelledby="tv-interview-dialog-title">
+    <button type="button" class="tv-interview-close" aria-label="إغلاق اللقاء">×</button>
+    <h2 id="tv-interview-dialog-title" class="tv-interview-dialog-title"></h2>
+    <div class="tv-interview-player" data-tv-interview-player></div>
+    <a class="tv-interview-youtube" data-tv-interview-link target="_blank" rel="noopener" hidden>فتح اللقاء على YouTube</a>
+</dialog>

@@ -14,6 +14,12 @@ return [
     |
     */
 
+    'tibbino' => [
+        'enabled' => env('TIBBINO_ENABLED', false),
+        'url' => env('TIBBINO_URL'),
+        'token' => env('TIBBINO_TOKEN'),
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],

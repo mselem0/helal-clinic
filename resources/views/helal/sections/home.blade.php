@@ -56,8 +56,8 @@
         >
             <span class="hero-portrait-frame" style="--hero-video-poster: url('{{ \App\Support\ContentUrl::resolve($featuredPoster) }}')">
                 <img
-                    width="540"
-                    height="960"
+                    width="960"
+                    height="1280"
                     src="{{ \App\Support\ContentUrl::resolve($featuredPoster) }}" srcset="{{ \App\Support\ResponsiveImage::srcset($featuredPoster) }}" sizes="(max-width: 760px) 90vw, (max-width: 1184px) 72vw, 806px"
                     alt="د. محمد هلال"
                     fetchpriority="high"

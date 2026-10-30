@@ -11,7 +11,7 @@ async function login(app: any, screen: any, browser: any, name = 'admin') {
   await browser.locator('input[id="data.email"]').fill(credentials.user(name).username);
   await browser.locator('input[id="data.password"]').fill(credentials.user(name).password);
   await screen.getByRole('button', 'تسجيل الدخول', { exact: true }).click();
-  if(name === 'admin') await expect(browser).toHaveURL(/codeAiAdminDash\/theme-editor$/);
+  if(name === 'admin') await expect(browser).toHaveURL(/codeAiAdminDash\/website-booking-requests$/);
 }
 
 for (const width of [320, 390, 768, 1024, 1440]) {
@@ -141,20 +141,22 @@ test('branch schedules show daily hours and disable closed dates on mobile and d
  }
 });
 
-test('booking validates, hands off to WhatsApp and opens the follow-up page', async ({ app, browser }) => {
+test('booking validates and opens confirmation without an automatic popup', async ({ app, browser }) => {
   await browser.route(/^https:\/\/wa\.me\//, route => route.fulfill({status:200,contentType:'text/html',body:'<p>WhatsApp handoff intercepted for testing.</p>'}));
   await app.open('/appointment');await browser.locator('#booking-next').click();await expect(browser.locator('#booking-error')).toContainText('اختاري');
   await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-1').click();await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-1').click();await browser.locator('#booking-next').click();
   await browser.locator('#calendar-days button:not([disabled])').first().click();await browser.locator('#booking-next').click();
   await browser.locator('#patient').fill('مريضة اختبار');await browser.locator('#appointment-phone').fill('01012345678');
-  await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{set href(url:string){sessionStorage.setItem('__testBookingPopup',JSON.stringify({url,opener:null}));}},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
+  const expectedBranchPhone=await browser.evaluate(async()=>{const state=await(await fetch('/__e2e/state')).json();const id=(document.querySelector('#clinic') as HTMLSelectElement).value;return state.branches.find((b:any)=>String(b.id)===id)?.phone||'';});
+  await browser.evaluate(()=>{ window.open = () => { sessionStorage.setItem('__testBookingPopup', 'opened'); return null; }; });
   await browser.locator('#booking-confirm').click();
   await expect(browser).toHaveURL(/\/booking-confirmation$/);
-  await expect(browser.locator('h1')).toContainText('طلب موعدكِ جاهز');
-  await expect(browser.locator('main')).toContainText('جارٍ تأكيد موعدكِ من فريق العيادة.');
-  const popup=await browser.evaluate(()=>JSON.parse(sessionStorage.getItem('__testBookingPopup')!));
-  expect(popup.url).toContain('https://wa.me/201509011313');expect(popup.opener).toBe(null);
-  await browser.evaluate(()=>sessionStorage.removeItem('__testBookingPopup'));
+  await expect(browser.locator('h1')).toContainText('تم استلام طلب الحجز');
+  await expect(browser.locator('main')).toContainText('فريق العيادة هيتواصل معاك لتأكيد الموعد.');
+  expect(await browser.evaluate(()=>sessionStorage.getItem('__testBookingPopup'))).toBeNull();
+  const branchHref=await browser.evaluate(()=>document.querySelector('.booking-confirmation-actions a[href^="https://wa.me/"]')?.getAttribute('href')||'');
+  const digits=expectedBranchPhone.replace(/[^0-9]/g,''); const expectedNumber=digits.startsWith('0')?'2'+digits:digits;
+  if(expectedNumber)expect(new URL(branchHref).pathname).toBe('/'+expectedNumber);else expect(branchHref).toBe('');
   expect(await browser.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await app.screenshot('booking-confirmation-desktop');
   await browser.setViewport({width:390,height:1000});
@@ -206,7 +208,7 @@ test('unsigned previews and disabled modules cannot be reached directly', async 
 });
 
 test('real admin login opens dashboard and all registered content screens', async ({ app, browser, screen }) => {
-  await login(app,screen,browser);await expect(browser).toHaveURL(/codeAiAdminDash\/theme-editor$/);
+  await login(app,screen,browser);await expect(browser).toHaveURL(/codeAiAdminDash\/website-booking-requests$/);
   for(const path of ['site-pages','site-navigations','theme-editor','services','clinic-branches','videos','testimonials','articles','seo-management']){
     await app.open('/codeAiAdminDash/'+path);
     expect(await browser.evaluate(()=>document.body.innerText.includes('Server Error'))).toBe(false);
@@ -347,7 +349,7 @@ test('FAQ questions can be added and published from the editor',async({app,brows
 });
 
 
-test('fertility questions are optional, service-scoped and included in WhatsApp handoff', async ({app,browser})=>{
+test('fertility questions are optional, service-scoped and saved with the request', async ({app,browser})=>{
  await app.open('/appointment');await expect(browser.locator('#fertility-questions')).not.toBeVisible();
  await browser.locator('#clinic-choice').click();await browser.locator('#clinic-choice-options-1').click();
  await browser.locator('#service-choice').click();await browser.locator('#service-choice-options-2').click();
@@ -362,11 +364,9 @@ test('fertility questions are optional, service-scoped and included in WhatsApp 
  await browser.locator('#booking-next').click();await browser.locator('#calendar-days button:not([disabled])').first().click();await browser.locator('#booking-next').click();
  await expect(browser.locator('#appointment-summary')).toContainText('حمل سابق: نعم');
  await browser.locator('#patient').fill('اختبار');await browser.locator('#appointment-phone').fill('01012345678');
- await browser.evaluate(()=>{const popup={opener:window,closed:false,location:{set href(url:string){sessionStorage.setItem('__testBookingPopup',JSON.stringify({url,opener:null}));}},close(){this.closed=true;}};(window as any).__bookingPopup=popup;window.open=()=>popup as any;});
  await browser.locator('#booking-confirm').click();await expect(browser).toHaveURL(/\/booking-confirmation$/);
- const message=await browser.evaluate(()=>decodeURIComponent(JSON.parse(sessionStorage.getItem('__testBookingPopup')!).url));
- expect(message).toContain('حمل سابق: نعم.');expect(message).toContain('عملية مرتبطة بالحمل: لا.');
- await browser.evaluate(()=>sessionStorage.removeItem('__testBookingPopup'));
+ const message=await browser.evaluate(()=>decodeURIComponent(document.querySelector('.booking-confirmation-actions a[href^="https://wa.me/"]')?.getAttribute('href')||''));
+ if(message){expect(message).toContain('حمل سابق: نعم');expect(message).toContain('عملية مرتبطة بالحمل: لا');}
  await app.open('/appointment');await expect(browser.locator('#fertility-questions')).not.toBeVisible();expect(await browser.locator('#fertility-questions input:checked').count()).toBe(0);
 });
 
@@ -385,15 +385,21 @@ test('website request inbox follows up public submissions separately from clinic
  await expect(browser.locator('main')).toContainText('طلب متابعة الموقع');
  await expect(screen.getByRole('button','تصدير Excel',{exact:true})).toBeVisible();
  await expect(browser.locator('main')).toBeVisible();
- const state=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());
- await app.open('/codeAiAdminDash/website-booking-requests/'+state.website_booking_requests[0].id+'/edit');
- await expect(browser.locator('[id="data.patient_name"]')).toBeDisabled();
- await browser.locator('[id="data.admin_notes"]').fill('تم التواصل من صفحة طلبات الموقع');
+ await browser.locator('select').filter({has:browser.locator('option[value="contacted"]')}).first().selectOption({value:'contacted'});
+ await expect(browser.locator('select').filter({has:browser.locator('option[value="contacted"]')}).first()).toHaveValue('contacted');
+ await expect.poll(async()=>await browser.evaluate(async()=>(await(await fetch('/__e2e/state')).json()).website_booking_requests[0].status)).toBe('contacted');
+ await screen.getByRole('button','التفاصيل والملاحظات',{exact:true}).first().click();
+ await expect(browser.locator('[id="mountedTableActionsData.0.patient_name"]')).toBeVisible();
+ await expect(browser.locator('[id="mountedTableActionsData.0.patient_name"]')).toBeDisabled();
+ await browser.locator('textarea').fill('تم التواصل من صفحة الحجوزات');
  await screen.getByRole('button','حفظ التغييرات',{exact:true}).click();
- await expect(screen.getByText('تم الحفظ',{exact:true})).toBeVisible();
+ await expect.poll(async()=>await browser.evaluate(async()=>(await(await fetch('/__e2e/state')).json()).website_booking_requests[0].admin_notes)).toBe('تم التواصل من صفحة الحجوزات');
  const updated=await browser.evaluate(async()=>await(await fetch('/__e2e/state')).json());
- expect(updated.website_booking_requests[0].admin_notes).toBe('تم التواصل من صفحة طلبات الموقع');
- await browser.setViewport({width:390,height:844});await expect(browser.locator('[id="data.admin_notes"]')).toBeVisible();
+ expect(updated.website_booking_requests[0].admin_notes).toBe('تم التواصل من صفحة الحجوزات');
+ expect(updated.website_booking_requests[0].status).toBe('contacted');
+ await browser.setViewport({width:390,height:844});
+ await expect(browser.locator('main')).toContainText('كل الفروع');
+
 });
 
 
@@ -401,9 +407,33 @@ test('doctor navigation contains only content and website requests',async({app,b
  await login(app,screen,browser);
  const sidebar=browser.locator('nav.fi-sidebar-nav');
  await expect(browser.locator('nav.fi-sidebar-nav a')).toHaveCount(2);
- await expect(sidebar).toContainText('محتوى الموقع');await expect(sidebar).toContainText('طلبات الحجوزات');
- await expect(browser.locator('main')).toContainText('إدارة محتوى الموقع');
+ await expect(sidebar).toContainText('محتوى الموقع');await expect(sidebar).toContainText('الحجوزات');
+ await expect(browser.locator('main')).toContainText('الحجوزات');
  await expect(browser.locator('main')).not.toContainText('إعدادات الربط والتتبع');
  await browser.setViewport({width:390,height:844});
  expect(await browser.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('custom select mirrors asynchronously replaced options and disabled state', async ({ app, browser }) => {
+  await app.open('/appointment');
+  const id = await browser.evaluate(() => {
+    const select = document.querySelector('.booking-select select') as HTMLSelectElement;
+    select.disabled = true;
+    select.replaceChildren(new Option('جارٍ التحميل', ''));
+    return select.id;
+  });
+  const trigger = browser.locator('#' + id + '-choice');
+  await expect(trigger).toHaveAttribute('disabled', '');
+  await expect(trigger).toContainText('جارٍ التحميل');
+  await browser.evaluate(id => {
+    const select = document.getElementById(id) as HTMLSelectElement;
+    select.replaceChildren(new Option('اختاري', ''), new Option('خيار جديد', '99'));
+    select.disabled = false;
+  }, id);
+  await trigger.click();
+  await browser.locator('#' + id + '-choice-options-1').click();
+  await expect(trigger).toContainText('خيار جديد');
+  expect(await browser.evaluate(id => (document.getElementById(id) as HTMLSelectElement).value, id)).toBe('99');
+  await browser.evaluate(id => (document.getElementById(id) as HTMLSelectElement).disabled = true, id);
+  await expect(trigger).toHaveAttribute('disabled', '');
 });

@@ -14,10 +14,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tests\TestCase;
 
-#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
-#[\PHPUnit\Framework\Attributes\PreserveGlobalState(false)]
+#[RunTestsInSeparateProcesses]
+#[PreserveGlobalState(false)]
 class SimpleContentHubTest extends TestCase
 {
     use RefreshDatabase;
@@ -29,37 +31,23 @@ class SimpleContentHubTest extends TestCase
         $this->seed();
     }
 
-    public function test_hub_links_to_all_content_areas_and_keeps_publication_controls(): void
+    public function test_editor_keeps_publication_controls_without_design_or_technical_controls(): void
     {
         $user = User::factory()->create(['role' => 'admin']);
         $user->assignRole('super_admin');
         $this->actingAs($user);
-
-        $component = Livewire::test(ThemeEditor::class)
-            ->assertSee('محتوى الموقع')
-            ->assertSee('حفظ المسودة')
-            ->assertSee('معاينة الموقع')
-            ->assertSee('نشر الموقع')
-            ->assertSee('خيارات إضافية: المظهر والإصدارات')
-            ->assertDontSee('محتوى يحتاج مراجعة')
-            ->assertDontSee('استوديو موقع هلال');
-
+        Livewire::test(ThemeEditor::class)->assertSee('حفظ المسودة')->assertSee('معاينة الموقع')->assertSee('نشر الموقع')
+            ->assertDontSee('ألوان الموقع')->assertDontSee('خيارات إضافية: المظهر والإصدارات')->assertDontSee('مسار الصورة أو الفيديو')->assertDontSee('الترتيب الافتراضي للقسم');
         foreach ([SiteSettings::class, SitePageResource::class, ServiceResource::class, ClinicBranchResource::class, VideoResource::class, TestimonialResource::class, ArticleResource::class] as $destination) {
-            $component->assertSee('href="'.$destination::getUrl().'"', false);
             $this->get($destination::getUrl())->assertOk();
         }
     }
 
-    public function test_hub_only_shows_links_the_editor_can_open(): void
+    public function test_editor_deep_links_to_requested_page(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $user->givePermissionTo('page_ThemeEditor');
         $this->actingAs($user);
-
-        Livewire::test(ThemeEditor::class)
-            ->assertSee('href="'.SitePageResource::getUrl().'"', false)
-            ->assertDontSee('href="'.SiteSettings::getUrl().'"', false)
-            ->assertDontSee('href="'.ServiceResource::getUrl().'"', false)
-            ->assertDontSee('href="'.ArticleResource::getUrl().'"', false);
+        Livewire::withQueryParams(['selectedPageKey' => 'faq'])->test(ThemeEditor::class)->assertSet('selectedPageKey', 'faq')->assertSee('الأسئلة الشائعة');
     }
 }

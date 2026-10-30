@@ -22,6 +22,7 @@
     @foreach($page->sections ?? [] as $key)
         @continue($pageKey === 'journey' && (is_array($key) ? ($key['key'] ?? '') : $key) === 'booking' && !empty($journeyBookingIntegrated))
         @php($section = $sections->firstWhere('section_key', is_array($key) ? ($key['key'] ?? '') : $key))
+        @continue((is_array($key) ? ($key['key'] ?? '') : $key) === 'tv-interviews' && $tvInterviews->isEmpty())
         @if($section && view()->exists('helal.sections.'.$section->section_key))<div class="section-shell" data-section="{{ $section->section_key }}" @if($section->background_color) style="background-color:{{ $section->background_color }}" @endif>@include('helal.sections.'.$section->section_key,['content'=>$section->content, 'sectionHeadingTag'=>($useContentHeading && !$contentHeadingUsed && $section->section_key === $headingSectionKey) ? 'h1' : 'h2'])@php($contentHeadingUsed = $contentHeadingUsed || ($useContentHeading && $section->section_key === $headingSectionKey))</div>@endif
     @endforeach
     @if($pageKey === 'about' && !empty($page->doctor_profile))

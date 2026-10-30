@@ -5,9 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\PageSection;
 use App\Models\SitePage;
 use App\Models\SiteSetting;
-use App\Models\ThemeRevision;
 use App\Services\ThemeDraftService;
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -43,6 +41,8 @@ class ThemeEditor extends Page implements HasForms
 
     public string $selectedPageKey = 'home';
 
+    protected $queryString = ['selectedPageKey' => ['except' => 'home']];
+
     public ?int $selectedSectionId = null;
 
     public string $editingTheme = 'helal_classic';
@@ -63,18 +63,18 @@ class ThemeEditor extends Page implements HasForms
     {
         $this->authorizeEditor();
         $this->editingTheme = SiteSetting::where('key', 'active_theme')->value('value') ?? 'helal_classic';
-        $section = PageSection::orderBy('order')->first();
-        if ($section) {
-            $this->selectSection($section->id);
+        if (! SitePage::where('page_key', $this->selectedPageKey)->exists()) {
+            $this->selectedPageKey = SitePage::where('page_key', 'home')->value('page_key') ?? SitePage::value('page_key') ?? 'home';
         }
+        $this->updatedSelectedPageKey();
     }
 
     public function updatedSelectedPageKey(): void
     {
         $this->authorizeEditor();
         $page = SitePage::where('page_key', $this->selectedPageKey)->firstOrFail();
-        $keys = collect($page->draft_data['sections'] ?? $page->sections ?? [])->map(fn ($v) => is_array($v) ? $v['key'] : $v);
-        $section = PageSection::when($page->page_key !== 'home', fn ($q) => $q->whereIn('section_key', $keys))->orderBy('order')->first();
+        $sections = $this->sectionsForPage($page);
+        $section = ($page->page_key === 'home' ? $sections->firstWhere('section_key', 'home') : null) ?? $sections->first();
         $this->selectedSectionId = $section?->id;
         if ($section) {
             $this->selectSection($section->id);
@@ -89,13 +89,9 @@ class ThemeEditor extends Page implements HasForms
         // The editor always reads the draft; the public view only reads it with a valid preview signature.
         $draft = $section->draft_data ?? [];
         $body = json_decode($draft['body'] ?? $section->body ?? '{}', true) ?: [];
-        $setting = SiteSetting::where('key', 'theme_'.$this->editingTheme)->first();
-        $style = json_decode($setting?->draft_data['value'] ?? $setting?->value ?? '{}', true) ?: [];
         $this->form->fill([
-            'fields' => $section->section_key === 'faq' ? array_values(array_filter($body['fields'] ?? [], fn ($field) => ! in_array($field['key'], ['field_3', 'field_4', 'field_5', 'field_6', 'field_7', 'field_8']))) : ($body['fields'] ?? []), 'faqs' => $body['faqs'] ?? $this->legacyFaqs($body), 'stages' => collect($body['stages'] ?? [])->map(fn ($value, $key) => ['key' => $key] + $value)->values()->all(), 'order' => $draft['order'] ?? $section->order,
+            'fields' => array_values(array_filter($body['fields'] ?? [], fn ($field) => in_array($field['type'] ?? '', ['text', 'image'], true) && ($section->section_key !== 'faq' || ! in_array($field['key'], ['field_3', 'field_4', 'field_5', 'field_6', 'field_7', 'field_8'])))), 'faqs' => $body['faqs'] ?? $this->legacyFaqs($body), 'stages' => collect($body['stages'] ?? [])->map(fn ($value, $key) => ['key' => $key] + $value)->values()->all(),
             'is_active' => $draft['is_active'] ?? $section->is_active,
-            'background_color' => $style['sections'][$section->section_key]['background_color'] ?? null,
-            'primary' => $style['primary'] ?? '#006f76', 'accent' => $style['accent'] ?? '#ed8b19',
         ]);
     }
 
@@ -104,14 +100,11 @@ class ThemeEditor extends Page implements HasForms
         return $form->schema([
             Section::make('محتوى القسم')->description('احفظ التعديلات، ثم عاينها وانشرها عندما تكون جاهزة.')->schema([
                 Toggle::make('is_active')->label('إظهار القسم'),
-                TextInput::make('order')->label('الترتيب الافتراضي للقسم')->helperText('ترتيب الأقسام داخل الصفحة يُدار من صفحات الموقع.')->integer()->required(),
-                Repeater::make('fields')->label('النصوص والروابط والوسائط')->schema([
+                Repeater::make('fields')->label('النصوص والصور')->schema([
                     Hidden::make('key'), Hidden::make('type'), Hidden::make('label'),
                     Textarea::make('value')->label(fn ($get) => $get('label') ?: 'المحتوى')->rows(2)->maxLength(5000)->visible(fn ($get) => $get('type') === 'text'),
-                    TextInput::make('value')->label('الرابط')->maxLength(2000)->visible(fn ($get) => $get('type') === 'url')->rules(['regex:~^(https?://|tel:|mailto:|/|\#|$)~i']),
-                    TextInput::make('value')->label('مسار الصورة أو الفيديو')->maxLength(2000)->visible(fn ($get) => $get('type') === 'image')->helperText('ارفعي ملفًا أدناه أو استخدمي رابط https.'),
                     FileUpload::make('upload')->label('رفع صورة أو فيديو')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'video/mp4'])->maxSize(51200)->visible(fn ($get) => $get('type') === 'image'),
-                ])->itemLabel(fn (array $state): string => $state['label'] ?? 'محتوى')->collapsible()->collapsed()->addable(false)->deletable(false)->reorderable(false),
+                ])->itemLabel(fn (array $state): string => $state['label'] ?? 'محتوى')->collapsible()->addable(false)->deletable(false)->reorderable(false),
             ]),
             Section::make('الأسئلة الشائعة')->visible(fn () => PageSection::find($this->selectedSectionId)?->section_key === 'faq')->schema([
                 Repeater::make('faqs')->label('الأسئلة')->addActionLabel('إضافة سؤال')->schema([
@@ -125,15 +118,9 @@ class ThemeEditor extends Page implements HasForms
                     TextInput::make('title')->label('العنوان')->required(), Textarea::make('description')->label('الوصف'),
                     TextInput::make('service')->label('اسم الخدمة للحجز'),
                     Repeater::make('questions')->label('أسئلة الزيارة')->simple(TextInput::make('question')->label('السؤال')),
-                    TextInput::make('reel')->label('رقم فيديو فيسبوك')->numeric()->nullable(),
                     TextInput::make('video')->label('عنوان الفيديو'), Textarea::make('note')->label('ملاحظة الفيديو'),
                 ])->addable(false)->deletable(false)->itemLabel(fn (array $state) => $state['tag'] ?? 'مرحلة')->collapsible(),
             ]),
-            Section::make('ألوان الموقع')->collapsible()->collapsed()->schema([
-                ColorPicker::make('background_color')->label('خلفية القسم')->hex(),
-                ColorPicker::make('primary')->label('اللون الأساسي')->required()->hex(),
-                ColorPicker::make('accent')->label('لون التمييز')->required()->hex(),
-            ])->columns(2),
         ])->statePath('data');
     }
 
@@ -163,29 +150,38 @@ class ThemeEditor extends Page implements HasForms
         abort_unless(isset(ThemeDraftService::THEMES[$this->editingTheme]), 422);
         $state = $this->form->getState();
         $section = PageSection::findOrFail($this->selectedSectionId);
-        // Keep field definitions server-owned, so Livewire payloads cannot inject arbitrary bindings.
-        $original = json_decode($section->body, true)['fields'] ?? [];
-        $values = collect($state['fields'])->keyBy('key');
+        // Merge edits into the latest draft so unexposed content and settings survive a save.
+        $body = json_decode($section->draft_data['body'] ?? $section->body ?? '{}', true) ?: [];
+        $original = $body['fields'] ?? [];
+        $values = collect($state['fields'] ?? [])->keyBy('key');
         foreach ($original as &$field) {
+            if (! in_array($field['type'] ?? '', ['text', 'image'], true)) {
+                continue;
+            }
             $value = $values->get($field['key'], []);
             $field['value'] = $value['upload'] ?? $value['value'] ?? $field['value'];
         }
         unset($field);
-        app(ThemeDraftService::class)->saveSectionDraft($section->section_key, [
-            'body' => json_encode(['fields' => $original, 'faqs' => $state['faqs'] ?? [], 'stages' => collect($state['stages'] ?? [])->mapWithKeys(function ($stage) {
+        $body['fields'] = $original;
+        if ($section->section_key === 'faq' && array_key_exists('faqs', $state)) {
+            $body['faqs'] = $state['faqs'];
+        }
+        if ($section->section_key === 'your-journey' && array_key_exists('stages', $state)) {
+            $stages = $body['stages'] ?? [];
+            foreach ($state['stages'] as $stage) {
                 $key = $stage['key'];
                 unset($stage['key']);
-
-                return [$key => $stage];
-            })->all()], JSON_UNESCAPED_UNICODE), 'order' => (int) $state['order'],
+                // Stage identifiers and unexposed values remain server-owned.
+                if (array_key_exists($key, $stages)) {
+                    $stages[$key] = array_replace($stages[$key], $stage);
+                }
+            }
+            $body['stages'] = $stages;
+        }
+        app(ThemeDraftService::class)->saveSectionDraft($section->section_key, [
+            'body' => json_encode($body, JSON_UNESCAPED_UNICODE),
             'is_active' => (bool) $state['is_active'],
         ]);
-        $styleSetting = SiteSetting::where('key', 'theme_'.$this->editingTheme)->firstOrFail();
-        $style = json_decode($styleSetting->draft_data['value'] ?? $styleSetting->value ?? '{}', true) ?: [];
-        $style['primary'] = $state['primary'];
-        $style['accent'] = $state['accent'];
-        $style['sections'][$section->section_key]['background_color'] = $state['background_color'];
-        $styleSetting->update(['draft_data' => ['value' => json_encode($style)]]);
         Notification::make()->title('تم حفظ المسودة')->success()->send();
     }
 
@@ -227,44 +223,24 @@ class ThemeEditor extends Page implements HasForms
         return URL::temporarySignedRoute('site.preview', now()->addMinutes(30), ['page' => $page->id, 'preview' => 1, 'theme' => $this->editingTheme]);
     }
 
+    private function sectionsForPage(SitePage $page)
+    {
+        $keys = collect($page->draft_data['sections'] ?? $page->sections ?? [])
+            ->map(fn ($value) => is_array($value) ? ($value['key'] ?? '') : $value);
+        if ($page->page_key === 'home') {
+            $keys->push('home');
+        }
+
+        return PageSection::whereIn('section_key', $keys)->whereNotIn('section_key', ['header', 'footer'])->orderBy('order')->get();
+    }
+
     public function getViewData(): array
     {
         $page = SitePage::where('page_key', $this->selectedPageKey)->firstOrFail();
-        $keys = collect($page->draft_data['sections'] ?? $page->sections ?? [])->map(fn ($v) => is_array($v) ? $v['key'] : $v);
-
-        $resources = [
-            'services' => [\App\Filament\Resources\ServiceResource::class, 'الخدمات الطبية', 'أسماء الخدمات وصورها وتفاصيلها.'],
-            'clinics' => [\App\Filament\Resources\ClinicBranchResource::class, 'الفروع ومواعيد العمل', 'العناوين وأرقام الحجز ومواعيد كل فرع.'],
-            'videos' => [\App\Filament\Resources\VideoResource::class, 'فيديوهات الدكتور', 'الفيديوهات وعناوينها وترتيب ظهورها.'],
-            'reviews' => [\App\Filament\Resources\TestimonialResource::class, 'آراء المريضات', 'التقييمات والآراء المعروضة بالموقع.'],
-            'articles' => [\App\Filament\Resources\ArticleResource::class, 'المقالات', 'كتابة المقالات وتعديلها ونشرها.'],
-        ];
-        $contentLinks = [];
-        foreach ($resources as $key => [$resource, $label, $description]) {
-            if ($resource::canViewAny()) {
-                $contentLinks[$key] = ['url' => $resource::getUrl(), 'label' => $label, 'description' => $description];
-            }
-        }
-        $pageLinks = [];
-        if (\App\Filament\Resources\SitePageResource::canViewAny()) {
-            $pageLinks[] = ['url' => \App\Filament\Resources\SitePageResource::getUrl(), 'label' => 'الصفحات والقوائم', 'description' => 'محتوى الصفحات، بيانات الدكتور، قائمة التصفح وترتيب الأقسام.'];
-        }
-        if (\App\Filament\Resources\SiteNavigationResource::canViewAny()) {
-            $pageLinks[] = ['url' => \App\Filament\Resources\SiteNavigationResource::getUrl(), 'label' => 'قوائم التصفح', 'description' => 'روابط القائمة العلوية والفوتر وترتيبها.'];
-        }
-        if (SiteSettings::canAccess()) {
-            $pageLinks[] = ['url' => SiteSettings::getUrl(), 'label' => 'التواصل وواتساب', 'description' => 'أرقام التواصل ورسالة الترحيب وحقوق النشر.'];
-        }
 
         return [
             'sitePages' => SitePage::all(),
-            'sections' => PageSection::when($page->page_key !== 'home', fn ($q) => $q->whereIn('section_key', $keys))->orderBy('order')->get(),
-            'themes' => ThemeDraftService::THEMES,
-            'revisions' => ThemeRevision::latest()->limit(20)->get(),
-            'pageLinks' => $pageLinks,
-            'contentLinks' => $contentLinks,
-            'selectedKey' => PageSection::find($this->selectedSectionId)?->section_key,
-            'publishedTheme' => SiteSetting::where('key', 'active_theme')->value('value'),
+            'sections' => $this->sectionsForPage($page),
         ];
     }
 }

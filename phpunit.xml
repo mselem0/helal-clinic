@@ -18,6 +18,7 @@
         </include>
     </source>
     <php>
+        <env name="TIBBINO_ENABLED" value="false" force="true"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_KEY" value="base64:MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

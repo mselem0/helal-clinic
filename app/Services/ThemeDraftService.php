@@ -13,6 +13,7 @@ use App\Models\SiteNavigation;
 use App\Models\SitePage;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
+use App\Models\TvInterview;
 use App\Models\ThemeRevision;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Model;
@@ -42,7 +43,7 @@ class ThemeDraftService
             throw ValidationException::withMessages(['slug' => 'رابط هذه الصفحة ثابت.']);
         }
         $keys = collect($copy->sections ?? [])->map(fn ($v) => is_array($v) ? ($v['key'] ?? '') : $v);
-        if ($keys->duplicates()->isNotEmpty() || PageSection::whereIn('section_key', $keys)->whereNotIn('section_key', ['header', 'footer', 'home'])->count() !== $keys->count()) {
+        if ($keys->duplicates()->isNotEmpty() || PageSection::whereIn('section_key', $keys)->whereNotIn('section_key', $page->page_key === 'home' ? ['header', 'footer'] : ['header', 'footer', 'home'])->count() !== $keys->count()) {
             throw ValidationException::withMessages(['sections' => 'اختاري أقسامًا متاحة دون تكرار.']);
         }
     }
@@ -59,7 +60,7 @@ class ThemeDraftService
             'documents' => collect(self::PUBLISHED_MODELS)->mapWithKeys(fn ($class) => [$class => $class::all()->map(fn ($model) => collect($model->attributesToArray())->except('draft_data')->all())->all()])->all(),
             'sections' => PageSection::all()->map->only(['id', 'section_key', 'section_label', 'title', 'subtitle', 'body', 'button_text', 'button_url', 'background_color', 'order', 'is_active'])->all(),
             'settings' => SiteSetting::where('group', 'appearance')->get()->map->only(['key', 'value', 'group'])->all(),
-            'content' => collect([Service::class, ClinicBranch::class, Video::class, Testimonial::class, Article::class])->mapWithKeys(fn ($class) => [$class => $class::all()->map(fn ($model) => $model->attributesToArray())->all()])->all(),
+            'content' => collect([Service::class, ClinicBranch::class, Video::class, TvInterview::class, Testimonial::class, Article::class])->mapWithKeys(fn ($class) => [$class => $class::all()->map(fn ($model) => $model->attributesToArray())->all()])->all(),
         ];
     }
 
@@ -142,7 +143,7 @@ class ThemeDraftService
                 }
             }
             foreach ($revision->content_snapshot['content'] ?? [] as $class => $rows) {
-                abort_unless(in_array($class, [Service::class, ClinicBranch::class, Video::class, Testimonial::class, Article::class], true), 422);
+                abort_unless(in_array($class, [Service::class, ClinicBranch::class, Video::class, TvInterview::class, Testimonial::class, Article::class], true), 422);
                 $ids = array_column($rows, 'id');
                 $flag = $class === Article::class ? 'is_published' : 'is_active';
                 $class::whereNotIn('id', $ids)->update([$flag => false]);

@@ -24,14 +24,14 @@ class WebsiteBookingRequestExport
             }
             $row++;
         };
-        $write(['الرقم', 'الاسم', 'الهاتف', 'تاريخ الزيارة', 'الخدمة', 'الفرع', 'الحالة', 'ملاحظات الإدارة', 'المصدر', 'وقت الطلب']);
+        $write(['الرقم', 'الاسم', 'الهاتف', 'تاريخ الزيارة', 'الخدمة', 'الفرع', 'الحالة', 'ملاحظات الإدارة', 'المصدر', 'وقت الطلب', 'نوع الزيارة', 'فترة الزيارة المعروضة', 'وقت تأكيد قراءة الموعد', 'الساعة المختارة (القاهرة)']);
         foreach ((clone $query)->cursor() as $record) {
-            $write([$record->id, $record->patient_name, $record->patient_phone, $record->booking_date->toDateString(), $record->service_name, $record->branch_name, $record::STATUSES[$record->status] ?? $record->status, $record->admin_notes, $record->source_host, $record->created_at->timezone('Africa/Cairo')->format('Y-m-d H:i:s')]);
+            $write([$record->id, $record->patient_name, $record->patient_phone, $record->booking_date->toDateString(), $record->service_name, $record->branch_name, $record::STATUSES[$record->status] ?? $record->status, $record->admin_notes, $record->source_host, $record->created_at->timezone('Africa/Cairo')->format('Y-m-d H:i:s'), $record::VISIT_TYPES[$record->visit_type] ?? '', $record->visit_window, $record->visit_window_acknowledged_at?->timezone('Africa/Cairo')->format('Y-m-d H:i:s'), $record->booking_time]);
         }
         $sheet->freezePane('A2');
-        $sheet->setAutoFilter('A1:J'.($row - 1));
-        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
-        foreach (range('A', 'J') as $column) {
+        $sheet->setAutoFilter('A1:N'.($row - 1));
+        $sheet->getStyle('A1:N1')->getFont()->setBold(true);
+        foreach (range('A', 'N') as $column) {
             $sheet->getColumnDimension($column)->setWidth(24);
         }
 

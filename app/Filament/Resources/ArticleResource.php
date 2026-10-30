@@ -27,9 +27,6 @@ class ArticleResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\FileUpload::make('image_path')->label('صورة البطاقة')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(51200),
-                Forms\Components\TextInput::make('category')->label('التصنيف')->maxLength(1000),
-
                 Forms\Components\Section::make('معلومات المقال')
                     ->schema([
                         Forms\Components\TextInput::make('title')
@@ -47,6 +44,8 @@ class ArticleResource extends Resource
                             ->label('المحتوى')
                             ->columnSpanFull(),
 
+                        Forms\Components\FileUpload::make('image_path')->label('صورة البطاقة')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(51200),
+
                         Forms\Components\SpatieMediaLibraryFileUpload::make('image')
                             ->label('الصورة البارزة')
                             ->collection('article-image')
@@ -58,7 +57,8 @@ class ArticleResource extends Resource
                             ->default(true),
                     ])->columns(2),
 
-                Forms\Components\Section::make('التأليف والمراجعة الطبية')->description('استخدمي أسماء ومصادر وتواريخ مراجعة فعلية فقط.')->schema([
+                Forms\Components\Section::make('بيانات إضافية للمقال')->description('التصنيف، التأليف والمراجعة الطبية، المصادر وبيانات المشاركة.')->schema([
+                    Forms\Components\TextInput::make('category')->label('التصنيف')->maxLength(1000),
                     Forms\Components\TextInput::make('author_name')->label('كاتب المقال')->maxLength(255),
                     Forms\Components\TextInput::make('medical_reviewer')->label('المراجع الطبي')->maxLength(255)->helperText('يظهر اسم المراجع في المقال وفي البيانات المنظمة للصفحة الطبية؛ أدخلي اسم من راجع المحتوى فعليًا.'),
                     Forms\Components\DateTimePicker::make('published_at')->label('تاريخ النشر')->helperText('التاريخ المستقبلي يخفي المقال حتى موعده.'),
@@ -66,8 +66,8 @@ class ArticleResource extends Resource
                     Forms\Components\Repeater::make('sources')->defaultItems(0)->label('المصادر')->helperText('روابط المصادر الظاهرة للقارئ تُضاف أيضًا إلى بيانات المقال المنظمة. استخدمي روابط HTTP أو HTTPS موثوقة.')->schema([Forms\Components\TextInput::make('title')->label('المصدر')->required(), Forms\Components\TextInput::make('url')->label('الرابط')->url()->required()]),
                     Forms\Components\Select::make('service_ids')->label('الخدمات المرتبطة')->multiple()->options(fn () => Service::pluck('name', 'id')),
                     Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
-                ]),
-                Forms\Components\Section::make('SEO')->hidden()
+                ])->collapsible()->collapsed(),
+                Forms\Components\Section::make('بيانات تحسين الظهور في البحث')
                     ->schema([
                         Forms\Components\TextInput::make('meta_title')
                             ->label('Meta Title')
@@ -75,7 +75,7 @@ class ArticleResource extends Resource
                         Forms\Components\Textarea::make('meta_description')
                             ->label('Meta Description')
                             ->maxLength(255),
-                    ])->collapsible(),
+                    ])->collapsible()->collapsed(),
             ]);
     }
 

@@ -18,3 +18,22 @@
 /public/css
 
 /.phpunit.result.cache
+/.e2e-booking-ads
+/.e2e-booking-confirmation
+/.e2e-booking-final
+/.e2e-booking-main
+/.e2e-confirmation-copy
+/.e2e-confirmation-design
+/.e2e-confirmation-spacing
+*.zip
+/.e2e-content-polish
+/.e2e-simple-admin-main
+/.e2e-simple-admin
+/.e2e-website-requests-main
+/.e2e-website-requests
+/.playwright-cli
+/outputs
+/postman
+e2e.config.ts
+/docs
+e2e.config.ts

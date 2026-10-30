@@ -30,8 +30,6 @@ class TestimonialResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('source_url')->label('رابط مصدر التقييم')->maxLength(1000)->url(),
-
                 Forms\Components\Section::make('بيانات رأي المريض')
                     ->description('إضافة تجربة أو رأي لمريض لعرضها في الموقع لبناء الثقة.')
                     ->schema([
@@ -40,19 +38,6 @@ class TestimonialResource extends Resource
                             ->required()
                             ->placeholder('أحمد م.')
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('patient_initial')
-                            ->label('الحرف الأول (للرمز)')
-                            ->placeholder('أ')
-                            ->maxLength(1),
-                        Forms\Components\Select::make('avatar_color')
-                            ->label('لون خلفية الرمز')
-                            ->options([
-                                'cyan' => 'سماوي',
-                                'navy' => 'كحلي',
-                                'green' => 'أخضر',
-                                'purple' => 'بنفسجي',
-                            ])
-                            ->default('cyan'),
                         Forms\Components\Select::make('rating')
                             ->label('التقييم')
                             ->options([
@@ -75,6 +60,24 @@ class TestimonialResource extends Resource
                         Forms\Components\Hidden::make('order')
                             ->default(0),
                     ])->columns(2),
+                Forms\Components\Section::make('تفاصيل إضافية')
+                    ->description('مظهر رمز المريض ورابط مصدر التقييم.')
+                    ->schema([
+                        Forms\Components\TextInput::make('patient_initial')
+                            ->label('الحرف الأول (للرمز)')
+                            ->placeholder('أ')
+                            ->maxLength(1),
+                        Forms\Components\Select::make('avatar_color')
+                            ->label('لون خلفية الرمز')
+                            ->options([
+                                'cyan' => 'سماوي',
+                                'navy' => 'كحلي',
+                                'green' => 'أخضر',
+                                'purple' => 'بنفسجي',
+                            ])
+                            ->default('cyan'),
+                        Forms\Components\TextInput::make('source_url')->label('رابط مصدر التقييم')->maxLength(1000)->url(),
+                    ])->columns(2)->collapsible()->collapsed(),
             ]);
     }
 

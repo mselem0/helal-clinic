@@ -96,6 +96,26 @@ function resetVideoDialog(){
 }
 videoDialog?.addEventListener('close',resetVideoDialog);
 videoDialog?.querySelector('.close').addEventListener('click',resetVideoDialog);
+const tvInterviewDialog=document.querySelector('#tv-interview-dialog');
+let tvInterviewTrigger=null;
+document.addEventListener('error',event=>{if(event.target instanceof HTMLImageElement&&event.target.closest('.tv-interview-cover'))event.target.remove();},true);
+function closeTvInterview(){tvInterviewDialog?.querySelector('[data-tv-interview-player]')?.replaceChildren();tvInterviewTrigger?.focus({preventScroll:true});tvInterviewTrigger=null;}
+document.querySelectorAll('[data-tv-interview-id]').forEach(button=>button.addEventListener('click',()=>{
+ const id=button.dataset.tvInterviewId||'';
+ if(!/^[A-Za-z0-9_-]{11}$/.test(id)||!tvInterviewDialog)return;
+ tvInterviewTrigger=button;
+ const title=button.dataset.tvInterviewTitle||'لقاء تلفزيوني';
+ tvInterviewDialog.querySelector('#tv-interview-dialog-title').textContent=title;
+ const frame=document.createElement('iframe');
+ frame.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(id)+'?autoplay=1&playsinline=1';
+ frame.title=title;frame.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';frame.allowFullscreen=true;
+ frame.referrerPolicy='strict-origin-when-cross-origin';frame.loading='eager';
+ tvInterviewDialog.querySelector('[data-tv-interview-player]').replaceChildren(frame);
+ const link=tvInterviewDialog.querySelector('[data-tv-interview-link]');link.href='https://www.youtube.com/watch?v='+encodeURIComponent(id);link.hidden=false;
+ tvInterviewDialog.showModal();tvInterviewDialog.querySelector('.tv-interview-close').focus({preventScroll:true});
+}));
+tvInterviewDialog?.querySelector('.tv-interview-close').addEventListener('click',()=>tvInterviewDialog.close());
+tvInterviewDialog?.addEventListener('close',closeTvInterview);
 const form=document.querySelector('#booking-form');
 let showBookingStep=()=>{};
 if(form){
@@ -117,48 +137,58 @@ if(form){
   const valid=entry&&/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.from||'')&&/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.to||'')&&(entry.to>entry.from||(entry.to==='00:00'&&entry.from>'00:00'));
   if(!open||!valid)return {available:false,label:'العيادة مغلقة في اليوم ده. اختاري يومًا آخر.'};
   const format=time=>{if(time==='00:00')return '12 منتصف الليل';const [hour,minute]=time.split(':').map(Number);return (hour%12||12)+':'+String(minute).padStart(2,'0')+' '+(hour<12?'صباحًا':'مساءً');};
-  return {available:true,label:'من '+format(entry.from)+' إلى '+format(entry.to)};
+  return {available:true,from:entry.from,to:entry.to,label:'من '+format(entry.from)+' إلى '+format(entry.to)};
  }
- function updateHours(){const hours=document.querySelector('#booking-hours');if(hours)hours.textContent=date.value?availability(date.value).label:(document.querySelector('#calendar-days button:not([disabled])')?'اختاري اليوم لعرض مواعيد العيادة.':'لا توجد أيام متاحة في الشهر ده. جرّبي شهرًا آخر.');}
- document.querySelector('#clinic').addEventListener('change',()=>{date.value='';renderCalendar();});
+ const timeField=document.querySelector('#booking-time-field'),timeSlots=document.querySelector('#booking-time-slots');
+ const timeEnabled=()=>{const s=window.helalBooking.schedules?.[document.querySelector('#clinic').value];return Boolean(s?.enabled&&s?.time_enabled);};
+ function slotList(range){
+  const toMinutes=t=>Number(t.slice(0,2))*60+Number(t.slice(3));
+  const close=range.to==='00:00'?1440:toMinutes(range.to);
+  let start=toMinutes(range.from);if(start%30)start+=30-start%30;
+  const list=[];for(let slot=start;slot<close;slot+=30)list.push(String(Math.floor(slot/60)).padStart(2,'0')+':'+String(slot%60).padStart(2,'0'));
+  return list;
+ }
+ function updateTimePicker(){
+  const day=availability(date.value),enabled=Boolean(date.value&&day.available&&timeEnabled());
+  timeField.hidden=!enabled;
+  if(!enabled){selectedTime='';timeSlots.replaceChildren();return;}
+  const slots=slotList(day);
+  timeSlots.replaceChildren(...slots.map(slot=>{
+   const button=document.createElement('button');button.type='button';button.dataset.time=slot;button.textContent=slot;button.setAttribute('aria-pressed',String(slot===selectedTime));
+   button.addEventListener('click',()=>{selectedTime=slot;timeSlots.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.time===slot)));});
+   return button;}));
+  if(selectedTime&&!slots.includes(selectedTime))selectedTime='';
+ }
+ function updateHours(){updateTimePicker();const hours=document.querySelector('#booking-hours');if(hours)hours.textContent=date.value?availability(date.value).label:(document.querySelector('#calendar-days button:not([disabled])')?'اختاري اليوم لعرض مواعيد العيادة.':'لا توجد أيام متاحة في الشهر ده. جرّبي شهرًا آخر.');}
+ document.querySelector('#clinic').addEventListener('change',()=>{date.value='';selectedTime='';renderCalendar();});
  serviceSelect.addEventListener('change',syncFertilityQuestions);
  syncFertilityQuestions();
- function summary(){ const clinic=document.querySelector('#clinic'),service=document.querySelector('#service');let text=clinic.selectedOptions[0].textContent+' · '+service.selectedOptions[0].textContent+'\n'+offer+' · '+date.value+' · '+availability(date.value).label;if(isFertility()){for(const [name,label] of [['previous_pregnancy','حمل سابق'],['pregnancy_related_surgery','عملية مرتبطة بالحمل']]){const answer=form.querySelector(`input[name="${name}"]:checked`)?.value;if(answer)text+='\n'+label+': '+(answer==='yes'?'نعم':'لا');}}return text; }
- showBookingStep=function(step,focusHeading=false){document.querySelector('.appointment-actions').hidden=false;document.querySelector('.booking-progress').hidden=false;bookingStep=step;errorBox.textContent='';const stepCaption=document.querySelector('#booking-step-caption');if(stepCaption)stepCaption.textContent='الخطوة '+String(step)+' من 3';const stepHint=form.querySelector('.booking-step-hint');if(stepHint)stepHint.textContent=JSON.parse(stepHint.dataset.hints)[step-1];form.querySelectorAll('[data-step-label]').forEach(label=>{if(Number(label.dataset.stepLabel)===step)label.setAttribute('aria-current','step');else label.removeAttribute('aria-current');label.classList.toggle('completed',Number(label.dataset.stepLabel)<step);});document.querySelectorAll('.booking-step').forEach(el=>el.hidden=Number(el.dataset.step)!==step);document.querySelectorAll('[data-step-label]').forEach(el=>el.classList.toggle('active',Number(el.dataset.stepLabel)===step));document.querySelector('#booking-back').hidden=step===1;document.querySelector('#booking-next').hidden=step===3;document.querySelector('#booking-confirm').hidden=step!==3;document.querySelector('#patient').required=step===3;document.querySelector('#appointment-phone').required=step===3;if(step===3)document.querySelector('#appointment-summary').textContent=summary();if(focusHeading&&bookingHeading){bookingHeading.focus({preventScroll:true});bookingHeading.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}};
- function renderCalendar(){document.querySelector('#calendar-month').textContent=calendarMonth.toLocaleDateString('ar-EG-u-nu-latn',{month:'long',year:'numeric'});const grid=document.querySelector('#calendar-days');grid.replaceChildren();const offset=(calendarMonth.getDay()+1)%7;for(let i=0;i<offset;i++)grid.append(document.createElement('span'));const days=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0).getDate();for(let d=1;d<=days;d++){const value=[calendarMonth.getFullYear(),String(calendarMonth.getMonth()+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-');const button=document.createElement('button');button.type='button';button.textContent=String(d);button.disabled=value<date.min||!availability(value).available;button.dataset.date=value;button.setAttribute('aria-label',new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),d).toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'long',year:'numeric'}));button.setAttribute('aria-pressed',String(date.value===value));button.addEventListener('click',()=>{date.value=value;renderCalendar();});grid.append(button);}updateHours();}
+ function summary(){ const clinic=document.querySelector('#clinic'),service=document.querySelector('#service');let text=clinic.selectedOptions[0].textContent+' · '+service.selectedOptions[0].textContent+'\n'+offer+' · '+date.value+(selectedTime?' · الساعة '+selectedTime+' بتوقيت القاهرة':' · '+availability(date.value).label);if(isFertility()){for(const [name,label] of [['previous_pregnancy','حمل سابق'],['pregnancy_related_surgery','عملية مرتبطة بالحمل']]){const answer=form.querySelector(`input[name="${name}"]:checked`)?.value;if(answer)text+='\n'+label+': '+(answer==='yes'?'نعم':'لا');}}return text; }
+ showBookingStep=function(step,focusHeading=false){document.querySelector('.appointment-actions').hidden=false;document.querySelector('.booking-progress').hidden=false;bookingStep=step;errorBox.textContent='';const stepCaption=document.querySelector('#booking-step-caption');if(stepCaption)stepCaption.textContent='الخطوة '+String(step)+' من 3';const stepHint=form.querySelector('.booking-step-hint');if(stepHint)stepHint.textContent=JSON.parse(stepHint.dataset.hints)[step-1];form.querySelectorAll('[data-step-label]').forEach(label=>{if(Number(label.dataset.stepLabel)===step)label.setAttribute('aria-current','step');else label.removeAttribute('aria-current');label.classList.toggle('completed',Number(label.dataset.stepLabel)<step);});document.querySelectorAll('.booking-step').forEach(el=>el.hidden=Number(el.dataset.step)!==step);document.querySelectorAll('[data-step-label]').forEach(el=>el.classList.toggle('active',Number(el.dataset.stepLabel)===step));document.querySelector('#booking-back').hidden=step===1;document.querySelector('#booking-next').hidden=step===3;document.querySelector('#booking-confirm').hidden=step!==3;document.querySelector('#patient').required=step===3;document.querySelector('#appointment-phone').required=step===3;if(step===3){document.querySelector('#appointment-summary').textContent=summary();document.querySelector('#visit-window-acknowledged').checked=false;document.querySelector('#visit-window-confirmation').textContent=selectedTime?'الساعة المختارة '+selectedTime+' بتوقيت القاهرة':availability(date.value).label;}if(focusHeading&&bookingHeading){bookingHeading.focus({preventScroll:true});bookingHeading.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}};
+ function renderCalendar(){document.querySelector('#calendar-month').textContent=calendarMonth.toLocaleDateString('ar-EG-u-nu-latn',{month:'long',year:'numeric'});const grid=document.querySelector('#calendar-days');grid.replaceChildren();const offset=(calendarMonth.getDay()+1)%7;for(let i=0;i<offset;i++)grid.append(document.createElement('span'));const days=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0).getDate();for(let d=1;d<=days;d++){const value=[calendarMonth.getFullYear(),String(calendarMonth.getMonth()+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-');const button=document.createElement('button');button.type='button';button.textContent=String(d);button.disabled=value<date.min||!availability(value).available;button.dataset.date=value;button.setAttribute('aria-label',new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),d).toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'long',year:'numeric'}));button.setAttribute('aria-pressed',String(date.value===value));button.addEventListener('click',()=>{date.value=value;selectedTime='';renderCalendar();});grid.append(button);}updateHours();}
  document.querySelectorAll('[data-offer]').forEach(button=>button.addEventListener('click',()=>{offer=button.dataset.offer;document.querySelectorAll('[data-offer]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));}));
- document.querySelectorAll('[data-time]').forEach(button=>button.addEventListener('click',()=>{selectedTime=button.dataset.time;document.querySelectorAll('[data-time]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));}));
  document.querySelector('#month-prev').addEventListener('click',()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);renderCalendar();});
  document.querySelector('#month-next').addEventListener('click',()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);renderCalendar();});
- document.querySelector('#booking-next').addEventListener('click',()=>{if(bookingStep===1&&(!document.querySelector('#clinic').value||!document.querySelector('#service').value)){errorBox.textContent='اختاري العيادة والخدمة أولًا.';return;}if(bookingStep===2&&(!date.value||!availability(date.value).available)){errorBox.textContent='اختاري اليوم المفضل أولًا.';return;}showBookingStep(bookingStep+1,true);});
+ document.querySelector('#booking-next').addEventListener('click',()=>{if(bookingStep===1&&(!document.querySelector('#clinic').value||!document.querySelector('#service').value)){errorBox.textContent='اختاري العيادة والخدمة أولًا.';return;}if(bookingStep===2&&(!date.value||!availability(date.value).available)){errorBox.textContent='اختاري اليوم المفضل أولًا.';return;}if(bookingStep===2&&timeEnabled()&&!selectedTime){errorBox.textContent='اختاري موعدًا من مواعيد الفرع.';return;}showBookingStep(bookingStep+1,true);});
  document.querySelector('#booking-back').addEventListener('click',()=>showBookingStep(bookingStep-1,true));
  form.addEventListener('submit',async event=>{
   event.preventDefault();if(submitting)return;if(bookingStep!==3 || !form.reportValidity())return;
   if(!document.querySelector('#patient').value.trim()){errorBox.textContent='اكتبي الاسم أولًا.';return;}
   const submit=document.querySelector('#booking-confirm');
-  // Reserve the new tab during the click so async validation does not trigger popup blocking.
-  const handoff=window.open('about:blank','_blank');
-  if(!handoff){errorBox.textContent='اسمحي بفتح تاب جديدة في المتصفح، وبعدها حاولي الإرسال مرة تانية.';return;}
-  handoff.opener=null;
   submitting=true;submit.disabled=true;errorBox.textContent='';
-  const payload={patient_name:document.querySelector('#patient').value.trim(),patient_phone:document.querySelector('#appointment-phone').value,booking_date:date.value,service_id:document.querySelector('#service').value,clinic_branch_id:document.querySelector('#clinic').value};
+  const payload={patient_name:document.querySelector('#patient').value.trim(),patient_phone:document.querySelector('#appointment-phone').value,booking_date:date.value,service_id:document.querySelector('#service').value,clinic_branch_id:document.querySelector('#clinic').value,visit_type:offer==='متابعة'?'follow_up':'first_visit',visit_window:availability(date.value).label,visit_window_acknowledged:document.querySelector('#visit-window-acknowledged').checked};
+  if(timeEnabled())payload.booking_time=selectedTime;
   if(isFertility())Object.assign(payload,{previous_pregnancy:form.querySelector('input[name="previous_pregnancy"]:checked')?.value||null,pregnancy_related_surgery:form.querySelector('input[name="pregnancy_related_surgery"]:checked')?.value||null});
+  if(!payload.visit_window_acknowledged){errorBox.textContent='برجاء تأكيد قراءة فترة الزيارة.';submitting=false;submit.disabled=false;return;}
   const signature=JSON.stringify(payload);if(signature!==requestPayload){requestPayload=signature;requestKey=crypto.randomUUID();}payload.request_key=requestKey;
-  let requestSucceeded=false;
   try {
    const response=await fetch(window.helalBooking.url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify(payload)});
 
    const result=await response.json();if(!response.ok)throw new Error(Object.values(result.errors || {}).flat()[0] || result.message || 'تعذر إرسال الطلب. حاولي مجددًا.');
-   if(!result.whatsapp_url)throw new Error('تعذر تجهيز رابط واتساب. حاولي مجددًا.');
-   const whatsappUrl=new URL(result.whatsapp_url);
-   if(whatsappUrl.protocol!=='https:'||whatsappUrl.hostname!=='wa.me')throw new Error('تعذر تجهيز رابط واتساب. حاولي مجددًا.');
    const confirmationUrl=new URL(result.confirmation_url,location.origin);
    if(confirmationUrl.origin!==location.origin||confirmationUrl.pathname!=='/booking-confirmation'||confirmationUrl.search||confirmationUrl.hash)throw new Error('تعذر تجهيز صفحة متابعة الطلب. حاولي مجددًا.');
-   if(handoff.closed)throw new Error('تم إغلاق تبويب واتساب. حاولي مجددًا لإكمال إرسال طلبكِ.');
-   handoff.location.href=whatsappUrl.href;
-   requestSucceeded=true;
    location.assign(confirmationUrl.href);
-  } catch(error){if(!requestSucceeded&&!handoff.closed)handoff.close();errorBox.textContent=error.message || 'تعذر الاتصال. حاولي مجددًا.';} finally {submitting=false;submit.disabled=false;}
+  } catch(error){errorBox.textContent=error.message || 'تعذر الاتصال. حاولي مجددًا.';} finally {submitting=false;submit.disabled=false;}
  });
  showBookingStep(1);renderCalendar();
 }
@@ -264,12 +294,17 @@ document.querySelectorAll('select').forEach((select,selectIndex)=>{
  const arrow=document.createElementNS('http://www.w3.org/2000/svg','svg');arrow.setAttribute('viewBox','0 0 24 24');arrow.setAttribute('aria-hidden','true');arrow.innerHTML='<path d="m6 9 6 6 6-6"/>';trigger.append(text,arrow);
  const list=document.createElement('div');list.className='clinic-select-options';list.id=trigger.id+'-options';list.setAttribute('role','listbox');list.setAttribute('aria-label',label?.textContent||select.getAttribute('aria-label')||'الاختيارات');list.hidden=true;trigger.setAttribute('aria-controls',list.id);
  let active=select.selectedIndex,search='',searchTimer;
- const options=[...select.options].map((option,index)=>{
+ let options=[];
+ function rebuildOptions(){
+ list.replaceChildren();
+ options=[...select.options].map((option,index)=>{
   const row=document.createElement('div');row.id=list.id+'-'+index;row.className='clinic-select-option';row.tabIndex=-1;row.setAttribute('role','option');row.textContent=option.textContent;row.setAttribute('aria-disabled',String(option.disabled));
   row.addEventListener('click',()=>choose(index));list.append(row);return row;
  });
+ active=select.selectedIndex;close();sync();
+ }
  function highlight(index){active=index;options.forEach((row,i)=>row.classList.toggle('is-active',i===index));if(index>=0){trigger.setAttribute('aria-activedescendant',options[index].id);options[index].scrollIntoView({block:'nearest'});}}
- function sync(){text.textContent=select.selectedOptions[0]?.textContent||'';options.forEach((row,i)=>row.setAttribute('aria-selected',String(i===select.selectedIndex)));trigger.classList.toggle('is-placeholder',!select.value);}
+ function sync(){trigger.disabled=select.disabled;trigger.setAttribute('aria-required',String(select.required));if(select.disabled)close();text.textContent=select.selectedOptions[0]?.textContent||'';options.forEach((row,i)=>row.setAttribute('aria-selected',String(i===select.selectedIndex)));trigger.classList.toggle('is-placeholder',!select.value);}
  function close(){list.hidden=true;trigger.setAttribute('aria-expanded','false');trigger.removeAttribute('aria-activedescendant');wrapper.classList.remove('is-open');}
  function open(){document.dispatchEvent(new CustomEvent('clinic-select-open',{detail:wrapper}));list.hidden=false;const rect=trigger.getBoundingClientRect(),below=innerHeight-rect.bottom,above=rect.top;const upwards=below<Math.min(240,list.scrollHeight+14)&&above>below;wrapper.classList.toggle('opens-up',upwards);list.style.maxHeight=Math.min(240,Math.max(88,(upwards?above:below)-12))+'px';wrapper.classList.add('is-open');trigger.setAttribute('aria-expanded','true');highlight(select.selectedIndex);}
  function choose(index){if(select.options[index].disabled)return;select.selectedIndex=index;select.dispatchEvent(new Event('input',{bubbles:true}));select.dispatchEvent(new Event('change',{bubbles:true}));close();trigger.focus({preventScroll:true});}
@@ -291,7 +326,9 @@ document.querySelectorAll('select').forEach((select,selectIndex)=>{
  select.addEventListener('invalid',event=>{event.preventDefault();trigger.focus();trigger.setAttribute('aria-invalid','true');});
  select.addEventListener('change',()=>trigger.removeAttribute('aria-invalid'));
  select.form?.addEventListener('reset',()=>queueMicrotask(()=>{sync();close();trigger.removeAttribute('aria-invalid');}));
- wrapper.append(trigger,list);select.hidden=true;select.tabIndex=-1;sync();
+ wrapper.append(trigger,list);select.hidden=true;select.tabIndex=-1;rebuildOptions();
+ // Async catalogues replace native options after enhancement; mirror them and disabled state.
+ new MutationObserver(rebuildOptions).observe(select,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['disabled','required','selected','label','value']});
 });
 
 // Keep visible introduction slides rotating unless reduced motion is requested.

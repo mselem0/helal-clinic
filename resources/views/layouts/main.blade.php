@@ -32,7 +32,7 @@
     $stage['poster'] = $video ? \App\Support\ContentUrl::resolve($video->getFirstMediaUrl('video-thumbnail') ?: $video->image_path) : '';
     return $stage;
 }))
-@php($bookingSchedules = $branches->mapWithKeys(fn ($branch) => [(string) $branch->id => ['enabled' => (bool) $branch->booking_schedule_enabled, 'weekly' => $branch->weekly_schedule ?? [], 'exceptions' => $branch->schedule_exceptions ?? [], 'legacy_hours' => $branch->working_hours]]))
+@php($bookingSchedules = $branches->mapWithKeys(fn ($branch) => [(string) $branch->id => ['enabled' => (bool) $branch->booking_schedule_enabled, 'time_enabled' => (bool) $branch->booking_time_enabled, 'weekly' => $branch->weekly_schedule ?? [], 'exceptions' => $branch->schedule_exceptions ?? [], 'legacy_hours' => $branch->working_hours]]))
 <script>window.helalJourney = @json($journeyWithVideoSources); window.helalBooking = @json(['url' => route('bookings.store'), 'enabled' => $bookingEnabled, 'schedules' => $bookingSchedules]);</script>
 <script src="{{ asset('journey-card.js') }}?v={{ substr(hash_file('sha256', public_path('journey-card.js')), 0, 12) }}" defer></script>
 <script src="{{ asset('helal.js') }}?v={{ substr(hash_file('sha256', public_path('helal.js')), 0, 12) }}" defer></script></body></html>

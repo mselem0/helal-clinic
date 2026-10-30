@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\SiteSettingHelper;
+use App\Jobs\SyncTibbinoBookingRequest;
 use App\Models\Article;
 use App\Models\ClinicBranch;
 use App\Models\HeroSetting;
@@ -11,21 +12,23 @@ use App\Models\Service;
 use App\Models\SitePage;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
+use App\Models\TvInterview;
 use App\Models\Video;
 use App\Models\WebsiteBookingRequest;
 use App\Services\PageSeo;
 use App\Services\SiteView;
 use App\Services\ThemeDraftService;
+use App\Services\TibbinoBooking;
 use App\Support\BranchSchedule;
 use App\Support\ClinicFeatures;
 use App\Support\DisplayNumbers;
 use Illuminate\Database\UniqueConstraintViolationException;
-
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Modules\Booking\Models\Booking;
 use Modules\PatientCore\Models\Patient;
@@ -78,6 +81,7 @@ class HomeController extends Controller
         }
 
         $videoLibrary = Video::where('is_active', true)->orderBy('order')->get();
+        $tvInterviews = TvInterview::where('is_active', true)->orderBy('order')->orderBy('id')->get();
 
         return response(DisplayNumbers::html(view($extra['siteView'] ?? ($page->page_key === 'home' ? 'helal.home' : 'helal.page'), array_merge([
             'page' => $page, 'pageKey' => $page->page_key,
@@ -85,6 +89,7 @@ class HomeController extends Controller
             'pageSections' => $pageSections, 'sections' => $sections, 'theme' => $theme, 'style' => $style,
             'videos' => $page->page_key === 'home' ? $videoLibrary->take(3) : $videoLibrary,
             'videoLibrary' => $videoLibrary,
+            'tvInterviews' => $tvInterviews,
             'testimonials' => Testimonial::where('is_active', true)->orderBy('order')->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
             'articles' => Article::where('is_published', true)->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now()))->latest()->when($page->page_key === 'home', fn ($q) => $q->limit(3))->get(),
             'services' => Service::where('is_active', true)->orderBy('order')->get(),
@@ -100,13 +105,14 @@ class HomeController extends Controller
             return redirect('/appointment')->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', 'noindex, nofollow');
         }
         $stored = $request->session()->pull('booking_confirmation_stored') === true;
+        $branchWhatsapp = $request->session()->pull('booking_confirmation_branch_whatsapp');
         $page = new SitePage([
             'page_key' => 'booking-confirmation', 'slug' => 'booking-confirmation',
-            'title' => 'طلب موعدكِ جاهز', 'sections' => [], 'robots' => 'noindex_nofollow',
+            'title' => 'تم استلام طلب الحجز', 'sections' => [], 'robots' => 'noindex_nofollow',
         ]);
 
         return $this->renderSite($request, $drafts, $page, [
-            'siteView' => 'helal.booking-confirmation', 'bookingStored' => $stored,
+            'siteView' => 'helal.booking-confirmation', 'bookingStored' => $stored, 'branchWhatsapp' => $branchWhatsapp,
         ])->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
@@ -126,14 +132,18 @@ class HomeController extends Controller
         }
         $data = $request->validate([
             'request_key' => ['nullable', 'uuid'],
+            'booking_time' => ['nullable', 'date_format:H:i'],
+            'visit_type' => ['nullable', 'in:first_visit,follow_up'],
+            'visit_window' => ['required_with:visit_type', 'nullable', 'string', 'max:255'],
+            'visit_window_acknowledged' => $request->filled('visit_type') ? ['required', 'accepted'] : ['sometimes', 'accepted'],
             'patient_name' => ['required', 'string', 'max:70'],
             'patient_phone' => ['required', 'string', 'regex:/^[0-9]{7,15}$/'],
             'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:'.now('Africa/Cairo')->toDateString()],
             'service_id' => ['required', 'integer', 'exists:services,id'],
             'clinic_branch_id' => ['required', 'integer', 'exists:clinic_branches,id'],
         ]);
+        $data['request_key'] = $data['request_key'] ?? (string) Str::uuid();
         $service = Service::where('is_active', true)->findOrFail($data['service_id']);
-        // Fertility intake answers are transient and are only added to the WhatsApp handoff.
         $fertilityAnswers = [];
         if ($service->slug === 'service-2') {
             $fertilityAnswers = Validator::make($request->only(['previous_pregnancy', 'pregnancy_related_surgery']), [
@@ -141,16 +151,31 @@ class HomeController extends Controller
                 'pregnancy_related_surgery' => ['nullable', 'in:yes,no'],
             ])->validate();
         }
+        $answerLabels = ['previous_pregnancy' => 'حمل سابق', 'pregnancy_related_surgery' => 'عملية مرتبطة بالحمل'];
+        $answerParts = [];
+        foreach ($answerLabels as $field => $label) {
+            if (filled($fertilityAnswers[$field] ?? null)) {
+                $answerParts[] = $label.': '.($fertilityAnswers[$field] === 'yes' ? 'نعم' : 'لا');
+            }
+        }
+        $answerNotes = $answerParts ? 'إجابات المريضة عند الحجز: '.implode('، ', $answerParts) : null;
         $branch = ClinicBranch::where('is_active', true)->findOrFail($data['clinic_branch_id']);
         $availability = BranchSchedule::forDate($branch, $data['booking_date']);
         if (! $availability['available']) {
             throw ValidationException::withMessages(['booking_date' => 'الفرع غير متاح في اليوم المختار. اختاري يومًا آخر.']);
         }
-        $number = SiteSettingHelper::formatWhatsappNumber(trim($branch->phone ?? '') ?: SiteSettingHelper::get('wa_number', HeroSetting::first()?->whatsapp_number ?? ''));
-        abort_if($number === '', 503, 'رقم التواصل غير مُعدّ.');
-        // Both records commit together: a failed write must never produce a WhatsApp success.
-        $persistRequest = function () use ($data, $service, $branch, $request): void {
-            $fields = collect($data)->except('request_key')->all();
+        $expectedWindow = \App\Support\BookingVisitDetails::window($branch, $availability);
+        $retry = !empty($data['request_key']) ? WebsiteBookingRequest::where('request_key', $data['request_key'])->first() : null;
+        if (isset($data['visit_type']) && ($data['visit_window'] ?? '') !== ($retry?->visit_window ?? $expectedWindow)) {
+            throw ValidationException::withMessages(['visit_window' => 'تغيرت مواعيد الفرع. حدّثي الصفحة وراجعي الموعد قبل تأكيد الحجز.']);
+        }
+        $acknowledged = filter_var($data['visit_window_acknowledged'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        unset($data['visit_window_acknowledged']);
+        $data['visit_window'] = $retry?->visit_window ?? $expectedWindow;
+        $data['visit_window_acknowledged_at'] = $retry?->visit_window_acknowledged_at ?? ($acknowledged ? now() : null);
+        $number = SiteSettingHelper::formatWhatsappNumber(trim($branch->phone ?? ''));
+        $persistRequest = function () use ($data, $service, $branch, $request, $answerNotes): void {
+            $fields = collect($data)->except(['request_key', 'visit_window', 'visit_window_acknowledged_at'])->all();
             $existing = isset($data['request_key']) ? WebsiteBookingRequest::where('request_key', $data['request_key'])->first() : null;
             if ($existing) {
                 foreach ($fields as $field => $value) {
@@ -160,14 +185,23 @@ class HomeController extends Controller
 
                 return;
             }
+            // Serialize with branch schedule edits, without limiting appointments at this time.
+            $currentBranch = ClinicBranch::whereKey($branch->id)->lockForUpdate()->firstOrFail();
+            abort_unless($currentBranch->is_active, 422);
+            $currentWindow = BranchSchedule::forDate($currentBranch, $data['booking_date']);
+            if (!$currentWindow['available'] || \App\Support\BookingVisitDetails::window($currentBranch, $currentWindow) !== $data['visit_window']) {
+                throw ValidationException::withMessages(['booking_date' => 'تغيرت مواعيد الفرع. حدّثي الصفحة وراجعي الموعد.']);
+            }
+            \App\Support\BookingTime::validate($currentBranch, $data['booking_date'], $data['booking_time'] ?? null);
             WebsiteBookingRequest::create($data + [
                 'service_name' => $service->name, 'branch_name' => $branch->name,
                 'source_host' => in_array($request->getHost(), ['drmohamedhelal.com', 'www.drmohamedhelal.com', 'ads.drmohamedhelal.com'], true) ? $request->getHost() : 'website',
+                'integration_state' => 'pending', 'admin_notes' => $answerNotes,
             ]);
             if (ClinicFeatures::enabled('Booking')) {
                 abort_unless(class_exists(Booking::class), 503);
                 $patient = Patient::firstOrCreate(['phone' => $data['patient_phone']], ['name' => $data['patient_name'], 'gender' => 'female']);
-                Booking::create(collect($data)->except('request_key')->all() + ['patient_id' => $patient->id, 'user_id' => auth()->check() && auth()->user()->isPatient() ? auth()->id() : null, 'status' => 'new', 'source' => 'website']);
+                Booking::create(collect($data)->only(['patient_name', 'patient_phone', 'booking_date', 'booking_time', 'service_id', 'clinic_branch_id'])->all() + ['patient_id' => $patient->id, 'user_id' => auth()->check() && auth()->user()->isPatient() ? auth()->id() : null, 'status' => 'new', 'source' => 'website']);
             }
         };
         try {
@@ -180,24 +214,34 @@ class HomeController extends Controller
             }
             DB::transaction($persistRequest);
         }
-        $stored = true;
-        $closingTime = $availability['to'] === '00:00' ? '12 منتصف الليل' : $availability['to'];
-        $hours = $availability['from'] && $availability['to'] ? ' مواعيد العيادة من '.$availability['from'].' إلى '.$closingTime.' بتوقيت القاهرة.' : '';
-        $message = "مرحبًا د. محمد هلال، أرغب في طلب موعد باسم {$data['patient_name']}، رقم {$data['patient_phone']}، يوم {$data['booking_date']}، فرع {$branch->name}، خدمة {$service->name}. الموعد قيد التأكيد.".$hours;
-        $answerLabels = ['previous_pregnancy' => 'حمل سابق', 'pregnancy_related_surgery' => 'عملية مرتبطة بالحمل'];
-        foreach ($answerLabels as $field => $label) {
-            if (filled($fertilityAnswers[$field] ?? null)) {
-                $message .= ' '.$label.': '.($fertilityAnswers[$field] === 'yes' ? 'نعم.' : 'لا.');
+        // The durable local request commits before any queue or upstream operation.
+        // The scheduler can recover even when dispatch itself is unavailable.
+        if (TibbinoBooking::enabled()) {
+            try {
+                SyncTibbinoBookingRequest::dispatch(WebsiteBookingRequest::where('request_key', $data['request_key'])->value('id'));
+            } catch (\Throwable $exception) {
+                // Keep the saved request pending; never log tokens or patient data.
             }
         }
-
+        $savedBooking = !empty($data['request_key']) ? WebsiteBookingRequest::where('request_key', $data['request_key'])->first() : null;
+        $visitWindow = $savedBooking?->visit_window ?: $data['visit_window'];
+        $visitType = $savedBooking?->visit_type ?? ($data['visit_type'] ?? null);
+        $stored = true;
         $request->session()->flash('booking_confirmation_stored', $stored);
+        $typeLabel = \App\Support\BookingVisitDetails::TYPES[$visitType] ?? 'غير محدد';
+        $timeLabel = $savedBooking?->booking_time ?? ($data['booking_time'] ?? null);
+        $whenLabel = $timeLabel ? 'الساعة المختارة: '.$timeLabel.' بتوقيت القاهرة.' : 'مواعيد الزيارة المعروضة: '.$visitWindow.'.';
+        $message = "مرحبًا د. محمد هلال، أرغب في طلب موعد باسم {$data['patient_name']}، رقم {$data['patient_phone']}، يوم {$data['booking_date']}، فرع {$branch->name}، خدمة {$service->name}. نوع الزيارة: {$typeLabel}. {$whenLabel} الموعد قيد التأكيد.";
+        if ($acknowledged) $message .= ' أؤكد أنني قرأت موعد الزيارة، والموعد قيد تأكيد العيادة.';
+        if ($answerParts) {
+            $message .= ' '.implode('، ', $answerParts).'.';
+        }
+        $request->session()->flash('booking_confirmation_branch_whatsapp', preg_match('/^[0-9]{7,15}$/', $number) ? 'https://wa.me/'.$number.'?text='.rawurlencode($message) : null);
 
         return response()->json([
             'confirmation_url' => route('bookings.confirmation'),
             'stored' => $stored, 'status' => 'pending',
-            'message' => $stored ? 'تم تسجيل طلبكِ للمراجعة. الموعد غير مؤكد بعد.' : 'طلبكِ جاهز للإرسال عبر واتساب. لم يُسجل موعد على الموقع.',
-            'whatsapp_url' => 'https://wa.me/'.$number.'?text='.rawurlencode($message),
+            'message' => 'تم استلام طلب الحجز. فريق العيادة هيتواصل معاك لتأكيد الموعد.',
         ]);
     }
 }

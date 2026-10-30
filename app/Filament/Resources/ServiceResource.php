@@ -31,9 +31,6 @@ class ServiceResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\FileUpload::make('image_path')->label('صورة البطاقة')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(51200),
-                Forms\Components\TextInput::make('card_title')->label('عنوان البطاقة')->maxLength(1000),
-
                 Forms\Components\Section::make('تفاصيل الخدمة الطبية')
                     ->description('أدخل تفاصيل الخدمة التي تقدمها العيادة لعرضها في الموقع.')
                     ->schema([
@@ -53,6 +50,7 @@ class ServiceResource extends Resource
                         Forms\Components\RichEditor::make('rich_description')
                             ->label('الوصف الكامل للخدمة')
                             ->columnSpanFull(),
+                        Forms\Components\FileUpload::make('image_path')->label('صورة البطاقة')->disk('public')->directory('landing')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(51200),
                         SpatieMediaLibraryFileUpload::make('service-image')->collection('service-image')
                             ->label('صورة الخدمة'),
                         Forms\Components\Toggle::make('is_active')
@@ -62,8 +60,10 @@ class ServiceResource extends Resource
                         Forms\Components\Hidden::make('order')
                             ->default(0),
                     ])->columns(2),
-                Forms\Components\Section::make('SEO')->hidden()
+                Forms\Components\Section::make('تفاصيل إضافية')
+                    ->description('عنوان البطاقة وبيانات المشاركة في محركات البحث.')
                     ->schema([
+                        Forms\Components\TextInput::make('card_title')->label('عنوان البطاقة')->maxLength(1000),
                         Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
                         Forms\Components\TextInput::make('meta_title')
                             ->label('Meta Title')
@@ -71,7 +71,7 @@ class ServiceResource extends Resource
                         Forms\Components\Textarea::make('meta_description')
                             ->label('Meta Description')
                             ->maxLength(255),
-                    ])->collapsible(),
+                    ])->collapsible()->collapsed(),
             ]);
     }
 

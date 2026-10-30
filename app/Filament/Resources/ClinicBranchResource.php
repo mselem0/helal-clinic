@@ -43,10 +43,6 @@ class ClinicBranchResource extends Resource
                         Forms\Components\TextInput::make('slug')->label('الرابط')->required()->maxLength(180)->unique(ignoreRecord: true)->regex('/^[\pL\pN]+(?:[-_][\pL\pN]+)*$/u')->default(fn () => 'branch-'.strtolower(Str::random(8))),
                         Forms\Components\Textarea::make('description')->label('نبذة عن الفرع'),
                         Forms\Components\Textarea::make('directions')->label('إرشادات الوصول'),
-                        Forms\Components\Select::make('service_ids')->label('الخدمات المتاحة فعليًا')->multiple()->options(fn () => Service::pluck('name', 'id')),
-                        Forms\Components\TextInput::make('meta_title')->label('عنوان البحث')->maxLength(255),
-                        Forms\Components\Textarea::make('meta_description')->label('وصف البحث')->maxLength(320),
-                        Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
                         Forms\Components\TextInput::make('phone')
                             ->label('رقم هاتف الفرع')
                             ->tel()
@@ -56,11 +52,33 @@ class ClinicBranchResource extends Resource
                             ->helperText('نص تعريفي للفروع التي لم يُفعّل جدول الحجز المنظم لها.')
                             ->placeholder('السبت - الخميس: 5م - 10م')
                             ->maxLength(255),
+                        Forms\Components\Textarea::make('address')
+                            ->label('العنوان التفصيلي')
+                            ->required()
+                            ->columnSpanFull(),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('حالة التفعيل (ظاهر في الموقع)')
+                            ->required()
+                            ->default(true),
+                        Forms\Components\Hidden::make('order')->default(0),
+                    ])->columns(2),
+                Forms\Components\Section::make('إعدادات إضافية للفرع')
+                    ->description('الخدمات المرتبطة، موقع الفرع، الحجز، وبيانات المشاركة والبحث.')
+                    ->schema([
+                        Forms\Components\Select::make('service_ids')->label('الخدمات المتاحة فعليًا')->multiple()->options(fn () => Service::pluck('name', 'id')),
+                        Forms\Components\TextInput::make('meta_title')->label('عنوان البحث')->maxLength(255),
+                        Forms\Components\Textarea::make('meta_description')->label('وصف البحث')->maxLength(320),
+                        Forms\Components\FileUpload::make('og_image')->label('صورة المشاركة')->image()->disk('public')->directory('landing'),
                         Forms\Components\Toggle::make('booking_schedule_enabled')
                             ->label('تفعيل مواعيد الحجز لهذا الفرع')
                             ->live()
                             ->default(false)
                             ->helperText('عند عدم التفعيل يستمر الحجز بالطريقة الحالية.'),
+                        Forms\Components\Toggle::make('booking_time_enabled')
+                            ->label('تفعيل اختيار ساعة الزيارة')
+                            ->default(true)
+                            ->helperText('تختار المريضة موعدًا من قائمة كل نصف ساعة داخل مواعيد اليوم المسجلة أدناه. لا يوجد حد لعدد الحجوزات في نفس الموعد.')
+                            ->visible(fn (Get $get): bool => (bool) $get('booking_schedule_enabled')),
                         Forms\Components\Section::make('الجدول الأسبوعي للحجز')
                             ->description('المواعيد بتوقيت القاهرة وتُطبّق على جميع خدمات الفرع. اترك اليوم مغلقًا عند عدم استقبال الحجوزات.')
                             ->schema(self::weeklyScheduleFields())
@@ -92,10 +110,6 @@ class ClinicBranchResource extends Resource
                             ->collapsible()
                             ->visible(fn (Get $get): bool => (bool) $get('booking_schedule_enabled'))
                             ->columnSpanFull(),
-                        Forms\Components\Textarea::make('address')
-                            ->label('العنوان التفصيلي')
-                            ->required()
-                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('google_maps_url')
                             ->label('رابط الموقع على خرائط جوجل')
                             ->url()
@@ -105,13 +119,7 @@ class ClinicBranchResource extends Resource
                             ->label('كود تضمين الخريطة (Iframe)')
                             ->placeholder('كود iframe من خرائط جوجل')
                             ->columnSpanFull(),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('حالة التفعيل (ظاهر في الموقع)')
-                            ->required()
-                            ->default(true),
-                        Forms\Components\Hidden::make('order')
-                            ->default(0),
-                    ])->columns(2),
+                    ])->columns(2)->collapsible()->collapsed(),
             ]);
     }
 
